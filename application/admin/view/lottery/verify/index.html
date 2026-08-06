@@ -1,0 +1,131 @@
+<div class="panel panel-default panel-intro">
+    <div class="panel-heading"><h3 class="panel-title">实名认证审核</h3></div>
+    <div class="panel-body">
+        <div style="margin-bottom:15px;">
+            <select id="filterStatus" class="form-control" style="width:120px;display:inline-block;margin-right:10px;">
+                <option value="">全部状态</option>
+                <option value="0" selected>待审核</option>
+                <option value="1">已通过</option>
+                <option value="2">已拒绝</option>
+            </select>
+            <button class="btn btn-primary" onclick="loadList()"><i class="fa fa-search"></i> 筛选</button>
+        </div>
+        <table class="table table-bordered table-hover">
+            <thead><tr>
+                <th width="50">ID</th><th>用户名</th><th>昵称</th><th>真实姓名</th><th>身份证号</th>
+                <th>证件正面</th><th>证件反面</th><th>状态</th><th>拒绝原因</th><th>提交时间</th><th width="180">操作</th>
+            </tr></thead>
+            <tbody id="tableBody"><tr><td colspan="11" style="text-align:center;color:#999;">加载中...</td></tr></tbody>
+        </table>
+        <div id="pagination" style="text-align:center;"></div>
+    </div>
+</div>
+
+<!-- 证件查看弹窗 -->
+<div id="imgOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;" onclick="this.style.display='none'">
+    <img id="imgPreview" src="" style="max-width:90%;max-height:90%;border-radius:8px;">
+</div>
+
+<script>
+var vPage = 1;
+// 基础路径：取当前页面pathname
+var basePath = location.pathname.replace(/\/index$/, '');
+
+function loadList() {
+    var status = document.getElementById('filterStatus').value;
+    var url = basePath + '/index?status=' + status + '&page=' + vPage;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState !== 4) return;
+        var tbody = document.getElementById('tableBody');
+        if (xhr.status !== 200) {
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#c00;">请求失败: ' + xhr.status + '</td></tr>';
+            return;
+        }
+        try {
+            var res = JSON.parse(xhr.responseText);
+        } catch(e) {
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#c00;">数据解析失败</td></tr>';
+            return;
+        }
+        var rows = res.rows || [];
+        if (!rows.length) { tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#999;">暂无数据</td></tr>'; return; }
+        var html = '';
+        rows.forEach(function(r) {
+            html += '<tr>';
+            html += '<td>' + r.id + '</td>';
+            html += '<td>' + (r.username||'-') + '</td>';
+            html += '<td>' + (r.nickname||'-') + '</td>';
+            html += '<td><b>' + r.real_name + '</b></td>';
+            html += '<td>' + r.id_card + '</td>';
+            html += '<td>' + (r.front_image ? '<a href="javascript:;" onclick="showImg(\''+r.front_image+'\')">查看</a>' : '-') + '</td>';
+            html += '<td>' + (r.back_image ? '<a href="javascript:;" onclick="showImg(\''+r.back_image+'\')">查看</a>' : '-') + '</td>';
+            html += '<td>' + r.status_html + '</td>';
+            html += '<td style="max-width:120px;word-break:break-all;">' + (r.reject_reason||'-') + '</td>';
+            html += '<td>' + r.create_date + '</td>';
+            html += '<td>';
+            if (r.status == 0) {
+                html += '<button class="btn btn-xs btn-success" onclick="doApprove('+r.id+')"><i class="fa fa-check"></i> 通过</button> ';
+                html += '<button class="btn btn-xs btn-danger" onclick="doReject('+r.id+')"><i class="fa fa-times"></i> 拒绝</button>';
+            } else if (r.status == 2) {
+                html += '<span class="text-muted">已拒绝</span>';
+            } else {
+                html += '<span class="text-success">已通过</span>';
+            }
+            html += '</td></tr>';
+        });
+        tbody.innerHTML = html;
+        var total = res.total || 0;
+        var pages = Math.ceil(total / 15);
+        var pg = '';
+        for (var i = 1; i <= pages; i++) {
+            pg += '<button class="btn btn-xs '+(i===vPage?'btn-primary':'btn-default')+'" onclick="vPage='+i+';loadList()" style="margin:0 2px;">'+i+'</button>';
+        }
+        document.getElementById('pagination').innerHTML = pg;
+    };
+    xhr.send();
+}
+
+function showImg(url) {
+    document.getElementById('imgPreview').src = url;
+    document.getElementById('imgOverlay').style.display = 'flex';
+}
+
+function doApprove(id) {
+    Layer.confirm('确认通过该用户的实名认证？', function(idx) {
+        Layer.close(idx);
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', basePath + '/approve', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== 4) return;
+            var res = JSON.parse(xhr.responseText);
+            if (res.code === 1) { Toastr.success(res.msg); loadList(); }
+            else { Toastr.error(res.msg); }
+        };
+        xhr.send('id=' + id);
+    });
+}
+
+function doReject(id) {
+    Layer.prompt({title: '请输入拒绝原因', value: '信息不符', formType: 0}, function(reason, idx) {
+        Layer.close(idx);
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', basePath + '/reject', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== 4) return;
+            var res = JSON.parse(xhr.responseText);
+            if (res.code === 1) { Toastr.success(res.msg); loadList(); }
+            else { Toastr.error(res.msg); }
+        };
+        xhr.send('id=' + id + '&reason=' + encodeURIComponent(reason));
+    });
+}
+
+loadList();
+</script>

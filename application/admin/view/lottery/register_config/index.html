@@ -1,0 +1,80 @@
+<div class="panel panel-default panel-intro">
+    <div class="panel-heading"><h3 class="panel-title">注册配置信息</h3></div>
+    <div class="panel-body">
+        <!-- 统计卡片 -->
+        <div style="display:flex;gap:15px;margin-bottom:20px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:160px;background:#e3f2fd;border-radius:8px;padding:14px 18px;">
+                <div style="font-size:12px;color:#666;">注册用户总数</div>
+                <div style="font-size:22px;font-weight:700;color:#1565c0;" id="statTotal">-</div>
+            </div>
+            <div style="flex:1;min-width:160px;background:#e8f5e9;border-radius:8px;padding:14px 18px;">
+                <div style="font-size:12px;color:#666;">今日新增</div>
+                <div style="font-size:22px;font-weight:700;color:#2e7d32;" id="statToday">-</div>
+            </div>
+            <div style="flex:1;min-width:160px;background:#fff3e0;border-radius:8px;padding:14px 18px;">
+                <div style="font-size:12px;color:#666;">已绑定邀请人</div>
+                <div style="font-size:22px;font-weight:700;color:#ef6c00;" id="statInvited">-</div>
+            </div>
+        </div>
+
+        <!-- 只读提示 -->
+        <div class="alert alert-info" style="margin-bottom:15px;">
+            <i class="fa fa-info-circle"></i> 本页面用于查看当前注册相关的系统设置，仅供观赏，不提供修改。
+        </div>
+
+        <!-- 配置项表格 -->
+        <table class="table table-bordered table-hover table-striped" style="font-size:13px;">
+            <thead><tr style="background:#f5f5f5;">
+                <th width="200">配置项</th>
+                <th width="180">当前值</th>
+                <th>说明</th>
+            </tr></thead>
+            <tbody id="cfgBody"><tr><td colspan="3" style="text-align:center;color:#999;">加载中...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+(function(){
+    var entry = (function(){ var m = location.pathname.match(/^(\/[^\/]+\.php)/); return m ? m[1] : ''; })();
+    var baseUrl = entry + '/lottery/register_config/index';
+
+    function esc(s){ if(s==null) return ''; return String(s).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];}); }
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', baseUrl, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function(){
+        try {
+            var res = JSON.parse(xhr.responseText);
+            if(res.code !== 1){ document.getElementById('cfgBody').innerHTML='<tr><td colspan="3" style="color:red;">'+esc(res.msg)+'</td></tr>'; return; }
+            var d = res.data || {};
+            var s = d.stats || {};
+            document.getElementById('statTotal').textContent = s.total_users != null ? s.total_users : 0;
+            document.getElementById('statToday').textContent = s.today_users != null ? s.today_users : 0;
+            document.getElementById('statInvited').textContent = s.invited_users != null ? s.invited_users : 0;
+
+            var items = d.items || [], html = '';
+            if(!items.length){
+                html = '<tr><td colspan="3" style="text-align:center;color:#999;">暂无配置项</td></tr>';
+            } else {
+                for(var i=0;i<items.length;i++){
+                    var it = items[i];
+                    html += '<tr>'+
+                        '<td><strong>'+esc(it.name)+'</strong></td>'+
+                        '<td><span class="label label-success" style="font-size:13px;">'+esc(it.value)+'</span></td>'+
+                        '<td><small style="color:#666;">'+esc(it.desc)+'</small></td>'+
+                        '</tr>';
+                }
+            }
+            document.getElementById('cfgBody').innerHTML = html;
+        } catch(e){
+            document.getElementById('cfgBody').innerHTML='<tr><td colspan="3" style="color:red;">解析错误: '+esc(e.message)+'</td></tr>';
+        }
+    };
+    xhr.onerror = function(){
+        document.getElementById('cfgBody').innerHTML='<tr><td colspan="3" style="color:red;">请求失败</td></tr>';
+    };
+    xhr.send();
+})();
+</script>

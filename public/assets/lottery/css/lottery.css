@@ -1,0 +1,2531 @@
+/* ============================================
+   彩票投注系统 - 完整样式表
+   设计参考: DB彩票 多宝彩票
+   色系: 白色背景 + 蓝色主色调(#1c9eff)
+   ============================================ */
+
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
+
+/* ====== CSS Variables ====== */
+:root {
+    --primary: #1c9eff;
+    --primary-dark: #0d8ae0;
+    --primary-light: #e8f4ff;
+    --primary-gradient: linear-gradient(135deg, #1c9eff, #0078d4);
+    --success: #52c41a;
+    --danger: #ff4d4f;
+    --warning: #faad14;
+    --orange: #fa8c16;
+    --bg-body: #f0f2f5;
+    --bg-white: #ffffff;
+    --bg-card: #ffffff;
+    --bg-sidebar: #1a2138;
+    --bg-sidebar-hover: #253052;
+    --bg-header: #ffffff;
+    --text-primary: #1a1a2e;
+    --text-secondary: #666;
+    --text-muted: #999;
+    --text-light: #bbb;
+    --border-color: #e8e8e8;
+    --border-light: #f0f0f0;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 2px 8px rgba(0,0,0,0.1);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --font-mono: 'Roboto Mono', 'Courier New', monospace;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    --transition: all 0.25s ease;
+}
+
+/* ====== Reset & Base ====== */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body.lottery-page {
+    font-family: var(--font-sans);
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { color: var(--primary-dark); }
+
+/* ====== Scrollbar ====== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
+/* ==================================================================
+   TOP HEADER BAR
+   ================================================================== */
+.lottery-header {
+    background: var(--bg-white);
+    border-bottom: 1px solid var(--border-color);
+    height: 56px;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+}
+
+.lottery-header .header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-right: 32px;
+}
+
+.lottery-header .header-logo .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--primary-gradient);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.lottery-header .header-logo .logo-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.lottery-header .header-logo .logo-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: block;
+    line-height: 1;
+}
+
+.header-nav {
+    display: flex;
+    gap: 4px;
+    margin-right: auto;
+}
+
+.header-nav a {
+    padding: 8px 18px;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.header-nav a:hover,
+.header-nav a.active {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 4px 12px;
+    border-radius: 20px;
+    transition: var(--transition);
+}
+
+.header-user:hover { background: var(--bg-body); }
+
+.header-user .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.header-balance {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.header-balance .amount {
+    color: var(--orange);
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+
+/* ==================================================================
+   MAIN LAYOUT
+   ================================================================== */
+.lottery-layout {
+    display: flex;
+    min-height: calc(100vh - 56px);
+}
+
+/* ====== Left Sidebar ====== */
+.lottery-sidebar {
+    width: 180px;
+    background: var(--bg-white);
+    border-right: 1px solid var(--border-color);
+    padding: 12px 0;
+    flex-shrink: 0;
+    overflow-y: auto;
+    height: calc(100vh - 56px);
+    position: sticky;
+    top: 56px;
+}
+
+.sidebar-group-title {
+    padding: 10px 20px 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-item:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.sidebar-item.active {
+    background: var(--primary-light);
+    color: var(--primary);
+    border-left-color: var(--primary);
+    font-weight: 600;
+}
+
+.sidebar-item .item-icon {
+    width: 20px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.sidebar-item .hot-badge {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--danger);
+    color: white;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* ====== Main Content ====== */
+.lottery-main {
+    flex: 1;
+    padding: 20px;
+    min-width: 0;
+}
+
+/* ====== Right Sidebar ====== */
+.lottery-right {
+    width: 300px;
+    padding: 20px 16px;
+    flex-shrink: 0;
+}
+
+/* ==================================================================
+   LOTTERY TYPE TABS (热门彩种 / 3D / etc.)
+   ================================================================== */
+.lottery-type-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 16px;
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+    flex-wrap: nowrap;
+}
+
+.lottery-type-tabs .type-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+    min-width: 60px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.lottery-type-tabs .type-tab .tab-icon {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.lottery-type-tabs .type-tab:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.lottery-type-tabs .type-tab.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 2px 8px rgba(28,158,255,0.4);
+}
+
+/* ==================================================================
+   LOTTERY CARD (开奖信息卡片)
+   ================================================================== */
+.lottery-card {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+    border: 2px solid transparent;
+    transition: var(--transition);
+    position: relative;
+}
+
+.lottery-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-light);
+}
+
+.lottery-card.highlight {
+    border-color: var(--primary);
+}
+
+/* Card Header */
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.card-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.card-icon.fc3d { background: linear-gradient(135deg, #667eea, #764ba2); }
+.card-icon.pl3 { background: linear-gradient(135deg, #f093fb, #f5576c); }
+.card-icon.xs3d { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.card-icon.xy3d { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+
+.card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.card-period {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* Draw Numbers */
+.card-numbers {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.number-ball {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    font-family: var(--font-mono);
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.number-ball.blue { background: linear-gradient(135deg, #1c9eff, #0078d4); }
+.number-ball.green { background: linear-gradient(135deg, #52c41a, #389e0d); }
+.number-ball.red { background: linear-gradient(135deg, #ff4d4f, #cf1322); }
+.number-ball.orange { background: linear-gradient(135deg, #fa8c16, #d46b08); }
+.number-ball.purple { background: linear-gradient(135deg, #722ed1, #531dab); }
+.number-ball.cyan { background: linear-gradient(135deg, #13c2c2, #006d75); }
+.number-ball.pink { background: linear-gradient(135deg, #eb2f96, #c41d7f); }
+
+.number-ball-sm {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+}
+
+/* Countdown & Period Info */
+.card-timer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.timer-period {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.timer-period strong {
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+}
+
+.timer-countdown {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+}
+
+.timer-countdown.urgent {
+    color: var(--danger);
+    animation: timer-pulse 1s ease-in-out infinite;
+}
+
+@keyframes timer-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Bet Now Button */
+.btn-bet-now {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 24px;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 2px 8px rgba(28,158,255,0.3);
+}
+
+.btn-bet-now:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(28,158,255,0.4);
+    color: white;
+}
+
+.btn-bet-now:active {
+    transform: translateY(0);
+}
+
+/* Stats Table */
+.card-stats {
+    margin-top: 12px;
+    border-top: 1px solid var(--border-light);
+    padding-top: 12px;
+}
+
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.stats-table th {
+    background: var(--bg-body);
+    color: var(--text-secondary);
+    font-weight: 600;
+    padding: 6px 12px;
+    text-align: center;
+    border: 1px solid var(--border-light);
+    font-size: 12px;
+}
+
+.stats-table td {
+    padding: 6px 12px;
+    text-align: center;
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+.stats-table td.red { color: var(--danger); font-weight: 600; }
+.stats-table td.blue { color: var(--primary); font-weight: 600; }
+.stats-table td.green { color: var(--success); font-weight: 600; }
+
+/* Trend/Route Links */
+.card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.card-actions .action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: var(--transition);
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.card-actions .action-link:hover {
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+/* ==================================================================
+   RIGHT SIDEBAR PANELS
+   ================================================================== */
+.right-panel {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+}
+
+.right-panel-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Hot Bets */
+.hot-bet-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.hot-bet-item:last-child { border-bottom: none; }
+
+.hot-bet-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hot-bet-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+}
+
+.hot-bet-name { font-size: 13px; color: var(--text-primary); }
+
+.hot-bet-type {
+    font-size: 12px;
+    color: var(--primary);
+    background: var(--primary-light);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.hot-bet-time {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+
+/* Expert Panel */
+.expert-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.expert-item:last-child { border-bottom: none; }
+
+.expert-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.expert-info { flex: 1; }
+.expert-name { font-size: 14px; font-weight: 600; }
+.expert-count { font-size: 12px; color: var(--text-muted); }
+.expert-count strong { color: var(--primary); }
+
+/* ==================================================================
+   BETTING PAGE - TOP INFO BAR
+   ================================================================== */
+.bet-page-layout {
+    display: flex;
+    min-height: calc(100vh - 56px);
+}
+
+.bet-main {
+    flex: 1;
+    padding: 0;
+    min-width: 0;
+}
+
+.bet-info-bar {
+    background: linear-gradient(135deg, #f8fbff 0%, #eef5ff 100%);
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.bet-info-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.bet-lottery-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+}
+
+.bet-lottery-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.bet-lottery-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.bet-lottery-meta .meta-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.meta-tag.official { background: #fff0e0; color: #d46b08; }
+.meta-tag.freq { background: #e6f7e6; color: #389e0d; }
+
+/* Countdown Timer Block */
+.bet-countdown-block {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.bet-timer-wrap {
+    text-align: center;
+}
+
+.bet-timer-period {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.bet-timer-display {
+    background: #1a2138;
+    border-radius: 8px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.bet-timer-display .timer-digit {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: #00d4ff;
+    min-width: 20px;
+    text-align: center;
+}
+
+.bet-timer-display .timer-sep {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: #00d4ff;
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.bet-timer-status {
+    font-size: 11px;
+    margin-top: 4px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    background: #e6fffb;
+    color: #13c2c2;
+    display: inline-block;
+}
+
+/* Current Draw Numbers */
+.bet-draw-numbers {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bet-draw-numbers .number-ball {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+}
+
+/* ==================================================================
+   BETTING PAGE - PLAY TYPE TOGGLES
+   ================================================================== */
+.bet-panel-toggle {
+    display: flex;
+    gap: 0;
+    padding: 16px 28px 0;
+    background: var(--bg-white);
+}
+
+.panel-toggle-btn {
+    padding: 8px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 2px solid var(--border-color);
+    background: var(--bg-white);
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+
+.panel-toggle-btn:first-child {
+    border-radius: 6px 0 0 6px;
+}
+
+.panel-toggle-btn:last-child {
+    border-radius: 0 6px 6px 0;
+    border-left: none;
+}
+
+.panel-toggle-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Play Type Tabs */
+.play-type-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 12px 28px;
+    background: var(--bg-white);
+    border-bottom: 1px solid var(--border-light);
+    overflow-x: auto;
+    flex-wrap: nowrap;
+}
+
+.play-type-tab {
+    padding: 6px 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 4px;
+    white-space: nowrap;
+    transition: var(--transition);
+    border: 1px solid transparent;
+}
+
+.play-type-tab:hover {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+.play-type-tab.active {
+    color: var(--primary);
+    background: var(--primary-light);
+    border-color: var(--primary);
+    font-weight: 600;
+}
+
+/* Sub Tabs (位选) */
+.play-sub-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 12px 28px;
+    background: var(--bg-white);
+}
+
+.play-sub-tab {
+    padding: 6px 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: var(--transition);
+    border: 1px solid var(--border-color);
+}
+
+.play-sub-tab:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.play-sub-tab.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.play-sub-tab .check-icon {
+    margin-left: 4px;
+}
+
+/* Play Rule Description */
+.play-rule-desc {
+    padding: 8px 28px;
+    background: var(--bg-white);
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.play-rule-desc::before {
+    content: '✦';
+    margin-right: 4px;
+    color: var(--primary);
+}
+
+/* ==================================================================
+   BETTING AREA
+   ================================================================== */
+.bet-area {
+    padding: 20px 28px;
+    background: var(--bg-white);
+}
+
+/* Category Options (大小单双质合) */
+.bet-category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.bet-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    user-select: none;
+}
+
+.bet-option:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.bet-option.selected {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+}
+
+.bet-option .option-name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.bet-option .option-odds {
+    font-size: 13px;
+    font-family: var(--font-mono);
+    color: var(--danger);
+}
+
+.bet-option.selected .option-odds {
+    color: rgba(255,255,255,0.9);
+}
+
+/* Number Grid (0-9) */
+.bet-number-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.bet-number-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    user-select: none;
+}
+
+.bet-number-item:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.bet-number-item.selected {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+}
+
+.bet-number-item .num-ball {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-family: var(--font-mono);
+    flex-shrink: 0;
+}
+
+.bet-number-item.selected .num-ball {
+    background: rgba(255,255,255,0.3);
+    color: white;
+}
+
+.bet-number-item .num-odds {
+    font-size: 13px;
+    font-family: var(--font-mono);
+    color: var(--danger);
+}
+
+.bet-number-item.selected .num-odds {
+    color: rgba(255,255,255,0.9);
+}
+
+/* ==================================================================
+   BOTTOM TOOLBAR (投注工具栏)
+   ================================================================== */
+.bet-bottom-bar {
+    background: var(--bg-white);
+    border-top: 1px solid var(--border-color);
+    padding: 12px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    bottom: 0;
+    z-index: 50;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+}
+
+.bet-count-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.bet-count-info .count-num {
+    color: var(--danger);
+    font-weight: 700;
+    font-family: var(--font-mono);
+    font-size: 16px;
+}
+
+/* Amount Chips */
+.bet-amount-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.amount-chip {
+    padding: 6px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: white;
+    color: var(--text-primary);
+    transition: var(--transition);
+    font-family: var(--font-mono);
+}
+
+.amount-chip:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.amount-chip.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.amount-edit-btn {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    background: white;
+    color: var(--text-muted);
+    transition: var(--transition);
+}
+
+.amount-edit-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.amount-custom-input {
+    width: 80px;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: var(--font-mono);
+    outline: none;
+    transition: var(--transition);
+}
+
+.amount-custom-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(28,158,255,0.2);
+}
+
+/* Action Buttons */
+.bet-action-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-bet-submit {
+    padding: 8px 32px;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 2px 8px rgba(28,158,255,0.3);
+}
+
+.btn-bet-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(28,158,255,0.4);
+}
+
+.btn-bet-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-bet-secondary {
+    padding: 8px 16px;
+    background: white;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-bet-secondary:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* ==================================================================
+   RIGHT PANEL - TREND/路子图
+   ================================================================== */
+.trend-panel {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 16px;
+}
+
+.trend-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.trend-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.trend-tab {
+    padding: 4px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+
+.trend-tab.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Draw History Table */
+.draw-history {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+}
+
+.draw-history-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.history-table th {
+    background: var(--bg-body);
+    padding: 6px 8px;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
+    white-space: nowrap;
+}
+
+.history-table td {
+    padding: 6px 8px;
+    text-align: center;
+    border: 1px solid var(--border-light);
+    font-family: var(--font-mono);
+    white-space: nowrap;
+}
+
+.history-table tr:hover {
+    background: var(--primary-light);
+}
+
+/* ==================================================================
+   TREND DOTS (路子图)
+   ================================================================== */
+.trend-grid {
+    display: grid;
+    gap: 1px;
+    background: var(--border-light);
+}
+
+.trend-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 700;
+}
+
+.trend-dot.da { background: var(--danger); color: white; }
+.trend-dot.xiao { background: var(--primary); color: white; }
+.trend-dot.dan { background: var(--danger); color: white; }
+.trend-dot.shuang { background: var(--primary); color: white; }
+
+/* ==================================================================
+   DIRECT INPUT MODES (直选/组选输入)
+   ================================================================== */
+.direct-input-area {
+    padding: 20px 0;
+}
+
+.direct-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.direct-input-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 60px;
+    text-align: right;
+}
+
+.direct-input-field {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: var(--font-mono);
+    outline: none;
+    transition: var(--transition);
+}
+
+.direct-input-field:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(28,158,255,0.15);
+}
+
+.direct-input-field::placeholder {
+    color: var(--text-light);
+}
+
+/* ==================================================================
+   MODAL OVERLAY
+   ================================================================== */
+.lottery-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.lottery-modal-overlay.show {
+    display: flex;
+}
+
+.lottery-modal {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    min-width: 400px;
+    max-width: 600px;
+    box-shadow: var(--shadow-lg);
+    animation: modalIn 0.25s ease-out;
+}
+
+@keyframes modalIn {
+    from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.lottery-modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.lottery-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+/* ==================================================================
+   TOAST NOTIFICATIONS
+   ================================================================== */
+.lottery-toast {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+}
+
+.toast-item {
+    background: rgba(255,255,255,0.97);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    padding: 16px 28px;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: toastCenter 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    font-size: 15px;
+    font-weight: 500;
+    border-left: 4px solid var(--primary);
+    pointer-events: auto;
+    max-width: 500px;
+}
+
+.toast-item.success { border-left-color: #27ae60; color: #1a7a42; }
+.toast-item.error { border-left-color: #e74c3c; color: #c0392b; }
+.toast-item.warning { border-left-color: #f39c12; color: #b8760e; }
+
+@keyframes toastCenter {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* ==================================================================
+   RESPONSIVE
+   ================================================================== */
+@media (max-width: 1200px) {
+    .lottery-right { width: 260px; }
+    .lottery-sidebar { width: 160px; }
+}
+
+@media (max-width: 992px) {
+    .lottery-right { display: none; }
+    .lottery-sidebar { width: 60px; }
+    .sidebar-item span:not(.item-icon) { display: none; }
+    .sidebar-group-title { display: none; }
+}
+
+/* ==================================================================
+   FOOTER
+   ================================================================== */
+.lottery-footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-muted);
+    font-size: 13px;
+    background: var(--bg-white);
+    border-top: 1px solid var(--border-color);
+}
+
+/* ==================================================================
+   LOADING ANIMATIONS
+   ================================================================== */
+.loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+    border-radius: 4px;
+}
+
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Spin animation */
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ==================================================================
+   PLAY TYPE SPECIFIC: COMBINATION INPUTS
+   ================================================================== */
+.combo-input-area {
+    padding: 16px 0;
+}
+
+.combo-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.combo-position {
+    min-width: 60px;
+    padding-top: 8px;
+}
+
+.combo-position-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.combo-numbers {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.combo-num-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    background: white;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+}
+
+.combo-num-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.combo-num-btn.selected {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 2px 6px rgba(28,158,255,0.3);
+}
+
+/* Quick select tools */
+.quick-tools {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.quick-tool-btn {
+    padding: 4px 12px;
+    font-size: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    background: white;
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+
+.quick-tool-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+/* ==================================================================
+   SUM VALUE BETTING (和值)
+   ================================================================== */
+.sum-bet-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 8px;
+}
+
+.sum-bet-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 4px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    user-select: none;
+}
+
+.sum-bet-item:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.sum-bet-item.selected {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+}
+
+.sum-bet-item .sum-value {
+    font-size: 16px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+
+.sum-bet-item .sum-odds {
+    font-size: 11px;
+    color: var(--danger);
+    font-family: var(--font-mono);
+    margin-top: 2px;
+}
+
+.sum-bet-item.selected .sum-odds {
+    color: rgba(255,255,255,0.85);
+}
+
+/* ==================================================================
+   SELECTION ANIMATION EFFECTS
+   ================================================================== */
+.bet-option.selected,
+.bet-number-item.selected,
+.sum-bet-item.selected,
+.combo-num-btn.selected {
+    animation: selectPop 0.2s ease-out;
+}
+
+@keyframes selectPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Number ball bounce on selection */
+.bet-number-item.selected .num-ball {
+    animation: ballBounce 0.3s ease-out;
+}
+
+@keyframes ballBounce {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.2); }
+    70% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+/* Hover glow effects */
+.bet-option:hover {
+    box-shadow: 0 2px 8px rgba(28,158,255,0.15);
+}
+
+.bet-number-item:hover {
+    box-shadow: 0 2px 8px rgba(28,158,255,0.15);
+}
+
+/* Combo button selected shine */
+.combo-num-btn.selected {
+    position: relative;
+    overflow: hidden;
+}
+
+.combo-num-btn.selected::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+/* Bottom bar total amount highlight */
+.bet-count-info .count-num {
+    transition: all 0.3s ease;
+}
+
+.bet-count-info .count-num.highlight {
+    transform: scale(1.2);
+    color: #ff4d4f;
+}
+
+/* Confirm modal bet summary styling */
+#confirmContent p {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+#confirmContent p:last-child {
+    border-bottom: none;
+    padding-top: 8px;
+}
+
+/* Play type tab scrollbar */
+.play-type-tabs::-webkit-scrollbar {
+    height: 3px;
+}
+
+.play-type-tabs::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 2px;
+}
+
+/* Active sidebar sub-item indicator */
+.sidebar-sub-items .sidebar-item.active::before {
+    content: '▸';
+    position: absolute;
+    left: 6px;
+    color: var(--primary);
+    font-size: 12px;
+}
+
+/* Header logo hover */
+.header-logo:hover .logo-icon {
+    transform: rotate(-5deg) scale(1.05);
+    transition: transform 0.3s ease;
+}
+
+/* Bet button pulse when enabled */
+.btn-bet-submit:not(:disabled) {
+    animation: betPulse 2s ease-in-out infinite;
+}
+
+@keyframes betPulse {
+    0%, 100% { box-shadow: 0 2px 8px rgba(28,158,255,0.3); }
+    50% { box-shadow: 0 4px 16px rgba(28,158,255,0.5); }
+}
+
+/* Panel toggle smooth transition */
+.panel-toggle-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.panel-toggle-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--primary);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.panel-toggle-btn.active::after {
+    opacity: 1;
+    z-index: -1;
+}
+
+/* Right sidebar card hover */
+.draw-history:hover,
+.trend-panel:hover {
+    box-shadow: var(--shadow-md);
+    transition: box-shadow 0.3s ease;
+}
+
+/* History table number ball mini */
+.history-table .number-ball {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+    margin: 0 1px;
+    box-shadow: none;
+}
+
+/* ==================================================================
+   行式投注选项 (对标参考站: 选项名 + 赔率 + 金额输入框)
+   ================================================================== */
+.bet-row-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1px;
+    background: var(--border-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.bet-row-grid-5 {
+    grid-template-columns: repeat(5, 1fr) !important;
+}
+
+.bet-row-grid-5 .bet-row-item {
+    padding: 8px 6px;
+    gap: 4px;
+}
+
+.bet-row-grid-5 .bet-row-item .row-amount {
+    width: 54px;
+    padding: 0 4px;
+}
+
+.bet-row-grid-4 {
+    grid-template-columns: repeat(4, 1fr) !important;
+}
+
+.bet-row-grid-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+}
+
+.bet-row-grid-combo {
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 1px !important;
+}
+
+.bet-row-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    background: var(--bg-white);
+    cursor: pointer;
+    transition: background 0.15s;
+    min-height: 44px;
+}
+
+.bet-row-item:hover {
+    background: #f8fbff;
+}
+
+.bet-row-item.selected {
+    background: #e8f4ff;
+}
+
+.bet-row-item .row-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 28px;
+    text-align: center;
+}
+
+.bet-row-item .row-odds {
+    font-size: 13px;
+    color: var(--danger);
+    font-weight: 600;
+    font-family: var(--font-mono);
+    min-width: 40px;
+}
+
+.bet-row-item .row-amount {
+    width: 72px;
+    height: 30px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0 8px;
+    font-size: 13px;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    background: var(--bg-white);
+    outline: none;
+    transition: border-color 0.2s;
+    margin-left: auto;
+}
+
+.bet-row-item .row-amount:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(28,158,255,0.15);
+}
+
+.bet-row-item .row-amount::-webkit-inner-spin-button,
+.bet-row-item .row-amount::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.bet-row-item .row-amount {
+    -moz-appearance: textfield;
+}
+
+/* 响应式: 小屏幕时减少列数 */
+@media (max-width: 768px) {
+    .bet-row-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .bet-row-grid-5 {
+        grid-template-columns: repeat(5, 1fr);
+    }
+    .bet-row-item .row-amount {
+        width: 56px;
+    }
+}
+
+/* ============================================
+   标准盘样式 (对标多宝彩票)
+   ============================================ */
+
+/* --- 热门/全部模式切换 --- */
+.bzp-mode-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 12px;
+}
+.bzp-mode-btn {
+    padding: 7px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: var(--bg-white);
+    color: var(--text-secondary);
+    transition: var(--transition);
+    user-select: none;
+}
+.bzp-mode-btn:first-child {
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+.bzp-mode-btn:last-child {
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    border-left: none;
+}
+.bzp-mode-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+/* --- 全部玩法 分组导航 --- */
+.bzp-group-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 8px;
+}
+.bzp-group {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border-light);
+}
+.bzp-group:last-child {
+    border-bottom: none;
+}
+.bzp-group-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-right: 16px;
+    font-weight: 400;
+    width: 40px;
+    text-align: right;
+}
+.bzp-play-link {
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px 12px;
+    margin-right: 8px;
+    text-decoration: none;
+    transition: var(--transition);
+    white-space: nowrap;
+    border-radius: 4px;
+}
+.bzp-play-link:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+.bzp-play-link.active {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+/* --- 圆形号码球选号器 --- */
+.bzp-selector {
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 20px;
+}
+.bzp-ball-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    flex-wrap: wrap;
+    gap: 8px;
+    border-bottom: 1px solid var(--border-light);
+}
+.bzp-ball-row:last-child {
+    border-bottom: none;
+}
+.bzp-pos-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 44px;
+    text-align: center;
+}
+.bzp-ball {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    background: var(--bg-white);
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+.bzp-ball:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: scale(1.08);
+}
+.bzp-ball.selected {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(28,158,255,0.35);
+    transform: scale(1.05);
+}
+
+/* --- 快捷按钮 (全大小奇偶清) --- */
+.bzp-quick-btns {
+    display: inline-flex;
+    gap: 4px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+.bzp-quick-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+    user-select: none;
+    background: #f5f5f5;
+}
+.bzp-quick-btn:hover {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+/* --- 和值/跨度网格 --- */
+.bzp-hz-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: 6px;
+    padding: 16px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+.bzp-hz-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    background: var(--bg-white);
+}
+.bzp-hz-item:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.bzp-hz-item.selected {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(28,158,255,0.3);
+}
+
+/* --- 龙虎和 --- */
+.bzp-lhh-grid {
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px;
+}
+.bzp-lhh-grid-col2 {
+    display: grid;
+    grid-template-rows: repeat(5, auto);
+    grid-auto-flow: column;
+    column-gap: 32px;
+}
+@media (max-width: 768px) {
+    .bzp-lhh-grid-col2 {
+        display: flex;
+        flex-direction: column;
+    }
+}
+.bzp-lhh-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+.bzp-lhh-grid-col2 .bzp-lhh-row:nth-child(5n) { border-bottom: none; }
+.bzp-lhh-row:last-child { border-bottom: none; }
+
+@media (max-width: 768px) {
+    .bzp-lhh-grid-col2 .bzp-lhh-row:nth-child(5n) { border-bottom: 1px solid var(--border-light); }
+    .bzp-lhh-grid-col2 .bzp-lhh-row:last-child { border-bottom: none; }
+}
+
+.bzp-lhh-label {
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 36px;
+    text-align: center;
+    color: var(--text-primary);
+}
+.bzp-lhh-item {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 90px;
+    height: 56px;
+    border: 1px solid #ddd;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--bg-white);
+    user-select: none;
+}
+.bzp-lhh-item:hover {
+    border-color: var(--primary);
+}
+.bzp-lhh-item.selected {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    box-shadow: 0 2px 6px rgba(28,158,255,0.2);
+}
+.bzp-lhh-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.bzp-lhh-odds {
+    font-size: 12px;
+    color: var(--danger);
+    font-weight: 500;
+}
+
+/* --- 标准盘文本输入 --- */
+.bzp-text-input {
+    padding: 16px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+.bzp-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: var(--font-mono);
+    resize: vertical;
+    transition: border-color 0.2s;
+}
+.bzp-textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(28,158,255,0.1);
+}
+.bzp-parse-btn {
+    padding: 6px 16px;
+    font-size: 13px;
+    border: 1px solid var(--primary);
+    background: var(--primary);
+    color: #fff;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+}
+.bzp-parse-btn:hover {
+    background: var(--primary-dark);
+}
+.bzp-clear-btn {
+    background: var(--bg-white);
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+.bzp-clear-btn:hover {
+    background: #f5f5f5;
+}
+
+/* --- 标准盘底部栏（倍数/金额/按钮）--- */
+.bzp-bottom-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    margin-top: 12px;
+}
+
+/* --- 玩法说明区域 --- */
+#playRuleDesc {
+    padding: 8px 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    min-height: 28px;
+}
+
+/* --- 清空按钮 --- */
+.btn-bet-clear {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    transition: var(--transition);
+}
+.btn-bet-clear:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+/* ==================================================================
+   双面全面板样式 (对标参考站截图 - 三列并排 + 组合区)
+   ================================================================== */
+
+/* --- 三列并排容器 (百位/十位/个位) --- */
+.sm-three-col {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.sm-col {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--bg-white);
+}
+
+.sm-col-title {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--primary);
+    padding: 12px 0;
+    border-bottom: 2px solid var(--primary-light);
+    background: linear-gradient(180deg, #f5faff 0%, #fff 100%);
+    letter-spacing: 2px;
+}
+
+.sm-col-body {
+    padding: 4px 0;
+}
+
+/* --- 单行选项 (大/小/单/双/质/合) --- */
+.sm-row-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.sm-row-item:last-child {
+    border-bottom: none;
+}
+
+.sm-row-item:hover {
+    background: #f8fbff;
+}
+
+.sm-row-item.selected {
+    background: #e8f4ff;
+}
+
+.sm-row-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 24px;
+}
+
+.sm-row-odds {
+    font-size: 13px;
+    color: var(--danger);
+    font-weight: 600;
+    font-family: var(--font-mono);
+    min-width: 38px;
+}
+
+.sm-row-item .row-amount,
+.sm-combo-item .row-amount {
+    width: 80px;
+    height: 28px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0 8px;
+    font-size: 13px;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    background: var(--bg-white);
+    outline: none;
+    transition: border-color 0.2s;
+    margin-left: auto;
+    -moz-appearance: textfield;
+}
+
+.sm-row-item .row-amount:focus,
+.sm-combo-item .row-amount:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(28,158,255,0.15);
+}
+
+.sm-row-item .row-amount::-webkit-inner-spin-button,
+.sm-row-item .row-amount::-webkit-outer-spin-button,
+.sm-combo-item .row-amount::-webkit-inner-spin-button,
+.sm-combo-item .row-amount::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* --- 两两组合区 (百十/百个/十个/百十个) --- */
+.sm-combo-section {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--bg-white);
+    margin-bottom: 16px;
+}
+
+.sm-combo-title {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--primary);
+    padding: 12px 0;
+    border-bottom: 2px solid var(--primary-light);
+    background: linear-gradient(180deg, #f5faff 0%, #fff 100%);
+    letter-spacing: 2px;
+}
+
+.sm-combo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+}
+
+.sm-combo-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.sm-combo-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-right: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.sm-combo-item:nth-child(4n) {
+    border-right: none;
+}
+
+.sm-combo-item:nth-last-child(-n+4) {
+    border-bottom: none;
+}
+
+.sm-combo-item:hover {
+    background: #f8fbff;
+}
+
+.sm-combo-item.selected {
+    background: #e8f4ff;
+}
+
+.sm-combo-item .sm-row-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 40px;
+    white-space: nowrap;
+}
+
+.sm-combo-item .sm-row-odds {
+    font-size: 13px;
+    color: var(--danger);
+    font-weight: 600;
+    font-family: var(--font-mono);
+    min-width: 38px;
+}
+
+/* --- 双面全面板响应式 --- */
+@media (max-width: 900px) {
+    .sm-three-col {
+        grid-template-columns: 1fr;
+    }
+    .sm-combo-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .sm-combo-item:nth-child(4n) {
+        border-right: 1px solid var(--border-light);
+    }
+    .sm-combo-item:nth-child(3n) {
+        border-right: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .sm-combo-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .sm-combo-item:nth-child(3n) {
+        border-right: 1px solid var(--border-light);
+    }
+    .sm-combo-item:nth-child(2n) {
+        border-right: none;
+    }
+    .sm-row-item .row-amount,
+    .sm-combo-item .row-amount {
+        width: 60px;
+    }
+}
+
+/* ====== 标准盘 每注/倍数 选择器 ====== */
+.bzp-unit-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    flex-wrap: wrap;
+}
+.bzp-unit-group, .bzp-multi-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.bzp-unit-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-right: 4px;
+    white-space: nowrap;
+}
+.bzp-unit-btn {
+    padding: 3px 10px;
+    font-size: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    background: var(--bg-white);
+    transition: all .15s;
+    white-space: nowrap;
+}
+.bzp-unit-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.bzp-unit-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+.bzp-multi-minus, .bzp-multi-plus {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text-secondary);
+    background: var(--bg-white);
+    user-select: none;
+}
+.bzp-multi-minus:hover, .bzp-multi-plus:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.bzp-multi-input {
+    width: 50px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 3px;
+    font-size: 13px;
+    outline: none;
+}
+.bzp-multi-input:focus {
+    border-color: var(--primary);
+}
+
+/* ===== 冷热 / 遗漏 工具栏 ===== */
+.cold-hot-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px 4px;
+    flex-wrap: wrap;
+}
+.ch-period-btns, .ch-mode-btns {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.ch-btn {
+    padding: 3px 12px;
+    font-size: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    background: var(--bg-white);
+    color: var(--text-secondary);
+    transition: all .15s;
+}
+.ch-btn.active, .ch-btn:hover {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+.ch-radio {
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+.ch-hint {
+    display: block;
+    font-size: 10px;
+    line-height: 1;
+    margin-top: 1px;
+    color: inherit;
+    opacity: 0.85;
+    pointer-events: none;
+}
+/* 冷热着色 */
+.bzp-ball[data-ch="hot"] {
+    background: #e53935 !important;
+    border-color: #e53935 !important;
+    color: #fff !important;
+}
+.bzp-ball[data-ch="cold"] {
+    background: #1976d2 !important;
+    border-color: #1976d2 !important;
+    color: #fff !important;
+}
+.bzp-ball[data-ch="normal"] {
+    opacity: 0.75;
+}

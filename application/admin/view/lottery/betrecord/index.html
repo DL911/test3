@@ -1,0 +1,247 @@
+<div class="panel panel-default panel-intro">
+    <div class="panel-heading"><h3 class="panel-title">会员投注记录</h3></div>
+    <div class="panel-body">
+        <!-- 统计卡片 -->
+        <div id="statCards" style="display:flex;gap:15px;margin-bottom:15px;">
+            <div style="flex:1;background:#e8f5e9;border-radius:8px;padding:12px 16px;">
+                <div style="font-size:12px;color:#666;">总投注金额</div>
+                <div style="font-size:20px;font-weight:700;color:#2e7d32;" id="statTotalAmount">¥0.00</div>
+            </div>
+            <div style="flex:1;background:#fff3e0;border-radius:8px;padding:12px 16px;">
+                <div style="font-size:12px;color:#666;">总中奖金额</div>
+                <div style="font-size:20px;font-weight:700;color:#e65100;" id="statTotalWin">¥0.00</div>
+            </div>
+            <div style="flex:1;background:#e3f2fd;border-radius:8px;padding:12px 16px;">
+                <div style="font-size:12px;color:#666;">记录总数</div>
+                <div style="font-size:20px;font-weight:700;color:#1565c0;" id="statCount">0</div>
+            </div>
+        </div>
+
+        <!-- 筛选栏 -->
+        <div style="margin-bottom:15px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+            <select id="filterType" class="form-control" style="width:120px;">
+                <option value="">全部彩种</option>
+                <option value="1">福彩3D</option>
+                <option value="2">排列三</option>
+            </select>
+            <select id="filterStatus" class="form-control" style="width:120px;">
+                <option value="">全部状态</option>
+                <option value="0">待开奖</option>
+                <option value="1">已中奖</option>
+                <option value="2">未中奖</option>
+                <option value="3">已取消</option>
+            </select>
+            <input type="text" id="filterKeyword" class="form-control" placeholder="订单号/用户名/昵称" style="width:200px;">
+            <input type="text" id="filterPeriod" class="form-control" placeholder="期号" style="width:120px;">
+            <input type="date" id="filterDateStart" class="form-control" style="width:140px;" title="开始日期">
+            <input type="date" id="filterDateEnd" class="form-control" style="width:140px;" title="结束日期">
+            <button class="btn btn-primary" onclick="btLoadList()"><i class="fa fa-search"></i> 搜索</button>
+            <button class="btn btn-default" onclick="btReset()"><i class="fa fa-refresh"></i> 重置</button>
+        </div>
+
+        <!-- 表格 -->
+        <div style="overflow-x:auto;">
+        <table class="table table-bordered table-hover table-striped" style="font-size:13px;">
+            <thead><tr style="background:#f5f5f5;">
+                <th width="40">ID</th>
+                <th>用户</th>
+                <th>彩种</th>
+                <th>期号</th>
+                <th>玩法</th>
+                <th>投注号码</th>
+                <th>开奖号码</th>
+                <th>注数</th>
+                <th>总金额</th>
+                <th>中奖金额</th>
+                <th>状态</th>
+                <th>时间</th>
+                <th width="80">操作</th>
+            </tr></thead>
+            <tbody id="tableBody"><tr><td colspan="13" style="text-align:center;color:#999;">加载中...</td></tr></tbody>
+        </table>
+        </div>
+        <div id="pagination" style="text-align:center;"></div>
+    </div>
+</div>
+
+<!-- 详情弹窗 -->
+<div id="detailModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:none;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:10px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;padding:24px;box-shadow:0 8px 30px rgba(0,0,0,0.2);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h4 style="margin:0;"><i class="fa fa-file-text-o"></i> 投注详情</h4>
+            <button class="btn btn-sm btn-default" onclick="btCloseDetail()"><i class="fa fa-times"></i></button>
+        </div>
+        <div id="detailContent"></div>
+    </div>
+</div>
+
+<script>
+var btPage = 1;
+var btEntry = (function(){ var m = location.pathname.match(/^(\/[^\/]+\.php)/); return m ? m[1] : ''; })();
+var btBaseUrl = btEntry + '/lottery/betrecord/index';
+var btDetailUrl = btEntry + '/lottery/betrecord/detail';
+var btCancelUrl = btEntry + '/lottery/betrecord/cancel';
+
+function btLoadList(page) {
+    btPage = page || 1;
+    var status = document.getElementById('filterStatus').value;
+    var keyword = document.getElementById('filterKeyword').value;
+    var type = document.getElementById('filterType').value;
+    var period = document.getElementById('filterPeriod').value;
+    var dateStart = document.getElementById('filterDateStart').value;
+    var dateEnd = document.getElementById('filterDateEnd').value;
+
+    var params = 'page='+btPage+'&limit=20&status='+encodeURIComponent(status)+
+        '&keyword='+encodeURIComponent(keyword)+
+        '&lottery_type='+encodeURIComponent(type)+
+        '&period='+encodeURIComponent(period)+
+        '&date_start='+encodeURIComponent(dateStart)+
+        '&date_end='+encodeURIComponent(dateEnd);
+
+    var url = btBaseUrl + '?' + params;
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function(){
+        try {
+            var res = JSON.parse(xhr.responseText);
+            if(res.code !== 1) { document.getElementById('tableBody').innerHTML='<tr><td colspan="13" style="color:red;">'+res.msg+'</td></tr>'; return; }
+            var d = res.data, list = d.list || [], html = '';
+
+            // 更新统计
+            document.getElementById('statTotalAmount').textContent = '¥' + (d.total_amount || 0).toFixed(2);
+            document.getElementById('statTotalWin').textContent = '¥' + (d.total_win || 0).toFixed(2);
+            document.getElementById('statCount').textContent = d.total || 0;
+
+            if(!list.length){
+                html = '<tr><td colspan="13" style="text-align:center;color:#999;">暂无数据</td></tr>';
+            } else {
+                for(var i=0;i<list.length;i++){
+                    var r = list[i];
+                    var sc = r.status==0?'label-warning':(r.status==1?'label-success':(r.status==2?'label-default':'label-danger'));
+                    var winHtml = parseFloat(r.win_amount) > 0 ? '<strong style="color:#27C24C;">+¥'+parseFloat(r.win_amount).toFixed(2)+'</strong>' : '<span class="text-muted">-</span>';
+
+                    html += '<tr>'+
+                        '<td>'+r.id+'</td>'+
+                        '<td>'+(r.nickname||r.username||'UID:'+r.user_id)+'</td>'+
+                        '<td><span class="label '+(r.lottery_type==1?'label-info':'label-primary')+'">'+(r.lottery_name||'')+'</span></td>'+
+                        '<td>'+r.period+'</td>'+
+                        '<td><small>'+(r.play_name||r.play_type||'-')+'</small></td>'+
+                        '<td style="max-width:140px;word-break:break-all;"><b style="color:#1890ff;">'+(r.bet_display||'-')+'</b></td>'+
+                        '<td><span style="color:#e67e22;font-weight:700;">'+(r.draw_result||'-')+'</span></td>'+
+                        '<td>'+r.bet_count+'</td>'+
+                        '<td><strong>¥'+parseFloat(r.total_amount).toFixed(2)+'</strong></td>'+
+                        '<td>'+winHtml+'</td>'+
+                        '<td><span class="label '+sc+'">'+(r.status_text||'')+'</span></td>'+
+                        '<td><small>'+(r.create_date||'-')+'</small></td>'+
+                        '<td><button class="btn btn-xs btn-info" onclick="btDetail('+r.id+')"><i class="fa fa-eye"></i></button> '+
+                        (r.status != 3 ? '<button class="btn btn-xs btn-danger" onclick="btCancel('+r.id+')"><i class="fa fa-ban"></i> 撤销</button>' : '<span class="text-muted">已撤销</span>') +
+                        '</td>'+
+                        '</tr>';
+                }
+            }
+            document.getElementById('tableBody').innerHTML = html;
+            btRenderPage(d.total||0, btPage, 20);
+        } catch(e){
+            document.getElementById('tableBody').innerHTML='<tr><td colspan="13" style="color:red;">解析错误: '+e.message+'</td></tr>';
+        }
+    };
+    xhr.send();
+}
+
+function btDetail(id) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', btDetailUrl + '?id=' + id, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function(){
+        try {
+            var res = JSON.parse(xhr.responseText);
+            if(res.code !== 1) { alert(res.msg); return; }
+            var d = res.data;
+            var bets = d.bet_content_arr || [];
+            var betsHtml = '<table class="table table-condensed table-bordered" style="font-size:12px;margin:0;">';
+            betsHtml += '<thead><tr><th>选项</th><th>赔率</th><th>金额</th></tr></thead><tbody>';
+            for(var i=0;i<bets.length;i++){
+                var b = bets[i];
+                betsHtml += '<tr><td>'+(b.key||'--')+'</td><td>'+(b.odds||'-')+'</td><td>'+(b.amount||'-')+'</td></tr>';
+            }
+            betsHtml += '</tbody></table>';
+
+            var typeMap = {1:'福彩3D', 2:'排列三'};
+            var statusMap = {0:'待开奖', 1:'已中奖', 2:'未中奖', 3:'已取消'};
+            var statusColor = {0:'#f0ad4e', 1:'#27C24C', 2:'#999', 3:'#d9534f'};
+            var html = '<table class="table table-bordered" style="margin-bottom:12px;">'+
+                '<tr><td width="100"><strong>订单号</strong></td><td>'+d.order_no+'</td></tr>'+
+                '<tr><td><strong>用户</strong></td><td>'+(d.nickname||d.username||'UID:'+d.user_id)+'</td></tr>'+
+                '<tr><td><strong>彩种</strong></td><td>'+(typeMap[d.lottery_type]||d.lottery_type)+'</td></tr>'+
+                '<tr><td><strong>期号</strong></td><td>'+d.period+'</td></tr>'+
+                '<tr><td><strong>玩法</strong></td><td>'+d.play_type+(d.play_sub?' / '+d.play_sub:'')+'</td></tr>'+
+                '<tr><td><strong>投注号码</strong></td><td><b style="color:#1890ff;font-size:16px;">'+(d.bet_display||'-')+'</b></td></tr>'+
+                '<tr><td><strong>开奖号码</strong></td><td><b style="color:#e67e22;font-size:16px;">'+(d.draw_result||'-')+'</b></td></tr>'+
+                '<tr><td><strong>注数</strong></td><td>'+d.bet_count+'</td></tr>'+
+                '<tr><td><strong>单注金额</strong></td><td>¥'+parseFloat(d.bet_amount).toFixed(2)+'</td></tr>'+
+                '<tr><td><strong>总金额</strong></td><td><strong style="color:#f60;">¥'+parseFloat(d.total_amount).toFixed(2)+'</strong></td></tr>'+
+                '<tr style="background:'+(d.status==1?'#f0fdf4':'#fff')+'"><td><strong>中奖金额</strong></td><td><strong style="color:'+(parseFloat(d.win_amount)>0?'#27C24C':'#999')+';font-size:18px;">¥'+(parseFloat(d.win_amount)||0).toFixed(2)+'</strong></td></tr>'+
+                '<tr><td><strong>状态</strong></td><td><span style="color:'+(statusColor[d.status]||'#333')+';font-weight:700;">'+(statusMap[d.status]||d.status)+'</span></td></tr>'+
+                '<tr><td><strong>时间</strong></td><td>'+d.create_date+'</td></tr>'+
+                '</table>'+
+                '<h5>投注明细 ('+bets.length+'项)</h5>'+betsHtml;
+            document.getElementById('detailContent').innerHTML = html;
+            document.getElementById('detailModal').style.display = 'flex';
+        } catch(e) { alert('加载失败: '+e.message); }
+    };
+    xhr.send();
+}
+
+function btCloseDetail() {
+    document.getElementById('detailModal').style.display = 'none';
+}
+
+function btReset() {
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterKeyword').value = '';
+    document.getElementById('filterType').value = '';
+    document.getElementById('filterPeriod').value = '';
+    document.getElementById('filterDateStart').value = '';
+    document.getElementById('filterDateEnd').value = '';
+    btLoadList();
+}
+
+function btRenderPage(total, page, limit){
+    var pages = Math.ceil(total / limit), html = '';
+    if(pages <= 1){ document.getElementById('pagination').innerHTML=''; return; }
+    if(page > 1) html += '<button class="btn btn-sm btn-default" onclick="btLoadList('+(page-1)+')" style="margin:2px;">上一页</button>';
+    var start = Math.max(1, page-3), end = Math.min(pages, page+3);
+    for(var i=start;i<=end;i++){
+        html += '<button class="btn btn-sm '+(i===page?'btn-primary':'btn-default')+'" onclick="btLoadList('+i+')" style="margin:2px;">'+i+'</button>';
+    }
+    if(page < pages) html += '<button class="btn btn-sm btn-default" onclick="btLoadList('+(page+1)+')" style="margin:2px;">下一页</button>';
+    document.getElementById('pagination').innerHTML = '<div>共'+total+'条 / '+pages+'页 '+html+'</div>';
+}
+
+function btCancel(id) {
+    if (!confirm('确定要撤销该投注吗？将退还投注金额到用户账户。')) return;
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', btCancelUrl, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function(){
+        try {
+            var res = JSON.parse(xhr.responseText);
+            alert(res.msg);
+            if(res.code === 1) btLoadList(btPage);
+        } catch(e) { alert('操作失败: '+e.message); }
+    };
+    xhr.send('id='+id);
+}
+
+// 暴露全局
+window.btLoadList = btLoadList;
+window.btDetail = btDetail;
+window.btCloseDetail = btCloseDetail;
+window.btReset = btReset;
+window.btCancel = btCancel;
+
+btLoadList();
+</script>

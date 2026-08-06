@@ -1,0 +1,230 @@
+<!-- 投注页面 - 福彩3D / 排列三 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="福彩3D/排列三在线投注 - 多种玩法，实时赔率">
+    <title id="pageTitle">投注 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/lottery.css?v={:time()}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="lottery-page">
+
+    <!-- ========== TOP HEADER ========== -->
+    <header class="lottery-header" id="mainHeader">
+        <div class="header-logo" style="cursor:pointer;" onclick="window.location.href='/index/lottery/index'">
+            <div class="logo-icon" style="background:transparent;padding:0;"><img src="/thumb.php?src=/c788ffd04d7bbafa657bd2dcf4c6ecc4.png&w=200&q=80" style="width:100%;height:100%;object-fit:contain;border-radius:12px;"></div>
+            <div>
+                <span class="logo-text">好运北彩</span>
+                <span class="logo-sub">HYBC Lottery</span>
+            </div>
+        </div>
+        <nav class="header-nav">
+            <a href="/index/lottery/index" class="active"><i class="fa-solid fa-dice"></i> 彩票</a>
+            <a href="javascript:;"><i class="fa-solid fa-chart-line"></i> 完整走势</a>
+            <a href="javascript:;"><i class="fa-solid fa-table-cells"></i> 路子图</a>
+            <a href="javascript:;"><i class="fa-solid fa-trophy"></i> 对奖信息</a>
+            <a href="javascript:;"><i class="fa-solid fa-fire-flame-curved"></i> 长龙排行</a>
+        </nav>
+        <div class="header-right">
+            <div id="authBtnWrap">
+                <a href="/index.php/index/lottery/login" class="btn-bet-now" style="padding:6px 18px;font-size:13px;"><i class="fa-solid fa-right-to-bracket"></i> 登录</a>
+                <a href="/index.php/index/lottery/register" class="btn-bet-now" style="padding:6px 18px;font-size:13px;background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;">注册</a>
+            </div>
+            <div id="userInfoWrap" style="display:none;">
+                <div class="header-balance">
+                    <i class="fa-solid fa-wallet"></i>
+                    余额: <span class="amount" id="userBalance">¥ 0.00</span>
+                </div>
+                <div class="header-user" id="headerUser" style="cursor:pointer;" onclick="location.href='/index.php/index/lottery/user'">
+                    <div class="user-avatar" id="userAvatar"><i class="fa-solid fa-user"></i></div>
+                    <span id="userName">用户</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========== MAIN LAYOUT ========== -->
+    <div class="bet-page-layout">
+        <!-- LEFT SIDEBAR -->
+        <aside class="lottery-sidebar" id="leftSidebar">
+            <div class="sidebar-group-title">彩种列表</div>
+            <div class="sidebar-item" data-lottery="fc3d" id="sideItemFc3d" onclick="window.location.href='/index/lottery/bet?type=fc3d'">
+                <span class="item-icon"><i class="fa-solid fa-cube"></i></span>
+                <span>福彩3D</span>
+                <span class="hot-badge">热</span>
+            </div>
+            <div class="sidebar-item" data-lottery="pl3" id="sideItemPl3" onclick="window.location.href='/index/lottery/bet?type=pl3'">
+                <span class="item-icon"><i class="fa-solid fa-list-ol"></i></span>
+                <span>排列三</span>
+            </div>
+        </aside>
+
+        <!-- BET MAIN -->
+        <div class="bet-main" id="betMain">
+            <!-- INFO BAR -->
+            <div class="bet-info-bar" id="betInfoBar">
+                <div class="bet-info-left">
+                    <div class="bet-lottery-icon fc3d" id="betLotteryIcon">福</div>
+                    <div>
+                        <div class="bet-lottery-name" id="betLotteryName">福彩3D</div>
+                        <div class="bet-lottery-meta" id="betLotteryMeta">
+                            <span class="meta-tag official">官方彩</span>
+                            <span class="meta-tag freq">每天一期 21:15开奖</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bet-countdown-block">
+                    <div class="bet-timer-wrap">
+                        <div class="bet-timer-period" id="betTimerPeriod">2026103期</div>
+                        <div class="bet-timer-display" id="betTimerDisplay">
+                            <span class="timer-digit" id="timerH1">2</span>
+                            <span class="timer-digit" id="timerH2">2</span>
+                            <span class="timer-sep">:</span>
+                            <span class="timer-digit" id="timerM1">3</span>
+                            <span class="timer-digit" id="timerM2">0</span>
+                            <span class="timer-sep">:</span>
+                            <span class="timer-digit" id="timerS1">5</span>
+                            <span class="timer-digit" id="timerS2">9</span>
+                        </div>
+                        <div class="bet-timer-status" id="betTimerStatus">投注中 ●</div>
+                    </div>
+                </div>
+                <div class="bet-draw-numbers" id="betDrawNumbers">
+                    <span class="number-ball purple">4</span>
+                    <span class="number-ball cyan">2</span>
+                    <span class="number-ball pink">0</span>
+                </div>
+            </div>
+
+            <!-- PANEL TOGGLE -->
+            <div class="bet-panel-toggle" id="panelToggle">
+                <div class="panel-toggle-btn active" data-panel="shuangmian" id="toggleShuangmian">双面盘</div>
+                <div class="panel-toggle-btn" data-panel="biaozhun" id="toggleBiaozhun">标准盘</div>
+            </div>
+
+            <!-- PLAY TYPE TABS -->
+            <div class="play-type-tabs" id="playTypeTabs"></div>
+
+            <!-- SUB TABS -->
+            <div class="play-sub-tabs" id="playSubTabs"></div>
+
+            <!-- PLAY RULE DESC -->
+            <div class="play-rule-desc" id="playRuleDesc">玩法说明</div>
+
+            <!-- COLD HOT TOOLBAR -->
+            <div class="cold-hot-toolbar" id="coldHotToolbar"></div>
+
+            <!-- BET AREA -->
+            <div class="bet-area" id="betArea"></div>
+
+            <!-- BOTTOM TOOLBAR -->
+            <div class="bet-bottom-bar" id="betBottomBar">
+                <div class="bet-count-info">
+                    <span id="currentOddsDisplay" style="color:var(--danger);font-weight:600;margin-right:16px;display:none;">奖金: <span id="currentOddsValue">0.00</span></span>
+                    余额: <span class="count-num" id="betBalanceShow" style="color:var(--danger);">0</span> <span style="cursor:pointer;" onclick="var el=document.getElementById('betBalanceShow');el.style.display=el.style.display==='none'?'':'none';">👁</span>
+                    <span style="margin-left:16px;font-size:13px;color:#666;"><span id="mBetCount" style="color:var(--danger);font-weight:700;font-size:15px;"></span> <span id="mBetTotal" style="color:var(--danger);font-weight:700;font-size:15px;"></span></span>
+                </div>
+                <div class="bet-amount-group" id="betAmountGroup">
+                    <div class="amount-edit-btn" id="amountEditBtn"><i class="fa-solid fa-pen"></i></div>
+                    <div class="amount-chip active" data-amount="1">1</div>
+                    <div class="amount-chip" data-amount="5">5</div>
+                    <div class="amount-chip" data-amount="10">10</div>
+                    <div class="amount-chip" data-amount="50">50</div>
+                    <div class="amount-chip" data-amount="100">100</div>
+                    <input type="number" class="amount-custom-input" id="customAmountInput" placeholder="自定义" min="1" style="display:none;">
+                </div>
+                <!-- 标准盘：每注单价 + 倍数 -->
+                <div class="bzp-unit-bar" id="bzpUnitBar" style="display:none;">
+                    <div class="bzp-unit-group">
+                        <span class="bzp-unit-label">每注</span>
+                        <div class="bzp-unit-btn active" data-unit="2">2元</div>
+                        <div class="bzp-unit-btn" data-unit="1">1元</div>
+                        <div class="bzp-unit-btn" data-unit="0.2">2角</div>
+                        <div class="bzp-unit-btn" data-unit="0.1">1角</div>
+                        <div class="bzp-unit-btn" data-unit="0.02">2分</div>
+                        <div class="bzp-unit-btn" data-unit="0.01">1分</div>
+                        <div class="bzp-unit-btn" data-unit="0.002">2厘</div>
+                        <div class="bzp-unit-btn" data-unit="0.001">1厘</div>
+                    </div>
+                    <div class="bzp-multi-group">
+                        <span class="bzp-unit-label">倍数:</span>
+                        <span class="bzp-multi-minus" id="bzpMultiMinus">−</span>
+                        <input type="number" class="bzp-multi-input" id="bzpMultiInput" value="1" min="1">
+                        <span class="bzp-multi-plus" id="bzpMultiPlus">+</span>
+                        <div class="bzp-unit-btn" data-multi="5">5倍</div>
+                        <div class="bzp-unit-btn" data-multi="10">10倍</div>
+                        <div class="bzp-unit-btn" data-multi="20">20倍</div>
+                    </div>
+                </div>
+                <div class="bet-action-group">
+                    <button class="btn-bet-submit" id="btnSubmitBet" disabled>立即投注</button>
+                    <button class="btn-bet-secondary" id="btnRandomBet">追号</button>
+                    <button class="btn-bet-secondary" id="btnAddToCart">加入</button>
+                    <button class="btn-bet-secondary" id="btnCartBtn"><i class="fa-solid fa-cart-shopping"></i> 购彩篮</button>
+                    <button class="btn-bet-clear" id="btnClearAll" onclick="var a=document.getElementById('betArea');a.querySelectorAll('.selected').forEach(function(e){e.classList.remove('selected');});a.querySelectorAll('.row-amount').forEach(function(i){i.value='';});if(typeof BetPage!=='undefined'){BetPage.updateSel();BetPage.updateBetCount();}showToast('已清空','info');"><i class="fa-solid fa-trash-can"></i><br><span style="font-size:10px;">清空</span></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDEBAR -->
+        <aside class="lottery-right" id="rightSidebar" style="padding-top:0;">
+            <div class="draw-history" id="drawHistoryPanel" style="margin-top:16px;">
+                <div class="draw-history-title">
+                    <span><i class="fa-solid fa-clock-rotate-left"></i> 近期开奖</span>
+                    <div style="display:flex; gap:6px;">
+                        <span class="trend-tab active" data-view="near">近期开奖</span>
+                        <span class="trend-tab" data-view="bet">近期投注</span>
+                    </div>
+                </div>
+                <table class="history-table" id="historyTable">
+                    <thead><tr><th>期数</th><th>开奖号码</th><th>总和</th><th>大小</th><th>单双</th></tr></thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+            </div>
+            <div class="trend-panel" id="trendPanel" style="margin-top:16px;">
+                <div class="trend-title">
+                    <i class="fa-solid fa-chart-simple"></i> 路子图
+                    <span style="float:right; font-size:12px; color:var(--text-muted); cursor:pointer;">多路下注 ></span>
+                </div>
+                <div class="trend-tabs" id="trendTabs">
+                    <div class="trend-tab active" data-trend="daxiao">大小</div>
+                    <div class="trend-tab" data-trend="danshuang">单双</div>
+                </div>
+                <div id="trendContent" style="overflow-x:auto;"></div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- CONFIRM MODAL -->
+    <div class="lottery-modal-overlay" id="confirmModal">
+        <div class="lottery-modal">
+            <div class="lottery-modal-title">确认投注</div>
+            <div id="confirmContent"></div>
+            <div class="lottery-modal-actions">
+                <button class="btn-bet-secondary" id="btnCancelBet">取消</button>
+                <button class="btn-bet-submit" id="btnConfirmBet">确认投注</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="lottery-toast" id="toastContainer"></div>
+
+    <script src="/assets/lottery/js/auth.js"></script>
+    <script src="/assets/lottery/js/lottery.js?v={:time()}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var params = new URLSearchParams(window.location.search);
+            var lotteryType = params.get('type') || 'fc3d';
+            BetPage.init(lotteryType);
+
+            // 侧边栏高亮
+            document.querySelectorAll('.sidebar-item[data-lottery]').forEach(function(item) {
+                item.classList.remove('active');
+                if (item.dataset.lottery === lotteryType) item.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

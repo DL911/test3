@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>站内转账 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/lottery.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body.lottery-page { background:#f0f2f5; }
+        .pc-page { max-width:720px; margin:80px auto 40px; padding:0 24px; }
+        .pc-card { background:#fff; border-radius:14px; padding:32px; margin-bottom:20px; color:#333; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
+        .pc-card-title { font-size:20px; font-weight:700; margin-bottom:24px; display:flex; align-items:center; gap:10px; }
+        .pc-card-title i { color:#0d6efd; }
+        .pc-back { display:inline-flex; align-items:center; gap:8px; color:#0d6efd; text-decoration:none; font-size:13px; font-weight:600; margin-bottom:18px; padding:8px 18px; border-radius:20px; background:#fff; border:1px solid #d0e0f8; box-shadow:0 1px 3px rgba(0,0,0,0.04); transition:all 0.2s; }
+        .pc-back:hover { background:#e8f0fe; border-color:#0d6efd; transform:translateX(-2px); }
+        .pc-form-group { margin-bottom:20px; }
+        .pc-form-group label { display:block; font-size:13px; color:#888; margin-bottom:8px; }
+        .pc-form-group input, .pc-form-group textarea { width:100%; padding:12px 16px; border-radius:10px; border:1px solid #ddd; background:#f8f9fa; color:#333; font-size:15px; box-sizing:border-box; }
+        .pc-form-group input:focus, .pc-form-group textarea:focus { outline:none; border-color:#0d6efd; background:#fff; }
+        .pc-form-group textarea { height:80px; resize:none; font-family:inherit; }
+        .pc-bal-info { background:#e8f0fe; border-radius:10px; padding:16px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; }
+        .pc-bal-label { font-size:13px; color:#888; }
+        .pc-bal-value { font-size:22px; font-weight:700; color:#0d6efd; }
+        .pc-btn { width:100%; padding:14px; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; transition:all 0.2s; }
+        .pc-btn-primary { background:linear-gradient(135deg,#1a3a6c,#0d6efd); color:#fff; }
+        .pc-btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(13,110,253,0.3); }
+        .pc-hint { font-size:12px; color:#999; line-height:1.6; margin-top:16px; }
+        .pc-result { display:none; text-align:center; padding:40px 0; }
+        .pc-result i { font-size:48px; color:#34d399; margin-bottom:16px; }
+        .pc-result h3 { font-size:20px; margin-bottom:8px; }
+    </style>
+</head>
+<body class="lottery-page">
+    {include file="lottery/pc_header" /}
+
+    <div class="pc-page">
+        <a href="/index.php/index/lottery/user" class="pc-back"><i class="fa-solid fa-arrow-left"></i> 返回个人中心</a>
+
+        <div class="pc-card">
+            <div class="pc-card-title"><i class="fa-solid fa-right-left"></i> 站内转账</div>
+
+            <div class="pc-bal-info">
+                <div><div class="pc-bal-label">可用余额</div></div>
+                <div class="pc-bal-value" id="tfBalance">¥ 0.00</div>
+            </div>
+
+            <div id="transferForm">
+                <div class="pc-form-group">
+                    <label>对方账号（用户名/手机号/昵称）</label>
+                    <input type="text" id="tfAccount" placeholder="请输入对方账号">
+                </div>
+
+                <div class="pc-form-group">
+                    <label>转账金额 (¥)</label>
+                    <input type="number" id="tfAmount" placeholder="最低转账 ¥1">
+                </div>
+
+                <div class="pc-form-group">
+                    <label>备注（可选）</label>
+                    <textarea id="tfRemark" placeholder="转账备注"></textarea>
+                </div>
+
+                <button class="pc-btn pc-btn-primary" onclick="submitTransfer()"><i class="fa-solid fa-paper-plane"></i> 确认转账</button>
+            </div>
+
+            <div class="pc-result" id="transferResult">
+                <i class="fa-solid fa-circle-check"></i>
+                <h3>转账成功</h3>
+                <div id="resultInfo" style="color:#999; font-size:14px;"></div>
+                <a href="/index.php/index/lottery/user" style="display:inline-block; margin-top:20px; color:#4da3ff; text-decoration:none;">返回个人中心</a>
+            </div>
+
+            <div class="pc-hint">
+                <p>• 转账即时到账，无手续费</p>
+                <p>• 请仔细核对对方账号，转账后无法撤回</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/lottery/js/auth.js"></script>
+    <script>
+    function submitTransfer() {
+        var account = document.getElementById('tfAccount').value.trim();
+        var amount = parseFloat(document.getElementById('tfAmount').value);
+        var remark = document.getElementById('tfRemark').value.trim();
+        if(!account) { alert('请输入对方账号'); return; }
+        if(!amount || amount < 1) { alert('最低转账 ¥1'); return; }
+        if(!LotteryAuth.isLoggedIn()) { alert('请先登录'); return; }
+        if(!confirm('确认向 ' + account + ' 转账 ¥' + amount + '？')) return;
+
+        var btn = document.querySelector('.pc-btn-primary');
+        if (btn) { btn.disabled = true; btn.textContent = '转账中...'; }
+
+        var fd = new FormData();
+        fd.append('to_account', account);
+        fd.append('amount', amount);
+        fd.append('remark', remark);
+
+        fetch('/index.php/api/payment/transfer', {
+            method:'POST', headers:{'token': LotteryAuth.getToken()}, body:fd
+        }).then(function(r){return r.json()}).then(function(res){
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> 确认转账'; }
+            if(res.code === 1) {
+                document.getElementById('transferForm').style.display = 'none';
+                document.getElementById('transferResult').style.display = '';
+                var d = res.data || {};
+                document.getElementById('resultInfo').innerHTML = '已成功转账 ¥' + (d.amount || amount) + ' 给 <b>' + (d.to_user || account) + '</b><br>订单号: ' + (d.order_no || '--');
+                // 刷新余额
+                if (typeof LotteryAuth !== 'undefined') {
+                    LotteryAuth.fetchUserInfo(function(u){
+                        if(u) document.getElementById('tfBalance').textContent = '¥ ' + (parseFloat(u.money)||0).toFixed(2);
+                    });
+                }
+            } else {
+                alert(res.msg || '转账失败');
+            }
+        }).catch(function(e){
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> 确认转账'; }
+            alert('网络错误，请检查网络后重试');
+            console.error('Transfer error:', e);
+        });
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+        LotteryAuth.initHeader && LotteryAuth.initHeader();
+        if(LotteryAuth.isLoggedIn()) {
+            LotteryAuth.fetchUserInfo(function(u){
+                if(u) document.getElementById('tfBalance').textContent = '¥ ' + (parseFloat(u.money)||0).toFixed(2);
+            });
+        }
+    });
+    </script>
+</body>
+</html>

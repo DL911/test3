@@ -1,0 +1,161 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>注册 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/lottery_auth.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div class="auth-page">
+
+    <!-- 粒子背景 -->
+    <div class="auth-particles">
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+    <div class="auth-glow auth-glow-1"></div>
+    <div class="auth-glow auth-glow-2"></div>
+    <div class="auth-glow auth-glow-3"></div>
+
+    <!-- ===== PC左侧品牌区 ===== -->
+    <div class="auth-left pc-only">
+        <div class="auth-brand">
+            <div class="auth-brand-logo" style="background:transparent;width:80px;height:80px;padding:0;"><img src="/thumb.php?src=/c788ffd04d7bbafa657bd2dcf4c6ecc4.png&w=200&q=80" style="width:100%;height:100%;object-fit:contain;border-radius:12px;"></div>
+            <div class="auth-brand-name">好运北彩</div>
+            <div class="auth-brand-tagline">DUOBAO LOTTERY</div>
+            <div class="auth-brand-features">
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fa-solid fa-gift"></i></div>
+                    <div class="auth-feature-title">新人礼包</div>
+                    <div class="auth-feature-desc">注册即送体验金</div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fa-solid fa-coins"></i></div>
+                    <div class="auth-feature-title">充值优惠</div>
+                    <div class="auth-feature-desc">首充赠送20%</div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fa-solid fa-headset"></i></div>
+                    <div class="auth-feature-title">VIP客服</div>
+                    <div class="auth-feature-desc">7x24小时在线</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 右侧注册表单 ===== -->
+    <div class="auth-right">
+        <div class="auth-card">
+
+            <!-- 手机端头部 -->
+            <div class="m-auth-header m-only">
+                <div class="m-auth-logo" style="background:transparent;width:64px;height:64px;padding:0;"><img src="/thumb.php?src=/c788ffd04d7bbafa657bd2dcf4c6ecc4.png&w=200&q=80" style="width:100%;height:100%;object-fit:contain;border-radius:12px;"></div>
+                <div class="m-auth-brand-name">好运北彩</div>
+                <div class="m-auth-brand-tag">DUOBAO LOTTERY</div>
+            </div>
+
+            <div class="m-auth-form-area">
+                <div class="auth-card-header">
+                    <h1 class="auth-card-title">创建账户</h1>
+                    <p class="auth-card-subtitle">加入多宝，体验极速彩票投注</p>
+                </div>
+
+                <form class="auth-form" id="registerForm" onsubmit="return false;">
+                    <!-- 用户名 -->
+                    <div class="auth-field" id="fieldUsername">
+                        <label class="auth-field-label">用户名</label>
+                        <div class="auth-field-input-wrap">
+                            <i class="fa-solid fa-user auth-field-icon"></i>
+                            <input type="text" class="auth-field-input" id="regUsername"
+                                   placeholder="4-20位字母、数字或下划线" autocomplete="username" maxlength="20">
+                        </div>
+                        <div class="auth-field-error" id="usernameError">请输入有效的用户名</div>
+                    </div>
+
+                    <!-- 手机号 -->
+                    <div class="auth-field" id="fieldMobile">
+                        <label class="auth-field-label">手机号</label>
+                        <div class="auth-field-input-wrap">
+                            <i class="fa-solid fa-mobile-screen auth-field-icon"></i>
+                            <input type="tel" class="auth-field-input" id="regMobile"
+                                   placeholder="请输入手机号码" autocomplete="tel" maxlength="11">
+                        </div>
+                        <div class="auth-field-error" id="mobileError">请输入有效的手机号</div>
+                    </div>
+
+                    <!-- 密码 -->
+                    <div class="auth-field" id="fieldRegPwd">
+                        <label class="auth-field-label">密码</label>
+                        <div class="auth-field-input-wrap">
+                            <i class="fa-solid fa-lock auth-field-icon"></i>
+                            <input type="password" class="auth-field-input" id="regPassword"
+                                   placeholder="6-30位，至少包含字母和数字" autocomplete="new-password">
+                            <button type="button" class="auth-field-toggle" id="toggleRegPwd">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="password-strength" id="pwdStrength">
+                            <div class="strength-bar" id="str1"></div>
+                            <div class="strength-bar" id="str2"></div>
+                            <div class="strength-bar" id="str3"></div>
+                            <div class="strength-bar" id="str4"></div>
+                        </div>
+                        <div class="strength-text" id="pwdStrengthText"></div>
+                        <div class="auth-field-error" id="regPwdError">请设置密码</div>
+                    </div>
+
+                    <!-- 确认密码 -->
+                    <div class="auth-field" id="fieldRegPwd2">
+                        <label class="auth-field-label">确认密码</label>
+                        <div class="auth-field-input-wrap">
+                            <i class="fa-solid fa-lock auth-field-icon"></i>
+                            <input type="password" class="auth-field-input" id="regPassword2"
+                                   placeholder="请再次输入密码" autocomplete="new-password">
+                        </div>
+                        <div class="auth-field-error" id="regPwd2Error">两次密码不一致</div>
+                    </div>
+
+                    <!-- 邀请码 -->
+                    <div class="auth-field">
+                        <label class="auth-field-label">邀请码 <span style="color:rgba(255,255,255,0.4);font-weight:400;text-transform:none;">(选填)</span></label>
+                        <div class="auth-field-input-wrap">
+                            <i class="fa-solid fa-ticket auth-field-icon"></i>
+                            <input type="text" class="auth-field-input" id="regInviteCode"
+                                   placeholder="如有邀请码请填写" maxlength="20">
+                        </div>
+                    </div>
+
+                    <!-- 协议 -->
+                    <div class="auth-agreement">
+                        <label class="auth-remember" style="justify-content:center;">
+                            <input type="checkbox" id="agreeTerms" checked>
+                            <span>我已阅读并同意 <a href="javascript:;">用户协议</a> 与 <a href="javascript:;">隐私政策</a></span>
+                        </label>
+                    </div>
+
+                    <!-- 注册按钮 -->
+                    <button type="submit" class="auth-btn auth-btn-primary" id="btnRegister">
+                        <span class="auth-btn-text">立 即 注 册</span>
+                    </button>
+                </form>
+
+
+
+                <!-- 底部 -->
+                <div class="auth-footer">
+                    已有账户？<a href="/index.php/index/lottery/login">立即登录</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="auth-toast" id="toastContainer"></div>
+<script src="/assets/lottery/js/auth_register.js"></script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<div class="panel panel-default panel-intro">
+    <div class="panel-heading"><h3 class="panel-title">会员登录日志</h3></div>
+    <div class="panel-body">
+        <!-- 统计卡片 -->
+        <div style="display:flex;gap:15px;margin-bottom:15px;">
+            <div style="flex:1;background:#e3f2fd;border-radius:8px;padding:12px 16px;">
+                <div style="font-size:12px;color:#666;">登录记录总数</div>
+                <div style="font-size:20px;font-weight:700;color:#1565c0;" id="statCount">0</div>
+            </div>
+        </div>
+
+        <!-- 筛选栏 -->
+        <div style="margin-bottom:15px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+            <input type="text" id="filterKeyword" class="form-control" placeholder="用户名/昵称/IP" style="width:220px;">
+            <input type="date" id="filterDateStart" class="form-control" style="width:140px;" title="开始日期">
+            <input type="date" id="filterDateEnd" class="form-control" style="width:140px;" title="结束日期">
+            <button class="btn btn-primary" onclick="llLoadList()"><i class="fa fa-search"></i> 搜索</button>
+            <button class="btn btn-default" onclick="llReset()"><i class="fa fa-refresh"></i> 重置</button>
+        </div>
+
+        <!-- 表格 -->
+        <div style="overflow-x:auto;">
+        <table class="table table-bordered table-hover table-striped" style="font-size:13px;">
+            <thead><tr style="background:#f5f5f5;">
+                <th width="60">ID</th>
+                <th width="80">会员ID</th>
+                <th>用户名</th>
+                <th>昵称</th>
+                <th>登录IP</th>
+                <th>登录方式</th>
+                <th>浏览器</th>
+                <th>登录时间</th>
+            </tr></thead>
+            <tbody id="tableBody"><tr><td colspan="8" style="text-align:center;color:#999;">加载中...</td></tr></tbody>
+        </table>
+        </div>
+        <div id="pagination" style="text-align:center;"></div>
+    </div>
+</div>
+
+<script>
+var llPage = 1;
+var llEntry = (function(){ var m = location.pathname.match(/^(\/[^\/]+\.php)/); return m ? m[1] : ''; })();
+var llBaseUrl = llEntry + '/lottery/loginlog/index';
+
+function llEscape(s){ if(s==null) return ''; return String(s).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];}); }
+
+function llLoadList(page) {
+    llPage = page || 1;
+    var keyword = document.getElementById('filterKeyword').value;
+    var dateStart = document.getElementById('filterDateStart').value;
+    var dateEnd = document.getElementById('filterDateEnd').value;
+
+    var params = 'page='+llPage+'&limit=20'+
+        '&keyword='+encodeURIComponent(keyword)+
+        '&date_start='+encodeURIComponent(dateStart)+
+        '&date_end='+encodeURIComponent(dateEnd);
+
+    var url = llBaseUrl + '?' + params;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function(){
+        try {
+            var res = JSON.parse(xhr.responseText);
+            if(res.code !== 1) { document.getElementById('tableBody').innerHTML='<tr><td colspan="8" style="color:red;">'+res.msg+'</td></tr>'; return; }
+            var d = res.data, list = d.list || [], html = '';
+            document.getElementById('statCount').textContent = d.total || 0;
+
+            if(!list.length){
+                html = '<tr><td colspan="8" style="text-align:center;color:#999;">暂无登录记录</td></tr>';
+            } else {
+                for(var i=0;i<list.length;i++){
+                    var r = list[i];
+                    var ua = r.user_agent || '';
+                    var uaShort = ua.length > 40 ? ua.substring(0,40)+'...' : ua;
+                    html += '<tr>'+
+                        '<td>'+r.id+'</td>'+
+                        '<td>'+r.user_id+'</td>'+
+                        '<td><strong>'+llEscape(r.username||'-')+'</strong></td>'+
+                        '<td>'+llEscape(r.nickname||'-')+'</td>'+
+                        '<td><span style="color:#1890ff;">'+llEscape(r.login_ip||'-')+'</span></td>'+
+                        '<td><span class="label label-info">'+llEscape(r.login_type_text||'-')+'</span></td>'+
+                        '<td><small title="'+llEscape(ua)+'">'+llEscape(uaShort)+'</small></td>'+
+                        '<td><small>'+(r.create_date||'-')+'</small></td>'+
+                        '</tr>';
+                }
+            }
+            document.getElementById('tableBody').innerHTML = html;
+            llRenderPage(d.total||0, llPage, 20);
+        } catch(e){
+            document.getElementById('tableBody').innerHTML='<tr><td colspan="8" style="color:red;">解析错误: '+e.message+'</td></tr>';
+        }
+    };
+    xhr.send();
+}
+
+function llReset() {
+    document.getElementById('filterKeyword').value = '';
+    document.getElementById('filterDateStart').value = '';
+    document.getElementById('filterDateEnd').value = '';
+    llLoadList();
+}
+
+function llRenderPage(total, page, limit){
+    var pages = Math.ceil(total / limit), html = '';
+    if(pages <= 1){ document.getElementById('pagination').innerHTML=''; return; }
+    if(page > 1) html += '<button class="btn btn-sm btn-default" onclick="llLoadList('+(page-1)+')" style="margin:2px;">上一页</button>';
+    var start = Math.max(1, page-3), end = Math.min(pages, page+3);
+    for(var i=start;i<=end;i++){
+        html += '<button class="btn btn-sm '+(i===page?'btn-primary':'btn-default')+'" onclick="llLoadList('+i+')" style="margin:2px;">'+i+'</button>';
+    }
+    if(page < pages) html += '<button class="btn btn-sm btn-default" onclick="llLoadList('+(page+1)+')" style="margin:2px;">下一页</button>';
+    document.getElementById('pagination').innerHTML = '<div>共'+total+'条 / '+pages+'页 '+html+'</div>';
+}
+
+window.llLoadList = llLoadList;
+window.llReset = llReset;
+
+llLoadList();
+</script>

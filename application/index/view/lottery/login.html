@@ -1,0 +1,122 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>登录 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/lottery_auth.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div class="auth-page">
+
+    <!-- 粒子背景 -->
+    <div class="auth-particles">
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+    <div class="auth-glow auth-glow-1"></div>
+    <div class="auth-glow auth-glow-2"></div>
+    <div class="auth-glow auth-glow-3"></div>
+
+    <!-- ===== PC左侧品牌区 ===== -->
+    <div class="auth-left pc-only">
+        <div class="auth-brand">
+            <div class="auth-brand-logo" style="background:transparent;width:80px;height:80px;padding:0;"><img src="/thumb.php?src=/c788ffd04d7bbafa657bd2dcf4c6ecc4.png&w=200&q=80" style="width:100%;height:100%;object-fit:contain;border-radius:12px;"></div>
+            <div class="auth-brand-name">好运北彩</div>
+            <div class="auth-brand-tagline">DUOBAO LOTTERY</div>
+            <div class="auth-brand-features">
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div class="auth-feature-title">安全保障</div>
+                    <div class="auth-feature-desc">银行级加密技术</div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fa-solid fa-bolt"></i></div>
+                    <div class="auth-feature-title">极速体验</div>
+                    <div class="auth-feature-desc">秒级开奖结算</div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fa-solid fa-trophy"></i></div>
+                    <div class="auth-feature-title">官方正版</div>
+                    <div class="auth-feature-desc">可信赖的平台</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 右侧表单 ===== -->
+    <div class="auth-right">
+        <div class="auth-card">
+
+            <!-- 手机端头部 -->
+            <div class="m-auth-header m-only">
+                <div class="m-auth-logo" style="background:transparent;width:64px;height:64px;padding:0;"><img src="/thumb.php?src=/c788ffd04d7bbafa657bd2dcf4c6ecc4.png&w=200&q=80" style="width:100%;height:100%;object-fit:contain;border-radius:12px;"></div>
+                <div class="m-auth-brand-name">好运北彩</div>
+                <div class="m-auth-brand-tag">DUOBAO LOTTERY</div>
+            </div>
+
+            <div class="m-auth-form-area">
+                <div class="auth-card-header">
+                    <h1 class="auth-card-title">欢迎回来</h1>
+                    <p class="auth-card-subtitle">登录您的账户，开启精彩之旅</p>
+                </div>
+
+                <form class="auth-form" id="loginForm" onsubmit="return false;">
+                    <!-- 用户名 -->
+                    <div class="auth-field" id="fieldAccount">
+                        <label class="auth-field-label">账户</label>
+                        <div class="auth-field-input-wrap">
+                            <i class="fa-solid fa-user auth-field-icon"></i>
+                            <input type="text" class="auth-field-input" id="loginAccount"
+                                   placeholder="请输入用户名 / 手机号" autocomplete="username">
+                        </div>
+                        <div class="auth-field-error" id="accountError">请输入用户名</div>
+                    </div>
+
+                    <!-- 密码 -->
+                    <div class="auth-field" id="fieldPassword">
+                        <label class="auth-field-label">密码</label>
+                        <div class="auth-field-input-wrap">
+                            <i class="fa-solid fa-lock auth-field-icon"></i>
+                            <input type="password" class="auth-field-input" id="loginPassword"
+                                   placeholder="请输入密码" autocomplete="current-password">
+                            <button type="button" class="auth-field-toggle" id="togglePwd">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="auth-field-error" id="passwordError">请输入密码</div>
+                    </div>
+
+                    <!-- 选项 -->
+                    <div class="auth-options">
+                        <label class="auth-remember">
+                            <input type="checkbox" checked> 记住我
+                        </label>
+                        <a href="javascript:;" class="auth-forgot">忘记密码？</a>
+                    </div>
+
+                    <!-- 登录按钮 -->
+                    <button type="submit" class="auth-btn auth-btn-primary" id="btnLogin">
+                        <span class="auth-btn-text">立 即 登 录</span>
+                    </button>
+                </form>
+
+
+
+                <!-- 底部注册链接 -->
+                <div class="auth-footer">
+                    还没有账户？<a href="/index.php/index/lottery/register">立即注册</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="auth-toast" id="toastContainer"></div>
+<script src="/assets/lottery/js/auth_login.js"></script>
+</body>
+</html>

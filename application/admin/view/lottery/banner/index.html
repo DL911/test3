@@ -1,0 +1,154 @@
+<div class="panel panel-default panel-intro">
+    <div class="panel-heading">
+        <div class="panel-lead"><em>轮播图管理</em>管理彩票首页轮播图（支持图片上传、排序、跳转链接）</div>
+        <ul class="nav nav-tabs">
+            <li class="active"><a href="#t-all" data-toggle="tab">列表</a></li>
+        </ul>
+    </div>
+    <div class="panel-body">
+        <div id="toolbar" class="toolbar">
+            <a href="javascript:;" class="btn btn-success" onclick="openAdd()"><i class="fa fa-plus"></i> 添加轮播图</a>
+        </div>
+        <table id="table" class="table table-striped table-bordered" data-toolbar="#toolbar" data-url="lottery/banner/index" data-side-pagination="server" data-pagination="false">
+            <thead>
+                <tr>
+                    <th data-field="id" data-sortable="true">ID</th>
+                    <th data-field="image" data-formatter="imgFormatter">图片</th>
+                    <th data-field="title">标题</th>
+                    <th data-field="url" data-formatter="urlFormatter">跳转链接</th>
+                    <th data-field="weigh">权重</th>
+                    <th data-field="status" data-formatter="statusFormatter">状态</th>
+                    <th data-field="id" data-formatter="actionFormatter">操作</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<!-- 编辑弹窗 -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h4 class="modal-title" id="modalTitle">添加轮播图</h4></div>
+            <form id="editForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="editId">
+                    <div class="form-group">
+                        <label>标题</label>
+                        <input type="text" class="form-control" name="title" id="editTitle" placeholder="轮播图标题">
+                    </div>
+                    <div class="form-group">
+                        <label>图片 <small class="text-muted">建议尺寸 1200×400</small></label>
+                        <div id="previewWrap" style="margin-bottom:8px;display:none;">
+                            <img id="previewImg" src="" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid #ddd;">
+                        </div>
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="image" id="editImage" placeholder="图片路径" required>
+                            <span class="input-group-btn">
+                                <button type="button" class="btn btn-primary" onclick="document.getElementById('bannerFile').click()"><i class="fa fa-upload"></i> 上传</button>
+                            </span>
+                        </div>
+                        <input type="file" id="bannerFile" accept="image/*" style="display:none;" onchange="uploadBanner(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>跳转链接 <small class="text-muted">留空则不跳转</small></label>
+                        <input type="text" class="form-control" name="url" id="editUrl" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label>权重 <small class="text-muted">数值越大排越前</small></label>
+                        <input type="number" class="form-control" name="weigh" id="editWeigh" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>状态</label>
+                        <select class="form-control" name="status" id="editStatus">
+                            <option value="1">启用</option>
+                            <option value="0">禁用</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitEdit()">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function imgFormatter(v) {
+    if (!v) return '<span class="text-muted">无</span>';
+    return '<img src="' + v + '" style="max-height:50px;border-radius:4px;cursor:pointer;" onclick="window.open(this.src)">';
+}
+function urlFormatter(v) {
+    if (!v) return '<span class="text-muted">无跳转</span>';
+    return '<a href="' + v + '" target="_blank" style="word-break:break-all;">' + (v.length > 40 ? v.substr(0, 40) + '...' : v) + '</a>';
+}
+function statusFormatter(v) { return v == 1 ? '<span class="label label-success">启用</span>' : '<span class="label label-default">禁用</span>'; }
+function actionFormatter(v, row) {
+    return '<a href="javascript:;" class="btn btn-xs btn-info" onclick=\'openEdit(' + JSON.stringify(row) + ')\'>编辑</a> ' +
+           '<a href="javascript:;" class="btn btn-xs btn-danger" onclick="doDel(' + v + ')">删除</a>';
+}
+
+function openAdd() {
+    document.getElementById('modalTitle').textContent = '添加轮播图';
+    document.getElementById('editId').value = '';
+    document.getElementById('editTitle').value = '';
+    document.getElementById('editImage').value = '';
+    document.getElementById('editUrl').value = '';
+    document.getElementById('editWeigh').value = '0';
+    document.getElementById('editStatus').value = '1';
+    document.getElementById('previewWrap').style.display = 'none';
+    $('#editModal').modal('show');
+}
+function openEdit(row) {
+    document.getElementById('modalTitle').textContent = '编辑轮播图';
+    document.getElementById('editId').value = row.id;
+    document.getElementById('editTitle').value = row.title || '';
+    document.getElementById('editImage').value = row.image || '';
+    document.getElementById('editUrl').value = row.url || '';
+    document.getElementById('editWeigh').value = row.weigh || 0;
+    document.getElementById('editStatus').value = row.status;
+    if (row.image) {
+        document.getElementById('previewImg').src = row.image;
+        document.getElementById('previewWrap').style.display = '';
+    } else {
+        document.getElementById('previewWrap').style.display = 'none';
+    }
+    $('#editModal').modal('show');
+}
+function submitEdit() {
+    $.post('lottery/banner/edit', $('#editForm').serialize(), function(res) {
+        if (res.code === 1) { Toastr.success(res.msg); $('#editModal').modal('hide'); $('#table').bootstrapTable('refresh'); }
+        else { Toastr.error(res.msg); }
+    }, 'json');
+}
+function doDel(id) {
+    Layer.confirm('确认删除此轮播图?', function(){ $.post('lottery/banner/del', {ids: id}, function(res){ if(res.code === 1){ Toastr.success(res.msg); $('#table').bootstrapTable('refresh'); } else { Toastr.error(res.msg); } }, 'json'); });
+}
+
+function uploadBanner(input) {
+    if (!input.files || !input.files[0]) return;
+    var fd = new FormData();
+    fd.append('file', input.files[0]);
+    $.ajax({
+        url: 'ajax/upload',
+        type: 'POST',
+        data: fd,
+        processData: false,
+        contentType: false,
+        success: function(res) {
+            if (res.code === 1 && res.data && res.data.url) {
+                document.getElementById('editImage').value = res.data.url;
+                document.getElementById('previewImg').src = res.data.url;
+                document.getElementById('previewWrap').style.display = '';
+                Toastr.success('上传成功');
+            } else {
+                Toastr.error(res.msg || '上传失败');
+            }
+        },
+        error: function() { Toastr.error('上传请求失败'); }
+    });
+    input.value = '';
+}
+</script>

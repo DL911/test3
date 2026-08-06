@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/lottery.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        body.lottery-page { background: #f0f2f5; }
+
+        .uc-wrap { margin:80px auto 40px; padding:0 48px; }
+
+        /* 顶部欢迎横幅 */
+        .uc-banner {
+            background: linear-gradient(135deg, #1a3a6c 0%, #0d6efd 100%);
+            border-radius:20px; padding:36px 40px; color:#fff; position:relative; overflow:hidden;
+            display:flex; align-items:center; gap:28px; margin-bottom:28px;
+        }
+        .uc-banner::before {
+            content:''; position:absolute; right:-60px; top:-60px; width:240px; height:240px;
+            background:radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%); border-radius:50%;
+        }
+        .uc-banner::after {
+            content:''; position:absolute; right:80px; bottom:-40px; width:160px; height:160px;
+            background:radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%); border-radius:50%;
+        }
+        .uc-avatar-wrap { position:relative; flex-shrink:0; cursor:pointer; }
+        .uc-avatar {
+            width:76px; height:76px; border-radius:50%; background:rgba(255,255,255,0.15);
+            display:flex; align-items:center; justify-content:center;
+            border:3px solid rgba(255,255,255,0.3); overflow:hidden;
+            background-size:cover; background-position:center; transition:transform 0.2s;
+        }
+        .uc-avatar:hover { transform:scale(1.06); }
+        .uc-avatar i { font-size:28px; color:rgba(255,255,255,0.6); }
+        .uc-avatar-cam {
+            position:absolute; right:0; bottom:0; width:24px; height:24px; border-radius:50%;
+            background:#fff; color:#0d6efd; font-size:10px; display:none;
+            align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.2);
+        }
+        .uc-banner-info { position:relative; z-index:1; }
+        .uc-banner-name { font-size:22px; font-weight:700; margin-bottom:2px; }
+        .uc-banner-id { font-size:13px; opacity:0.7; }
+
+        .uc-banner-right { margin-left:auto; display:flex; gap:36px; position:relative; z-index:1; }
+        .uc-banner-stat { text-align:center; }
+        .uc-banner-stat .val { font-size:26px; font-weight:800; }
+        .uc-banner-stat .lab { font-size:12px; opacity:0.75; margin-top:2px; }
+
+        /* 未登录横幅 */
+        .uc-banner-guest .uc-banner-info { text-align:center; flex:1; }
+        .uc-banner-guest { justify-content:center; padding:50px 40px; }
+        .uc-guest-btns { display:flex; gap:14px; justify-content:center; margin-top:16px; }
+        .uc-guest-btns a {
+            padding:10px 36px; border-radius:30px; font-size:14px; font-weight:700; text-decoration:none; transition:all 0.2s;
+        }
+        .uc-guest-btns a.primary { background:#fff; color:#0d6efd; }
+        .uc-guest-btns a.secondary { background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); }
+        .uc-guest-btns a:hover { transform:translateY(-2px); }
+
+        /* 主体两栏 */
+        .uc-body { display:grid; grid-template-columns:260px 1fr; gap:24px; }
+
+        /* 左侧菜单 */
+        .uc-nav { background:#fff; border-radius:16px; padding:12px 0; box-shadow:0 1px 4px rgba(0,0,0,0.04); align-self:start; }
+        .uc-nav-item {
+            display:flex; align-items:center; gap:12px; padding:13px 24px; font-size:14px;
+            color:#666; cursor:pointer; transition:all 0.15s; text-decoration:none; border-left:3px solid transparent;
+        }
+        .uc-nav-item:hover { background:#f8f8ff; color:#333; }
+        .uc-nav-item.active { color:#0d6efd; font-weight:700; background:#e8f0fe; border-left-color:#0d6efd; }
+        .uc-nav-item i { width:18px; text-align:center; font-size:15px; }
+        .uc-nav-item .arrow { margin-left:auto; font-size:10px; opacity:0.3; }
+        .uc-nav-divider { height:1px; background:#f0f0f0; margin:8px 20px; }
+
+        /* 右侧内容 */
+        .uc-content { min-height:400px; }
+        .uc-panel { display:none; }
+        .uc-panel.active { display:block; }
+
+        .uc-card { background:#fff; border-radius:16px; padding:28px; margin-bottom:20px; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
+        .uc-card-title { font-size:16px; font-weight:700; color:#333; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+        .uc-card-title i { color:#0d6efd; }
+
+        /* 余额卡片 */
+        .uc-bal-card {
+            background:linear-gradient(135deg, #1a3a6c 0%, #0d6efd 100%);
+            border-radius:16px; padding:28px 32px; color:#fff; margin-bottom:20px; position:relative; overflow:hidden;
+        }
+        .uc-bal-card::after {
+            content:''; position:absolute; right:-20px; top:-20px; width:100px; height:100px;
+            background:radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); border-radius:50%;
+        }
+        .uc-bal-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+        .uc-bal-label { font-size:13px; opacity:0.8; }
+        .uc-currency-btn {
+            padding:4px 12px; border-radius:16px; font-size:11px; cursor:pointer;
+            background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2); color:#fff; transition:all 0.2s;
+        }
+        .uc-currency-btn:hover { background:rgba(255,255,255,0.25); }
+        .uc-bal-amount { font-size:34px; font-weight:800; letter-spacing:0.5px; }
+        .uc-bal-btns { margin-top:20px; display:flex; gap:12px; position:relative; z-index:1; }
+        .uc-bal-btn {
+            padding:10px 28px; border-radius:10px; font-size:13px; font-weight:700;
+            text-decoration:none; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s;
+        }
+        .uc-bal-btn.w { background:#fff; color:#0d6efd; }
+        .uc-bal-btn.w:hover { background:#f0f6ff; transform:translateY(-1px); }
+        .uc-bal-btn.o { background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.25); }
+        .uc-bal-btn.o:hover { background:rgba(255,255,255,0.25); }
+
+        /* 快捷入口网格 */
+        .uc-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; }
+        .uc-grid-item {
+            background:#f0f6ff; border-radius:14px; padding:22px 16px; text-align:center;
+            text-decoration:none; color:#555; transition:all 0.2s; cursor:pointer; border:1px solid transparent;
+        }
+        .uc-grid-item:hover { border-color:#c2dbfe; transform:translateY(-2px); box-shadow:0 6px 20px rgba(13,110,253,0.08); background:#fff; }
+        .uc-grid-icon { width:46px; height:46px; border-radius:14px; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff; }
+        .uc-grid-label { font-size:13px; font-weight:700; color:#333; }
+        .uc-grid-desc { font-size:11px; color:#aaa; margin-top:3px; }
+
+        /* 退出按钮 */
+        .uc-nav-item.logout { color:#e33; }
+        .uc-nav-item.logout:hover { background:#fff0f0; }
+    </style>
+</head>
+<body class="lottery-page">
+    {include file="lottery/pc_header" /}
+
+    <div class="uc-wrap">
+
+        <!-- 顶部横幅 - 未登录 -->
+        <div class="uc-banner uc-banner-guest" id="guestBanner">
+            <div class="uc-banner-info">
+                <i class="fa-solid fa-user-lock" style="font-size:36px; opacity:0.4; margin-bottom:12px;"></i>
+                <div class="uc-banner-name">欢迎来到好运北彩</div>
+                <div class="uc-banner-id">登录后即可管理资金、查看投注记录</div>
+                <div class="uc-guest-btns">
+                    <a href="/index.php/index/lottery/login" class="primary">立即登录</a>
+                    <a href="/index.php/index/lottery/register" class="secondary">注册账户</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 顶部横幅 - 已登录 -->
+        <div class="uc-banner" id="userBanner" style="display:none;">
+            <div class="uc-avatar-wrap" onclick="triggerAvatar()">
+                <div class="uc-avatar" id="pcAvatar"><i id="pcAvatarIcon" class="fa-solid fa-user"></i></div>
+                <div class="uc-avatar-cam" id="pcAvatarCam"><i class="fa-solid fa-camera"></i></div>
+            </div>
+            <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="handleUpload(this)">
+            <div class="uc-banner-info">
+                <div class="uc-banner-name" id="pcUserName">用户</div>
+                <div class="uc-banner-id" id="pcUserId">ID: --</div>
+                <div style="margin-top:6px; font-size:12px; color:rgba(255,255,255,0.8); display:flex; gap:12px;">
+                    <span>自身返水: <span id="pcUserSelfRebate">0%</span></span>
+                    <span>下级洗码: <span id="pcUserInviteRebate">0%</span></span>
+                </div>
+            </div>
+            <div class="uc-banner-right" style="display:flex; align-items:center;">
+                <div class="uc-banner-stat" style="text-align:right;">
+                    <div style="display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-bottom:4px;">
+                        <span class="lab" style="font-size:13px; opacity:0.8;">账户余额</span>
+                        <button class="uc-currency-btn" onclick="toggleCurrency()" style="padding:2px 8px; border:1px solid rgba(255,255,255,0.3); border-radius:10px; background:rgba(0,0,0,0.1); color:#fff; cursor:pointer; font-size:11px;"><i class="fa-solid fa-rotate"></i> <span id="currencyLabel">CNY</span></button>
+                    </div>
+                    <div class="val" id="pcBalance2" style="font-size:32px; font-weight:800; letter-spacing:1px; line-height:1;">¥ 0.00</div>
+                </div>
+                <div style="display:flex; gap:12px; padding-left:30px; border-left:1px solid rgba(255,255,255,0.2); margin-left:30px;">
+                    <a href="javascript:;" onclick="goIfVerified('/index.php/index/lottery/recharge')" style="background:#fff; color:#0d6efd; padding:10px 24px; border-radius:10px; font-size:14px; font-weight:700; text-decoration:none; display:flex; align-items:center; gap:6px; box-shadow:0 4px 10px rgba(0,0,0,0.1);"><i class="fa-solid fa-plus"></i> 充值</a>
+                    <a href="javascript:;" onclick="goIfVerified('/index.php/index/lottery/withdraw')" style="background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.25); padding:10px 24px; border-radius:10px; font-size:14px; font-weight:700; text-decoration:none; display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-arrow-up-from-bracket"></i> 提现</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主体 -->
+        <div class="uc-body" id="mainBody" style="display:none;">
+            <!-- 左侧导航 -->
+            <div class="uc-nav">
+                <a class="uc-nav-item active" data-p="overview" onclick="showPanel('overview')">
+                    <i class="fa-solid fa-gauge-high"></i> 概览 <i class="fa-solid fa-chevron-right arrow"></i>
+                </a>
+                <a class="uc-nav-item" data-p="funds" onclick="showPanel('funds')">
+                    <i class="fa-solid fa-wallet"></i> 资金管理 <i class="fa-solid fa-chevron-right arrow"></i>
+                </a>
+                <a class="uc-nav-item" data-p="records" onclick="showPanel('records')">
+                    <i class="fa-solid fa-receipt"></i> 投注记录 <i class="fa-solid fa-chevron-right arrow"></i>
+                </a>
+                <a class="uc-nav-item" href="/index.php/index/lottery/xima">
+                    <i class="fa-solid fa-recycle" style="color:#43e97b;"></i> 洗码中心 <i class="fa-solid fa-chevron-right arrow"></i>
+                </a>
+
+                <a class="uc-nav-item" href="/index.php/index/lottery/transactions">
+                    <i class="fa-solid fa-list" style="color:#764ba2;"></i> 交易明细 <i class="fa-solid fa-chevron-right arrow"></i>
+                </a>
+                <div class="uc-nav-divider"></div>
+                <a class="uc-nav-item" href="/index.php/index/lottery/agent">
+                    <i class="fa-solid fa-users"></i> 全民代理 <i class="fa-solid fa-chevron-right arrow"></i>
+                </a>
+                <a class="uc-nav-item" href="/index.php/index/lottery/kefu">
+                    <i class="fa-solid fa-headset"></i> 在线客服
+                    <span id="kefuBadge" style="display:none; margin-left:auto; background:#e33; color:#fff; padding:1px 8px; border-radius:10px; font-size:11px;"></span>
+                    <i class="fa-solid fa-chevron-right arrow"></i>
+                </a>
+                <div class="uc-nav-divider"></div>
+                <a class="uc-nav-item logout" onclick="doLogout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> 退出登录
+                </a>
+            </div>
+
+            <!-- 右侧内容 -->
+            <div class="uc-content">
+                <!-- 概览 -->
+                <div class="uc-panel active" id="panel-overview">
+
+
+                    <div class="uc-card">
+                        <div class="uc-card-title"><i class="fa-solid fa-th-large"></i> 快捷入口</div>
+                        <div class="uc-grid">
+                            <a href="javascript:;" onclick="goIfVerified('/index.php/index/lottery/recharge')" class="uc-grid-item">
+                                <div class="uc-grid-icon" style="background:linear-gradient(135deg,#34d399,#059669);"><i class="fa-solid fa-plus"></i></div>
+                                <div class="uc-grid-label">充值</div><div class="uc-grid-desc">微信 · 支付宝 · USDT</div>
+                            </a>
+                            <a href="javascript:;" onclick="goIfVerified('/index.php/index/lottery/withdraw')" class="uc-grid-item">
+                                <div class="uc-grid-icon" style="background:linear-gradient(135deg,#60a5fa,#2563eb);"><i class="fa-solid fa-arrow-up-from-bracket"></i></div>
+                                <div class="uc-grid-label">提现</div><div class="uc-grid-desc">快速提现</div>
+                            </a>
+                            <a href="/index.php/index/lottery/transfer" class="uc-grid-item">
+                                <div class="uc-grid-icon" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);"><i class="fa-solid fa-right-left"></i></div>
+                                <div class="uc-grid-label">转账</div><div class="uc-grid-desc">站内转账</div>
+                            </a>
+                            <a href="/index.php/index/lottery/trend#records" class="uc-grid-item">
+                                <div class="uc-grid-icon" style="background:linear-gradient(135deg,#fb923c,#ea580c);"><i class="fa-solid fa-receipt"></i></div>
+                                <div class="uc-grid-label">投注记录</div><div class="uc-grid-desc">查看历史</div>
+                            </a>
+                            <a href="/index.php/index/lottery/trend#trend" class="uc-grid-item">
+                                <div class="uc-grid-icon" style="background:linear-gradient(135deg,#f472b6,#db2777);"><i class="fa-solid fa-chart-line"></i></div>
+                                <div class="uc-grid-label">走势分析</div><div class="uc-grid-desc">走势 · 路子 · 长龙</div>
+                            </a>
+                            <a href="/index.php/index/lottery/agent" class="uc-grid-item">
+                                <div class="uc-grid-icon" style="background:linear-gradient(135deg,#f87171,#dc2626);"><i class="fa-solid fa-users"></i></div>
+                                <div class="uc-grid-label">全民代理</div><div class="uc-grid-desc">邀请赚佣金</div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 资金管理 -->
+                <div class="uc-panel" id="panel-funds">
+                    <div class="uc-card">
+                        <div class="uc-card-title"><i class="fa-solid fa-wallet"></i> 资金管理</div>
+                        <div class="uc-grid">
+                            <a href="javascript:;" onclick="goIfVerified('/index.php/index/lottery/recharge')" class="uc-grid-item">
+                                <div class="uc-grid-icon" style="background:linear-gradient(135deg,#34d399,#059669);"><i class="fa-solid fa-plus"></i></div>
+                                <div class="uc-grid-label">充值</div><div class="uc-grid-desc">微信 · 支付宝 · USDT</div>
+                            </a>
+                            <a href="javascript:;" onclick="goIfVerified('/index.php/index/lottery/withdraw')" class="uc-grid-item">
+                                <div class="uc-grid-icon" style="background:linear-gradient(135deg,#60a5fa,#2563eb);"><i class="fa-solid fa-arrow-up-from-bracket"></i></div>
+                                <div class="uc-grid-label">提现</div><div class="uc-grid-desc">快速提现，安全便捷</div>
+                            </a>
+                            <a href="/index.php/index/lottery/transfer" class="uc-grid-item">
+                                <div class="uc-grid-icon" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);"><i class="fa-solid fa-right-left"></i></div>
+                                <div class="uc-grid-label">站内转账</div><div class="uc-grid-desc">转账给好友</div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 投注记录 -->
+                <div class="uc-panel" id="panel-records">
+                    <div class="uc-card">
+                        <div class="uc-card-title"><i class="fa-solid fa-receipt"></i> 我的投注记录</div>
+                        
+                        <!-- 投注记录筛选区设计 -->
+                        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:20px; margin-bottom:20px; font-size:14px; color:#555;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span>查询时间：</span>
+                                <div style="display:flex; background:#f5f7fa; border-radius:6px; overflow:hidden; border:1px solid #e4e7ed;">
+                                    <button class="pcRecTimeBtn active" data-time="today" onclick="setPcRecTime('today', this)" style="padding:6px 14px; border:none; background:#1890ff; color:#fff; cursor:pointer; font-size:13px; border-right:1px solid #e4e7ed;">今天</button>
+                                    <button class="pcRecTimeBtn" data-time="yesterday" onclick="setPcRecTime('yesterday', this)" style="padding:6px 14px; border:none; background:transparent; color:#606266; cursor:pointer; font-size:13px; border-right:1px solid #e4e7ed;">昨天</button>
+                                    <button class="pcRecTimeBtn" data-time="before_yesterday" onclick="setPcRecTime('before_yesterday', this)" style="padding:6px 14px; border:none; background:transparent; color:#606266; cursor:pointer; font-size:13px; border-right:1px solid #e4e7ed;">前天</button>
+                                    <button class="pcRecTimeBtn" data-time="week" onclick="setPcRecTime('week', this)" style="padding:6px 14px; border:none; background:transparent; color:#606266; cursor:pointer; font-size:13px; border-right:1px solid #e4e7ed;">近7天</button>
+                                    <button class="pcRecTimeBtn" data-time="month" onclick="setPcRecTime('month', this)" style="padding:6px 14px; border:none; background:transparent; color:#606266; cursor:pointer; font-size:13px;">近20天(低频)</button>
+                                </div>
+                            </div>
+                            
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span>彩种：</span>
+                                <select id="pcRecLotteryType" style="padding:6px 12px; border:1px solid #dcdfe6; border-radius:4px; color:#606266; font-size:13px; outline:none; cursor:pointer;">
+                                    <option value="">全部经典彩票</option>
+                                    <option value="fc3d">福彩3D</option>
+                                    <option value="pl3">排列三</option>
+                                </select>
+                            </div>
+                            
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span>订单状态：</span>
+                                <select id="pcRecStatus" style="padding:6px 12px; border:1px solid #dcdfe6; border-radius:4px; color:#606266; font-size:13px; outline:none; cursor:pointer;">
+                                    <option value="">全部状态</option>
+                                    <option value="0">待开奖</option>
+                                    <option value="1">已中奖</option>
+                                    <option value="2">未中奖</option>
+                                    <option value="3">已撤单</option>
+                                </select>
+                            </div>
+                            
+                            <button onclick="searchPcBetRecords()" style="padding:6px 20px; border:none; border-radius:4px; background:#1890ff; color:#fff; cursor:pointer; font-size:13px; font-weight:500;">查询</button>
+                        </div>
+                        <div id="pcBetRecords" style="color:#666;">点击左侧"投注记录"加载</div>
+                    </div>
+                </div>
+
+                <!-- 流水返利 -->
+                <div class="uc-panel" id="panel-rebate">
+                    <div class="uc-card">
+                        <div class="uc-card-title"><i class="fa-solid fa-gift"></i> 流水返利</div>
+                        <div id="pcRebateContent" style="color:#666;">加载中...</div>
+                        <div style="margin-top:16px;">
+                            <button id="pcClaimBtn" style="display:none; padding:12px 32px; border:none; border-radius:10px; background:linear-gradient(135deg,#f5a623,#e67e22); color:#fff; font-size:14px; font-weight:700; cursor:pointer;" onclick="pcClaimRebate()">立即领取</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/lottery/js/auth.js"></script>
+    <script>
+    var usdtRate = 7.2; // 默认值，会被实时覆盖
+    // 实时获取USDT汇率（优先OKX欧意）
+    (function() {
+        fetch('/index.php/api/lottery/getUsdtRate')
+        .then(function(r){return r.json();}).then(function(d){
+            if(d && d.code === 1 && d.data && d.data.rate > 0) { usdtRate = parseFloat(d.data.rate); refreshBalance(); }
+            else { fetchOkxDirect(); }
+        }).catch(function(){ fetchOkxDirect(); });
+        function fetchOkxDirect() {
+            fetch('https://www.okx.com/api/v5/market/exchange-rate')
+            .then(function(r){return r.json();}).then(function(d){
+                if(d && d.data && d.data[0] && d.data[0].usdCny > 0) { usdtRate = parseFloat(d.data[0].usdCny); refreshBalance(); }
+            }).catch(function(){});
+        }
+    })();
+
+    function triggerAvatar() { if(LotteryAuth.isLoggedIn()) document.getElementById('avatarInput').click(); }
+
+    function handleUpload(input) {
+        var file = input.files && input.files[0];
+        if(!file) return;
+        if(file.size > 2*1024*1024) { alert('图片不能超过2MB'); return; }
+        var fd = new FormData(); fd.append('file', file);
+        fetch('/index.php/api/common/upload', { method:'POST', headers:{'token':LotteryAuth.getToken()}, body:fd
+        }).then(function(r){return r.json()}).then(function(res){
+            if(res.code===1 && res.data && res.data.url) {
+                var url = res.data.fullurl || res.data.url;
+                var fd2 = new FormData(); fd2.append('avatar', res.data.url);
+                fetch('/index.php/api/user/profile', { method:'POST', headers:{'token':LotteryAuth.getToken()}, body:fd2
+                }).then(function(r){return r.json()}).then(function(r2){
+                    if(r2.code===1) { setAvatar(url); var u=LotteryAuth.getCachedUser(); if(u){u.avatar=url; localStorage.setItem('lottery_user',JSON.stringify(u));} }
+                    else alert(r2.msg||'保存失败');
+                });
+            } else alert(res.msg||'上传失败');
+        });
+        input.value = '';
+    }
+
+    function setAvatar(url) {
+        var el = document.getElementById('pcAvatar');
+        var icon = document.getElementById('pcAvatarIcon');
+        if(el && url) { el.style.backgroundImage = 'url(' + url + ')'; if(icon) icon.style.display = 'none'; }
+    }
+
+    function showPanel(name) {
+        document.querySelectorAll('.uc-panel').forEach(function(el){ el.classList.remove('active'); });
+        var p = document.getElementById('panel-'+name);
+        if(p) p.classList.add('active');
+        document.querySelectorAll('.uc-nav-item[data-p]').forEach(function(el){ el.classList.toggle('active', el.dataset.p === name); });
+        if(name === 'rebate') loadPcRebate();
+        if(name === 'records') searchPcBetRecords();
+    }
+
+    function doLogout() {
+        if(confirm('确认退出登录？')) {
+            localStorage.removeItem('lottery_token');
+            localStorage.removeItem('lottery_user');
+            window.location.href = '/index.php/index/lottery/login';
+        }
+    }
+
+    function toggleCurrency() {
+        LotteryAuth.toggleCurrency();
+        refreshBalance();
+    }
+
+    function refreshBalance() {
+        var u = LotteryAuth.getCachedUser(); if(!u) return;
+        var m = LotteryAuth.getCurrency();
+        var money = parseFloat(u.money) || 0;
+        var b1 = document.getElementById('pcBalance');
+        var b2 = document.getElementById('pcBalance2');
+        var lb = document.getElementById('currencyLabel');
+        if(m==='usdt') {
+            var v = 'USDT ' + (money/usdtRate).toFixed(2);
+            if(b1) b1.textContent=v; if(b2) b2.textContent=v; if(lb) lb.textContent='USDT';
+        } else {
+            var v = '¥ ' + money.toFixed(2);
+            if(b1) b1.textContent=v; if(b2) b2.textContent=v; if(lb) lb.textContent='CNY';
+        }
+    }
+
+    function loadPcRebate() {
+        var ct = document.getElementById('pcRebateContent');
+        ct.innerHTML = '加载中...';
+        document.getElementById('pcClaimBtn').style.display = 'none';
+        LotteryAuth.request('/index.php/api/rebate/summary', {method:'GET'}).then(function(res){
+            if(res.code===1) {
+                var d = res.data;
+                var h = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">';
+                h += '<div style="background:#f9f8ff; padding:18px; border-radius:12px;"><div style="font-size:12px; color:#999; margin-bottom:4px;">今日流水</div><div style="font-size:24px; font-weight:800; color:#764ba2;">¥'+d.today_bet+'</div></div>';
+                h += '<div style="background:#f9f8ff; padding:18px; border-radius:12px;"><div style="font-size:12px; color:#999; margin-bottom:4px;">昨日流水</div><div style="font-size:24px; font-weight:800; color:#333;">¥'+d.yesterday_bet+'</div></div></div>';
+                if(d.can_claim && d.yesterday_rebate > 0) {
+                    h += '<div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:18px; border-radius:12px; text-align:center; margin-bottom:16px;">';
+                    h += '<div style="color:#16a34a; margin-bottom:4px;">可领取昨日返利</div>';
+                    h += '<div style="font-size:28px; font-weight:800; color:#f59e0b;">¥'+d.yesterday_rebate+'</div>';
+                    h += '<div style="font-size:12px; color:#999;">'+(d.yesterday_rate*100).toFixed(2)+'%</div></div>';
+                    document.getElementById('pcClaimBtn').style.display = '';
+                } else if(d.already_claimed) {
+                    h += '<div style="text-align:center; color:#999; padding:18px;">昨日返利已领取 ✓</div>';
+                } else {
+                    h += '<div style="text-align:center; color:#999; padding:18px;">昨日无可领返利</div>';
+                }
+                h += '<div style="font-size:13px; color:#999; margin-bottom:14px;">累计已领: ¥'+d.total_claimed+'</div>';
+                if(d.tiers && d.tiers.length) {
+                    h += '<div style="font-size:13px; font-weight:700; color:#333; margin-bottom:8px;">返利阶梯:</div>';
+                    h += '<table style="width:100%; font-size:13px; border-collapse:collapse;"><tr style="color:#999;"><th style="text-align:left; padding:6px 0; border-bottom:1px solid #f0f0f0;">流水范围</th><th style="text-align:right; padding:6px 0; border-bottom:1px solid #f0f0f0;">比例</th></tr>';
+                    d.tiers.forEach(function(t){ h += '<tr><td style="padding:6px 0; border-bottom:1px solid #f8f8f8; color:#555;">¥'+t.min_amount+' ~ '+(t.max_amount>0?'¥'+t.max_amount:'无上限')+'</td><td style="text-align:right; padding:6px 0; border-bottom:1px solid #f8f8f8; color:#f59e0b; font-weight:700;">'+(t.rebate_rate*100).toFixed(2)+'%</td></tr>'; });
+                    h += '</table>';
+                }
+                ct.innerHTML = h;
+            } else { ct.innerHTML = '<div style="color:red;">'+(res.msg||'加载失败')+'</div>'; }
+        });
+    }
+
+    var betKeyMap = {
+        da:'大',xiao:'小',dan:'单',shuang:'双',zhi:'质',he:'合',long:'龙',hu:'虎',hh:'和',
+        baozi:'豹子',shunzi:'顺子',duizi:'对子',banshun:'半顺',zaliu:'杂六',
+        // 总和
+        zonghe_da:'总和大',zonghe_xiao:'总和小',zonghe_dan:'总和单',zonghe_shuang:'总和双',
+        zonghe_heda:'总和大',zonghe_hexiao:'总和小',zonghe_hedan:'总和单',zonghe_heshuang:'总和双',
+        zonghe_hezhi:'总和质',zonghe_hehe:'总和合',
+        zonghe_heweida:'总和尾大',zonghe_heweixiao:'总和尾小',zonghe_heweidan:'总和尾单',zonghe_heweishuang:'总和尾双',
+        zonghe_heweizhi:'总和尾质',zonghe_heweihe:'总和尾合',
+        // 百位
+        bai_da:'百大',bai_xiao:'百小',bai_dan:'百单',bai_shuang:'百双',bai_zhi:'百质',bai_he:'百合',
+        // 十位
+        shi_da:'十大',shi_xiao:'十小',shi_dan:'十单',shi_shuang:'十双',shi_zhi:'十质',shi_he:'十合',
+        // 个位
+        ge_da:'个大',ge_xiao:'个小',ge_dan:'个单',ge_shuang:'个双',ge_zhi:'个质',ge_he:'个合',
+        // 百十和数
+        baishi_heda:'百十大',baishi_hexiao:'百十小',baishi_hedan:'百十单',baishi_heshuang:'百十双',
+        baishi_heweida:'百十尾大',baishi_heweixiao:'百十尾小',baishi_heweidan:'百十尾单',baishi_heweishuang:'百十尾双',
+        baishi_heweizhi:'百十尾质',baishi_heweihe:'百十尾合',
+        // 百个和数
+        baige_heda:'百个大',baige_hexiao:'百个小',baige_hedan:'百个单',baige_heshuang:'百个双',
+        baige_heweida:'百个尾大',baige_heweixiao:'百个尾小',baige_heweidan:'百个尾单',baige_heweishuang:'百个尾双',
+        baige_heweizhi:'百个尾质',baige_heweihe:'百个尾合',
+        // 十个和数
+        shige_heda:'十个大',shige_hexiao:'十个小',shige_hedan:'十个单',shige_heshuang:'十个双',
+        shige_heweida:'十个尾大',shige_heweixiao:'十个尾小',shige_heweidan:'十个尾单',shige_heweishuang:'十个尾双',
+        shige_heweizhi:'十个尾质',shige_heweihe:'十个尾合'
+    };
+    function parseBetDisplay(raw) {
+        if (!raw || raw === '-') return '-';
+        try {
+            var arr = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            if (!Array.isArray(arr)) return String(raw);
+            var htmlParts = arr.map(function(item) {
+                var k = item.key || item;
+                var text = '';
+                var isNum = false;
+                
+                if (/^num_\d$/.test(k)) { text = k.replace('num_', ''); isNum = true; }
+                else if (/^yz_\d$/.test(k)) { text = k.replace('yz_', ''); isNum = true; }
+                else if (/^ez_\d+$/.test(k)) { text = k.replace('ez_', ''); isNum = true; }
+                else if (/^sz_\d+$/.test(k)) { text = k.replace('sz_', ''); isNum = true; }
+                else if (/^\d+$/.test(k)) { text = k; isNum = true; }
+                else if (/^p\d+_/.test(k)) { text = k.split('_')[1]; isNum = true; }
+                else if (/^(bai|shi|ge)_\d+$/.test(k)) { text = k.split('_')[1]; isNum = true; }
+                else if (k.indexOf('hzws_') === 0) { text = '和尾' + k.replace('hzws_',''); }
+                else if (k.indexOf('hz_') === 0) { text = '和' + k.replace('hz_',''); }
+                else if (k.indexOf('ehzws_') === 0) { text = '和尾' + k.replace('ehzws_',''); }
+                else if (k.indexOf('ehz_') === 0) { text = '和' + k.replace('ehz_',''); }
+                else if (k.indexOf('kd_') === 0) { text = '跨' + k.replace('kd_',''); }
+                else { text = betKeyMap[k] || k; }
+                
+                if (isNum) {
+                    var colors = [
+                        'radial-gradient(circle at 30% 30%, #60a5fa 0%, #2563eb 60%, #1e3a8a 100%)',
+                        'radial-gradient(circle at 30% 30%, #f87171 0%, #dc2626 60%, #7f1d1d 100%)',
+                        'radial-gradient(circle at 30% 30%, #34d399 0%, #059669 60%, #064e3b 100%)',
+                        'radial-gradient(circle at 30% 30%, #fbbf24 0%, #d97706 60%, #78350f 100%)',
+                        'radial-gradient(circle at 30% 30%, #c084fc 0%, #9333ea 60%, #4c1d95 100%)'
+                    ];
+                    var numVal = parseInt(text) || 0;
+                    var c = colors[numVal % colors.length];
+                    return '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:'+c+';color:#fff;font-weight:bold;margin:2px;box-shadow:inset -2px -2px 4px rgba(0,0,0,0.4), 1px 1px 3px rgba(0,0,0,0.3);font-size:12px;text-shadow:1px 1px 1px rgba(0,0,0,0.5);">'+text+'</span>';
+                } else {
+                    return '<span style="display:inline-block;padding:2px 8px;border-radius:10px;background:linear-gradient(135deg,#f1f5f9,#e2e8f0);color:#334155;margin:2px;font-size:12px;font-weight:600;box-shadow:inset 0 1px 2px rgba(255,255,255,0.8), 0 1px 2px rgba(0,0,0,0.05);border:1px solid #cbd5e1;">'+text+'</span>';
+                }
+            });
+            return '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:2px;">' + htmlParts.join('') + '</div>';
+        } catch(e) {
+            return String(raw).substring(0, 30);
+        }
+    }
+
+    var currentSearchTime = 'today';
+    function setPcRecTime(timeVal, btnElement) {
+        currentSearchTime = timeVal;
+        document.querySelectorAll('.pcRecTimeBtn').forEach(function(b){
+            b.classList.remove('active');
+            b.style.background = 'transparent';
+            b.style.color = '#606266';
+        });
+        btnElement.classList.add('active');
+        btnElement.style.background = '#1890ff';
+        btnElement.style.color = '#fff';
+    }
+
+    var pcBetPage = 1;
+    function searchPcBetRecords() {
+        pcBetPage = 1;
+        var type = document.getElementById('pcRecLotteryType').value;
+        var status = document.getElementById('pcRecStatus').value;
+        loadPcBetRecords(type, currentSearchTime, status, 1);
+    }
+
+    function loadPcBetRecords(type, timeRange, status, page) {
+        page = page || 1;
+        pcBetPage = page;
+        var ct = document.getElementById('pcBetRecords');
+        ct.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">加载中...</div>';
+        var url = '/index.php/api/lottery/getBetHistory?limit=20&page=' + page;
+        if (type) url += '&type=' + type;
+        if (timeRange) url += '&time=' + timeRange;
+        if (status) url += '&status=' + status;
+        
+        LotteryAuth.request(url, {method:'GET'}).then(function(res) {
+            var list = (res.data && res.data.list) ? res.data.list : (res.data || []);
+            var total = (res.data && res.data.total) ? res.data.total : list.length;
+            var limit = 20;
+            if (res.code !== 1 || !list.length) {
+                ct.innerHTML = '<div style="text-align:center;color:#999;padding:30px;">暂无投注记录</div>';
+                return;
+            }
+            var html = '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+            html += '<tr style="background:#f8f9fa;"><th style="padding:10px 8px;text-align:left;border-bottom:2px solid #eee;">彩种</th><th style="padding:10px 8px;text-align:left;border-bottom:2px solid #eee;">期数</th><th style="padding:10px 8px;text-align:left;border-bottom:2px solid #eee;">玩法</th><th style="padding:10px 8px;text-align:left;border-bottom:2px solid #eee;">投注内容</th><th style="padding:10px 8px;text-align:right;border-bottom:2px solid #eee;">金额</th><th style="padding:10px 8px;text-align:center;border-bottom:2px solid #eee;">状态</th><th style="padding:10px 8px;text-align:right;border-bottom:2px solid #eee;">中奖</th></tr>';
+            list.forEach(function(r) {
+                var statusText = '待开奖', statusColor = '#f59e0b', statusBg = '#fff8e1';
+                if (r.status == 1) { statusText = '已中奖'; statusColor = '#10b981'; statusBg = '#ecfdf5'; }
+                else if (r.status == 2) { statusText = '未中奖'; statusColor = '#999'; statusBg = '#f5f5f5'; }
+                else if (r.status == 3) { statusText = '已撤单'; statusColor = '#999'; statusBg = '#f5f5f5'; }
+                // 彩种：lottery_type 为数字 1=福彩3D 2=排列三
+                var lt = String(r.lottery_type);
+                var lotteryName = (lt === '1' || lt === 'fc3d' || lt === '福彩3D') ? '福彩3D' : '排列三';
+                // 玩法翻译
+                var playMap = {
+                    kuaijie:'快捷',shuangmian:'双面',daxiao:'大小',danshuang:'单双',longhu:'龙虎',zonghe_daxiao:'总和大小',zonghe_danshuang:'总和单双',biaozhun:'标准',dingwei:'定位',yizi:'一字组合',erzi:'二字组合',sanzi:'三字组合',zusan:'组三',zuliu:'组六',hezhi:'和值',zhixuan:'直选',danshi:'单式',
+                    yizi_dingwei:'一字定位',erzi_dingwei:'二字定位',sanzi_dingwei:'三字定位',yizi_zuhe:'一字组合',erzi_zuhe:'二字组合',sanzi_zuhe:'三字组合',kuadu:'跨度',
+                    erzi_heshu:'二字和数',erzi_heshu_baishi:'二字和数·百十',erzi_heshu_baige:'二字和数·百个',erzi_heshu_shige:'二字和数·十个',xingtai:'形态',
+                    sx_zx_fushi:'三星直选复式',sx_zx_danshi:'三星直选单式',sx_zx_hezhi:'三星直选和值',sx_zx_kuadu:'三星直选跨度',
+                    sx_zx3_fushi:'三星组三复式',sx_zx3_danshi:'三星组三单式',sx_zx6_fushi:'三星组六复式',sx_zx6_danshi:'三星组六单式',
+                    sx_hunhe:'三星混合组选',sx_zx_hezhi2:'三星组选和值',sx_zx_baodan:'三星组选包胆',sx_tx_fushi:'三星通选复式',sx_tx_danshi:'三星通选单式',sx_hzweishu:'三星和值尾数',
+                    sx_yimabuding:'三星一码不定胆',sx_ermabuding:'三星二码不定胆',
+                    qe_zx_fushi:'前二直选复式',qe_zx_danshi:'前二直选单式',qe_zx_hezhi:'前二直选和值',qe_zx_kuadu:'前二直选跨度',
+                    qe_zuxuan_fushi:'前二组选复式',qe_zuxuan_danshi:'前二组选单式',qe_zuxuan_hezhi:'前二组选和值',qe_zuxuan_baodan:'前二组选包胆',
+                    he_zx_fushi:'后二直选复式',he_zx_danshi:'后二直选单式',he_zx_hezhi:'后二直选和值',he_zx_kuadu:'后二直选跨度',
+                    he_zuxuan_fushi:'后二组选复式',he_zuxuan_danshi:'后二组选单式',he_zuxuan_hezhi:'后二组选和值',he_zuxuan_baodan:'后二组选包胆',
+                    dingweidan:'定位胆',dxds:'大小单双'
+                };
+                var playName = '';
+                var subLabelMap = {baiwei:'百位',shiwei:'十位',gewei:'个位',baishi:'百十',baige:'百个',shige:'十个',zonghe:'总和',longhu:'龙虎'};
+                // 优先用 play_type + '_' + play_sub 拼接查找
+                if (r.play_sub && playMap[r.play_type + '_' + r.play_sub]) {
+                    playName = playMap[r.play_type + '_' + r.play_sub];
+                } else {
+                    playName = playMap[r.play_type] || r.play_name || r.play_type || '-';
+                    // 需要显示sub的玩法
+                    var showSubPlays = ['erzi_dingwei','erzi_heshu','kuaijie','dingweidan'];
+                    if (r.play_sub && showSubPlays.indexOf(r.play_type) > -1 && subLabelMap[r.play_sub]) {
+                        playName += '·' + subLabelMap[r.play_sub];
+                    }
+                }
+                // 投注内容解析
+                var betContent = parseBetDisplay(r.bet_content || r.bets || '');
+                var winAmount = parseFloat(r.win_amount || 0);
+                html += '<tr style="border-bottom:1px solid #f0f0f0;">';
+                html += '<td style="padding:10px 8px;">' + lotteryName + '</td>';
+                html += '<td style="padding:10px 8px;">' + r.period + '</td>';
+                html += '<td style="padding:10px 8px;">' + playName + '</td>';
+                html += '<td style="padding:10px 8px;color:#666;font-size:12px;">' + betContent + '</td>';
+                html += '<td style="padding:10px 8px;text-align:right;font-weight:600;">¥' + parseFloat(r.total_amount).toFixed(2) + '</td>';
+                html += '<td style="padding:10px 8px;text-align:center;"><span style="padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;background:' + statusBg + ';color:' + statusColor + ';">' + statusText + '</span></td>';
+                html += '<td style="padding:10px 8px;text-align:right;font-weight:700;color:' + (winAmount > 0 ? '#10b981' : '#ccc') + ';">' + (winAmount > 0 ? '+¥' + winAmount.toFixed(2) : '-') + '</td>';
+                html += '</tr>';
+            });
+            html += '</table>';
+
+            // 分页
+            var totalPages = Math.ceil(total / limit);
+            if (totalPages > 1) {
+                html += '<div style="text-align:center;padding:16px 0;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;">';
+                html += '<span style="font-size:12px;color:#999;margin-right:12px;">共' + total + '条</span>';
+                if (page > 1) html += '<button onclick="goToBetPage(' + (page-1) + ')" style="padding:5px 12px;border:1px solid #dcdfe6;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;">上一页</button>';
+                var startP = Math.max(1, page - 3), endP = Math.min(totalPages, page + 3);
+                for (var i = startP; i <= endP; i++) {
+                    if (i === page) html += '<button style="padding:5px 12px;border:none;border-radius:4px;background:#1890ff;color:#fff;font-size:12px;font-weight:600;">' + i + '</button>';
+                    else html += '<button onclick="goToBetPage(' + i + ')" style="padding:5px 12px;border:1px solid #dcdfe6;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;">' + i + '</button>';
+                }
+                if (page < totalPages) html += '<button onclick="goToBetPage(' + (page+1) + ')" style="padding:5px 12px;border:1px solid #dcdfe6;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;">下一页</button>';
+                html += '</div>';
+            }
+
+            ct.innerHTML = html;
+        }).catch(function() {
+            ct.innerHTML = '<div style="text-align:center;color:red;padding:20px;">加载失败</div>';
+        });
+    }
+
+    function goToBetPage(p) {
+        var type = document.getElementById('pcRecLotteryType').value;
+        var status = document.getElementById('pcRecStatus').value;
+        loadPcBetRecords(type, currentSearchTime, status, p);
+    }
+
+    function pcClaimRebate() {
+        var btn = document.getElementById('pcClaimBtn');
+        btn.disabled=true; btn.textContent='领取中...';
+        LotteryAuth.request('/index.php/api/rebate/claim',{method:'POST'}).then(function(res){
+            if(res.code===1) { alert(res.msg||'领取成功'); window.location.reload(); }
+            else { alert(res.msg||'领取失败'); btn.disabled=false; btn.textContent='立即领取'; }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if(LotteryAuth.isLoggedIn()) {
+            var u = LotteryAuth.getCachedUser();
+            if(u) {
+                document.getElementById('guestBanner').style.display = 'none';
+                document.getElementById('userBanner').style.display = '';
+                document.getElementById('mainBody').style.display = '';
+
+                document.getElementById('pcUserName').textContent = u.nickname || u.username || '用户';
+                document.getElementById('pcUserId').textContent = 'ID: ' + (u.id || u.user_id || '--');
+                if(u.avatar) setAvatar(u.avatar);
+                document.getElementById('pcAvatarCam').style.display = 'flex';
+                refreshBalance();
+            }
+
+            LotteryAuth.fetchUserInfo(function(info) {
+                if(info) {
+                    document.getElementById('pcUserName').textContent = info.nickname || info.username || '用户';
+                    document.getElementById('pcUserId').textContent = 'ID: ' + (info.id || info.user_id || '--');
+                    if(info.avatar) setAvatar(info.avatar);
+                    refreshBalance();
+                    window._verifyStatus = (info.verify_status !== undefined) ? info.verify_status : -1;
+                }
+            });
+
+            LotteryAuth.request('/index.php/api/kefu/unreadCount', {method:'GET'}).then(function(res){
+                if(res.code===1 && res.data && res.data.count > 0) {
+                    var b = document.getElementById('kefuBadge');
+                    if(b) { b.style.display=''; b.textContent=res.data.count; }
+                }
+            });
+        }
+    });
+    function goIfVerified(url) {
+        var vs = window._verifyStatus;
+        if (vs === 1) {
+            location.href = url;
+            return;
+        }
+        
+        var div = document.createElement('div');
+        div.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;';
+        div.innerHTML = '<div style="background:#fff;padding:30px;border-radius:12px;text-align:center;width:340px;box-shadow:0 10px 20px rgba(0,0,0,0.2);">' + 
+            '<i class="fa-solid fa-circle-exclamation" style="font-size:40px;color:#f59e0b;margin-bottom:15px;display:block;"></i>' +
+            '<div style="font-size:18px;font-weight:700;color:#333;margin-bottom:10px;">请先实名认证</div>' +
+            '<div style="font-size:14px;color:#666;margin-bottom:25px;">微信/支付宝充提需使用认证姓名的账号</div>' +
+            '<div style="display:flex;gap:10px;justify-content:center;">' +
+            '<button onclick="this.parentNode.parentNode.parentNode.remove()" style="flex:1;padding:12px;border:none;border-radius:8px;background:#f0f0f0;color:#666;cursor:pointer;font-weight:600;">取消</button>' +
+            '<button onclick="location.href=\'/index.php/index/lottery/verify\'" style="flex:1;padding:12px;border:none;border-radius:8px;background:#1890ff;color:#fff;cursor:pointer;font-weight:600;">去认证</button>' +
+            '</div></div>';
+        document.body.appendChild(div);
+    }
+    </script>
+</body>
+</html>

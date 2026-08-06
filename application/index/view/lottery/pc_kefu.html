@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线客服 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/lottery.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body.lottery-page { background:#f0f2f5; }
+        .pc-page { max-width:720px; margin:80px auto 40px; padding:0 24px; }
+        .pc-back { display:inline-flex; align-items:center; gap:8px; color:#0d6efd; text-decoration:none; font-size:13px; font-weight:600; margin-bottom:18px; padding:8px 18px; border-radius:20px; background:#fff; border:1px solid #d0e0f8; box-shadow:0 1px 3px rgba(0,0,0,0.04); transition:all 0.2s; }
+        .pc-back:hover { background:#e8f0fe; border-color:#0d6efd; transform:translateX(-2px); }
+
+        .chat-container { background:#fff; border-radius:14px; overflow:hidden; display:flex; flex-direction:column; height:calc(100vh - 180px); min-height:400px; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
+        .chat-header { padding:16px 24px; background:linear-gradient(135deg,#1a3a6c,#0d6efd); display:flex; align-items:center; gap:12px; }
+        .chat-header-avatar { width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; }
+        .chat-header-info h4 { color:#fff; font-size:16px; margin:0; }
+        .chat-header-info small { color:rgba(255,255,255,0.7); font-size:12px; }
+
+        .chat-messages { flex:1; overflow-y:auto; padding:20px 24px; display:flex; flex-direction:column; gap:16px; background:#f8f9fa; }
+        .chat-msg { display:flex; gap:12px; max-width:70%; }
+        .chat-msg.user { align-self:flex-end; flex-direction:row-reverse; }
+        .chat-msg-avatar { width:36px; height:36px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff; }
+        .chat-msg.admin .chat-msg-avatar { background:linear-gradient(135deg,#1a3a6c,#0d6efd); }
+        .chat-msg.user .chat-msg-avatar { background:linear-gradient(135deg,#34d399,#059669); }
+        .chat-msg-bubble { padding:12px 16px; border-radius:14px; font-size:14px; line-height:1.6; word-break:break-word; }
+        .chat-msg.admin .chat-msg-bubble { background:#fff; color:#333; border-bottom-left-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+        .chat-msg.user .chat-msg-bubble { background:linear-gradient(135deg,#1a3a6c,#0d6efd); color:#fff; border-bottom-right-radius:4px; }
+        .chat-msg-time { font-size:11px; color:#999; margin-top:4px; }
+        .chat-msg.user .chat-msg-time { text-align:right; }
+
+        .chat-input-area { padding:16px 24px; background:#fff; border-top:1px solid #e0e0e0; display:flex; gap:12px; align-items:flex-end; }
+        .chat-input-area textarea { flex:1; padding:10px 14px; border-radius:10px; border:1px solid #ddd; background:#f8f9fa; color:#333; font-size:14px; resize:none; height:44px; max-height:100px; font-family:inherit; }
+        .chat-input-area textarea:focus { outline:none; border-color:#0d6efd; }
+        .chat-send-btn { padding:10px 24px; border:none; border-radius:10px; background:linear-gradient(135deg,#1a3a6c,#0d6efd); color:#fff; font-weight:700; cursor:pointer; white-space:nowrap; font-size:14px; }
+        .chat-send-btn:hover { box-shadow:0 4px 14px rgba(13,110,253,0.3); }
+        .chat-img-btn { padding:10px; border:none; border-radius:10px; background:#f8f9fa; border:1px solid #ddd; color:#888; cursor:pointer; font-size:16px; }
+        .chat-img-btn:hover { color:#0d6efd; border-color:#0d6efd; }
+        .chat-empty { text-align:center; color:#999; padding:60px 0; }
+        .chat-msg-avatar-wrap { display:flex; flex-direction:column; align-items:center; flex-shrink:0; gap:3px; }
+        .chat-msg-avatar-name { font-size:10px; color:#999; white-space:nowrap; max-width:56px; overflow:hidden; text-overflow:ellipsis; }
+        .chat-msg.admin .chat-msg-avatar-name { color:#0d6efd; font-weight:600; }
+    </style>
+</head>
+<body class="lottery-page">
+    {include file="lottery/pc_header" /}
+
+    <div class="pc-page">
+        <a href="/index.php/index/lottery/user" class="pc-back"><i class="fa-solid fa-arrow-left"></i> 返回个人中心</a>
+
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="chat-header-avatar"><i class="fa-solid fa-headset"></i></div>
+                <div class="chat-header-info">
+                    <h4>在线客服</h4>
+                    <small>通常5分钟内回复</small>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-empty"><i class="fa-solid fa-comments" style="font-size:40px; margin-bottom:12px;"></i><div>发送消息开始对话</div></div>
+            </div>
+
+            <div class="chat-input-area">
+                <button class="chat-img-btn" onclick="document.getElementById('chatImageFile').click()"><i class="fa-solid fa-image"></i></button>
+                <input type="file" id="chatImageFile" accept="image/*" style="display:none;" onchange="sendImage(this)">
+                <textarea id="chatInput" placeholder="输入消息..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+                <button class="chat-send-btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i> 发送</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/lottery/js/auth.js"></script>
+    <script>
+    var lastMsgId = 0, pollTimer = null;
+
+    function renderMessages(list) {
+        if(!list || !list.length) return;
+        var container = document.getElementById('chatMessages');
+        // 清空空状态
+        var empty = container.querySelector('.chat-empty');
+        if(empty) empty.remove();
+
+        list.forEach(function(msg) {
+            if(msg.id <= lastMsgId) return;
+            lastMsgId = msg.id;
+
+            var div = document.createElement('div');
+            div.className = 'chat-msg ' + (msg.sender_type === 'user' ? 'user' : 'admin');
+
+            var icon = msg.sender_type === 'user' ? 'fa-user' : 'fa-headset';
+            var time = msg.createtime ? new Date(msg.createtime * 1000).toLocaleString('zh-CN', {hour:'2-digit',minute:'2-digit'}) : '';
+
+            var content = msg.content;
+            // 图片消息
+            if(content.match(/\.(jpg|jpeg|png|gif|webp)$/i) || content.indexOf('/uploads/kefu/') > -1) {
+                content = '<img src="' + content + '" style="max-width:240px; border-radius:8px; cursor:pointer;" onclick="window.open(this.src)">';
+            }
+
+            var avatarName = msg.sender_type === 'user' ? '我' : '好运北彩';
+
+            div.innerHTML = '<div class="chat-msg-avatar-wrap"><div class="chat-msg-avatar"><i class="fa-solid ' + icon + '"></i></div><div class="chat-msg-avatar-name">' + avatarName + '</div></div>'
+                + '<div><div class="chat-msg-bubble">' + content + '</div><div class="chat-msg-time">' + time + '</div></div>';
+
+            container.appendChild(div);
+        });
+
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function loadHistory() {
+        LotteryAuth.request('/index.php/api/kefu/history', {method:'GET'}).then(function(res) {
+            if(res.code === 1) {
+                var list = res.data && res.data.list || [];
+                if(list.length) {
+                    document.getElementById('chatMessages').innerHTML = '';
+                    renderMessages(list);
+                }
+            }
+        });
+    }
+
+    function sendMessage() {
+        var input = document.getElementById('chatInput');
+        var text = input.value.trim();
+        if(!text) return;
+        if(!LotteryAuth.isLoggedIn()) { alert('请先登录'); return; }
+
+        input.value = '';
+        var fd = new FormData();
+        fd.append('content', text);
+
+        LotteryAuth.request('/index.php/api/kefu/send', {method:'POST', body:fd}).then(function(res) {
+            if(res.code === 1) renderMessages([res.data]);
+            else alert(res.msg || '发送失败');
+        });
+    }
+
+    function sendImage(input) {
+        if(!input.files || !input.files[0]) return;
+        if(!LotteryAuth.isLoggedIn()) { alert('请先登录'); return; }
+
+        var fd = new FormData();
+        fd.append('file', input.files[0]);
+
+        fetch('/index.php/api/kefu/uploadImage', {
+            method:'POST', headers:{'token': LotteryAuth.getToken()}, body:fd
+        }).then(function(r){return r.json()}).then(function(res) {
+            if(res.code === 1 && res.data && res.data.url) {
+                var fd2 = new FormData();
+                fd2.append('content', res.data.url);
+                LotteryAuth.request('/index.php/api/kefu/send', {method:'POST', body:fd2}).then(function(r2) {
+                    if(r2.code === 1) renderMessages([r2.data]);
+                });
+            } else { alert(res.msg || '上传失败'); }
+        });
+        input.value = '';
+    }
+
+    function startPoll() {
+        pollTimer = setInterval(function() {
+            LotteryAuth.request('/index.php/api/kefu/poll?last_id=' + lastMsgId, {method:'GET'}).then(function(res) {
+                if(res.code === 1 && res.data && res.data.list) {
+                    renderMessages(res.data.list);
+                }
+            });
+        }, 5000);
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+        LotteryAuth.initHeader && LotteryAuth.initHeader();
+        if(LotteryAuth.isLoggedIn()) {
+            loadHistory();
+            startPoll();
+        }
+    });
+    </script>
+</body>
+</html>

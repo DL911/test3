@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>洗码中心 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/mobile_light.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .xm-header { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 30px 20px 50px; text-align: center; color: #fff; }
+        .xm-header h2 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+        .xm-header p { font-size: 13px; opacity: 0.9; }
+
+        .xm-cards { display: flex; gap: 10px; margin: -30px 16px 16px; position: relative; z-index: 2; }
+        .xm-card { flex: 1; background: #fff; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+        .xm-card .val { font-size: 22px; font-weight: 800; color: #43e97b; }
+        .xm-card .lbl { font-size: 12px; color: #999; margin-top: 4px; }
+
+        .xm-claim-box { margin: 0 16px 16px; background: #fff; border-radius: 12px; padding: 24px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); text-align: center; }
+        .xm-claim-amount { font-size: 36px; font-weight: 800; color: #e67e22; margin: 8px 0; }
+        .xm-claim-hint { font-size: 13px; color: #999; margin-bottom: 16px; }
+        .xm-claim-btn { display: inline-block; padding: 14px 60px; border: none; border-radius: 30px; background: linear-gradient(135deg, #43e97b, #38f9d7); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(67,233,123,0.3); transition: all 0.2s; }
+        .xm-claim-btn:active { transform: scale(0.96); }
+        .xm-claim-btn:disabled { background: #ccc; box-shadow: none; }
+
+        .xm-section { margin: 16px; }
+        .xm-section-title { font-size: 15px; font-weight: 700; color: #333; margin-bottom: 12px; padding-left: 8px; border-left: 3px solid #43e97b; }
+
+        .xm-record { background: #fff; border-radius: 10px; margin-bottom: 8px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; }
+        .xm-record .left { flex: 1; }
+        .xm-record .type { font-size: 14px; font-weight: 600; color: #333; }
+        .xm-record .meta { font-size: 12px; color: #999; margin-top: 3px; }
+        .xm-record .amount { font-size: 16px; font-weight: 700; color: #43e97b; }
+        .xm-record .amount.claimed { color: #999; }
+
+        .xm-empty { text-align: center; padding: 40px 20px; color: #ccc; font-size: 14px; }
+        .xm-more { text-align: center; padding: 12px; color: #43e97b; font-size: 14px; cursor: pointer; }
+    </style>
+</head>
+<body class="light-mobile">
+
+    <div class="lm-topbar" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+        <a href="javascript:history.back();" class="back"><i class="fa-solid fa-chevron-left"></i></a>
+        <h2>洗码中心</h2>
+    </div>
+
+    <div class="xm-header">
+        <h2><i class="fa-solid fa-recycle"></i> 洗码中心</h2>
+        <p>每笔投注自动产生洗码，隔天有效投注后可领取</p>
+    </div>
+
+    <!-- 概况卡片 -->
+    <div class="xm-cards">
+        <div class="xm-card">
+            <div class="val" id="pendingTotal">0.00</div>
+            <div class="lbl">待领取</div>
+        </div>
+        <div class="xm-card">
+            <div class="val" style="color:#e67e22;" id="claimedTotal">0.00</div>
+            <div class="lbl">已领取</div>
+        </div>
+        <div class="xm-card">
+            <div class="val" style="color:#4facfe;" id="pendingCount">0</div>
+            <div class="lbl">待领笔数</div>
+        </div>
+    </div>
+
+    <!-- 领取区 -->
+    <div class="xm-claim-box">
+        <div style="font-size:13px; color:#999;">当前可领取洗码金额</div>
+        <div class="xm-claim-amount" id="claimAmount">¥0.00</div>
+        <div class="xm-claim-hint" id="claimDetail">
+            自身洗码: ¥<span id="selfAmount">0.00</span> | 邀请人洗码: ¥<span id="parentAmount">0.00</span>
+        </div>
+        <div id="todayHint" style="display:none; font-size:12px; color:#e67e22; margin-bottom:12px; padding:8px 16px; background:#fff8f0; border-radius:8px;">
+            <i class="fa-solid fa-clock"></i> 今日新增: ¥<span id="todayTotal">0.00</span>（明日可领）
+        </div>
+        <button class="xm-claim-btn" id="claimBtn" disabled onclick="claimAll()">一键领取</button>
+    </div>
+
+    <!-- 洗码记录 -->
+    <div class="xm-section">
+        <div class="xm-section-title">洗码记录</div>
+
+        <div class="lm-tabs" style="margin-bottom:12px;">
+            <div class="lm-tab active" onclick="switchTab('all',this)">全部</div>
+            <div class="lm-tab" onclick="switchTab('self',this)">自身洗码</div>
+            <div class="lm-tab" onclick="switchTab('parent',this)">邀请人洗码</div>
+        </div>
+
+        <div id="recordList"></div>
+        <div id="loadMore" class="xm-more" style="display:none;" onclick="loadHistory()">加载更多</div>
+    </div>
+
+    <div style="height:40px;"></div>
+
+    <script src="/assets/lottery/js/auth.js"></script>
+    <script>
+    var historyPage = 1;
+    var historyType = '';
+    var historyHasMore = true;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!LotteryAuth.isLoggedIn()) {
+            window.location.href = '/index.php/index/lottery/login';
+            return;
+        }
+        loadSummary();
+        loadHistory();
+    });
+
+    function loadSummary() {
+        LotteryAuth.request('/index.php/api/xima/summary', {method: 'GET'})
+            .then(function(res) {
+                if (res.code === 1) {
+                    var d = res.data;
+                    document.getElementById('pendingTotal').textContent = parseFloat(d.pending_total || 0).toFixed(2);
+                    document.getElementById('claimedTotal').textContent = parseFloat(d.claimed_total || 0).toFixed(2);
+                    document.getElementById('pendingCount').textContent = d.pending_count || 0;
+                    document.getElementById('selfAmount').textContent = parseFloat(d.pending_self || 0).toFixed(2);
+                    document.getElementById('parentAmount').textContent = parseFloat(d.pending_parent || 0).toFixed(2);
+
+                    var total = parseFloat(d.pending_total || 0);
+                    document.getElementById('claimAmount').textContent = '¥' + total.toFixed(2);
+
+                    // 今日新增（明日可领）
+                    var todayTotal = parseFloat(d.today_total || 0);
+                    var todayHint = document.getElementById('todayHint');
+                    if (todayTotal > 0 && todayHint) {
+                        document.getElementById('todayTotal').textContent = todayTotal.toFixed(2);
+                        todayHint.style.display = 'block';
+                    } else if (todayHint) {
+                        todayHint.style.display = 'none';
+                    }
+
+                    var btn = document.getElementById('claimBtn');
+                    if (total > 0) {
+                        btn.disabled = false;
+                        btn.textContent = '一键领取 ¥' + total.toFixed(2);
+                    } else {
+                        btn.disabled = true;
+                        btn.textContent = todayTotal > 0 ? '今日洗码明日可领' : '暂无可领取';
+                    }
+                }
+            });
+    }
+
+    function claimAll() {
+        var btn = document.getElementById('claimBtn');
+        btn.disabled = true;
+        btn.textContent = '领取中...';
+
+        LotteryAuth.request('/index.php/api/xima/claim', {method: 'POST'})
+            .then(function(res) {
+                if (res.code === 1) {
+                    alert(res.msg || '领取成功！');
+                    loadSummary();
+                    historyPage = 1;
+                    document.getElementById('recordList').innerHTML = '';
+                    loadHistory();
+                } else {
+                    alert(res.msg || '领取失败');
+                    btn.disabled = false;
+                    btn.textContent = '一键领取';
+                }
+            });
+    }
+
+    function switchTab(type, el) {
+        document.querySelectorAll('.lm-tab').forEach(function(t) { t.classList.remove('active'); });
+        el.classList.add('active');
+        historyType = (type === 'all') ? '' : type;
+        historyPage = 1;
+        historyHasMore = true;
+        document.getElementById('recordList').innerHTML = '';
+        loadHistory();
+    }
+
+    function loadHistory() {
+        if (!historyHasMore) return;
+        var url = '/index.php/api/xima/history?page=' + historyPage + '&limit=20';
+        if (historyType) url += '&type=' + historyType;
+
+        LotteryAuth.request(url, {method: 'GET'})
+            .then(function(res) {
+                if (res.code === 1) {
+                    var list = res.data.list || [];
+                    var total = res.data.total || 0;
+                    var html = '';
+
+                    if (list.length === 0 && historyPage === 1) {
+                        html = '<div class="xm-empty"><i class="fa-solid fa-inbox" style="font-size:32px;display:block;margin-bottom:8px;"></i>暂无记录</div>';
+                        document.getElementById('loadMore').style.display = 'none';
+                    } else {
+                        list.forEach(function(r) {
+                            var statusCls = r.status == 1 ? 'claimed' : '';
+                            var statusIcon = r.status == 1 ? '✓' : '○';
+                            html += '<div class="xm-record">' +
+                                '<div class="left">' +
+                                '<div class="type">' + (r.type_text || '洗码') + ' ' +
+                                '<span style="font-size:11px;padding:1px 6px;border-radius:8px;background:' + (r.status == 0 ? '#fff3e0' : '#e8f5e9') + ';color:' + (r.status == 0 ? '#e65100' : '#2e7d32') + ';">' + statusIcon + ' ' + (r.status_text || '') + '</span>' +
+                                '</div>' +
+                                '<div class="meta">投注: ¥' + parseFloat(r.bet_amount || 0).toFixed(2) + ' × ' + (parseFloat(r.xima_rate || 0) * 100).toFixed(2) + '%</div>' +
+                                '<div class="meta">' + (r.create_date || '') + (r.source_name && r.source_name !== '自己' ? ' | 来源: ' + r.source_name : '') + '</div>' +
+                                '</div>' +
+                                '<div class="amount ' + statusCls + '">¥' + parseFloat(r.xima_amount || 0).toFixed(2) + '</div>' +
+                                '</div>';
+                        });
+
+                        var loaded = (historyPage - 1) * 20 + list.length;
+                        if (loaded < total) {
+                            historyPage++;
+                            document.getElementById('loadMore').style.display = 'block';
+                        } else {
+                            document.getElementById('loadMore').style.display = 'none';
+                            historyHasMore = false;
+                        }
+                    }
+                    document.getElementById('recordList').innerHTML += html;
+                }
+            });
+    }
+    </script>
+</body>
+</html>

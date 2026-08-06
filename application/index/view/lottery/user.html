@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>个人中心 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/mobile_light.css">
+    <link rel="stylesheet" href="/assets/lottery/css/lottery_m.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 本页暖色调覆盖 - 与红色横幅融合 */
+        body.light-mobile {
+            background: linear-gradient(180deg, #f0ddd0 0%, #f5e6dc 10%, #faf0e6 30%, #f5f0eb 100%) !important;
+        }
+        .lm-card, .lm-menu-list {
+            background: rgba(255,252,248,0.95) !important;
+            border: 1px solid rgba(198,40,40,0.06);
+        }
+        .lm-menu-label {
+            color: #8b4513 !important;
+        }
+        .lm-balance-card {
+            background: linear-gradient(135deg, #c62828 0%, #a8071a 50%, #8b0000 100%) !important;
+        }
+        .lm-balance-btn {
+            color: #c62828 !important;
+        }
+        .m-bottom-nav {
+            background: rgba(255,252,248,0.98) !important;
+            border-top: 1px solid rgba(198,40,40,0.08) !important;
+        }
+        .lm-menu-group {
+            margin-bottom: 6px !important;
+        }
+    </style>
+</head>
+<body class="light-mobile">
+
+    <div class="lm-safe-bottom">
+
+        <!-- 用户头部: 图片 + 渐变过渡 -->
+        <div style="position:relative; overflow:hidden;">
+            <!-- 背景图 -->
+            <div style="width:100%; height:220px; position:relative;">
+                <img src="/thumb.php?src=/wode.png&w=800&q=72" style="width:100%; height:100%; display:block; object-fit:cover; object-position:center top;" alt="banner">
+                <!-- 底部渐变遮罩，让图片渐渐融入页面背景 -->
+                <div style="position:absolute; bottom:0; left:0; right:0; height:80px; background:linear-gradient(to bottom, transparent, #f0ddd0);"></div>
+            </div>
+
+            <!-- 头像 (绝对定位在图片右上角) -->
+            <div id="avatarWrap" style="position:absolute; top:16px; right:20px; cursor:pointer; z-index:5;" onclick="triggerAvatarUpload()">
+                <div id="userAvatar" style="width:50px; height:50px; border-radius:50%; background:rgba(255,255,255,0.9); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.2); border:2px solid rgba(255,255,255,0.8); overflow:hidden; background-size:cover; background-position:center;">
+                    <i id="avatarIcon" class="fa-solid fa-user" style="font-size:18px; color:#c62828;"></i>
+                </div>
+                <div id="avatarBadge" style="display:none; position:absolute; right:-3px; bottom:-3px; width:20px; height:20px; border-radius:50%; background:linear-gradient(135deg,#f5a623,#d4380d); color:#fff; font-size:9px; align-items:center; justify-content:center; border:2px solid #fff;">
+                    <i class="fa-solid fa-camera"></i>
+                </div>
+            </div>
+            <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="handleAvatarUpload(this)">
+
+            <!-- 用户信息浮层 (在图片底部渐变区域) -->
+            <div style="position:absolute; bottom:16px; left:0; right:0; text-align:center; z-index:3;">
+                <!-- 未登录 -->
+                <div id="loggedOutView">
+                    <div style="font-size:16px; font-weight:800; color:#fff; margin-bottom:12px; text-shadow:0 2px 6px rgba(0,0,0,0.4);">未登录</div>
+                    <div style="display:flex; justify-content:center; gap:12px;">
+                        <a href="/index.php/index/lottery/login" style="display:inline-block; width:100px; padding:9px 0; font-size:14px; font-weight:800; border-radius:30px; background:linear-gradient(135deg,#ffd700,#f5a623); color:#8b0000; text-decoration:none; text-align:center; box-shadow:0 3px 10px rgba(245,166,35,0.4); letter-spacing:1px;">登录</a>
+                        <a href="/index.php/index/lottery/register" style="display:inline-block; width:100px; padding:9px 0; font-size:14px; font-weight:800; border-radius:30px; background:linear-gradient(135deg,#d4380d,#a8071a); color:#ffd700; text-decoration:none; text-align:center; box-shadow:0 3px 10px rgba(168,7,26,0.4); border:1px solid rgba(255,215,0,0.3); letter-spacing:1px;">注册</a>
+                    </div>
+                </div>
+
+                <!-- 已登录 -->
+                <div id="loggedInView" style="display:none;">
+                    <div style="font-size:20px; font-weight:800; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,0.4); letter-spacing:1px;" id="userName">--</div>
+                    <div style="display:inline-block; margin-top:6px; padding:3px 14px; background:rgba(0,0,0,0.2); border-radius:20px; border:1px solid rgba(255,215,0,0.3); backdrop-filter:blur(4px);">
+                        <span style="font-size:12px; color:#ffd700; font-weight:600;" id="userId">ID: --</span>
+                    </div>
+                    <div style="margin-top:6px; font-size:11px; color:rgba(255,255,255,0.9); background:rgba(0,0,0,0.15); display:inline-block; padding:2px 10px; border-radius:12px;">
+                        自身返水: <span id="userSelfRebate">0%</span> &nbsp;|&nbsp; 下级洗码: <span id="userInviteRebate">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 余额卡片 -->
+        <div class="lm-balance-card" id="balanceCard" style="display:none;">
+            <div class="lm-balance-label">账户余额</div>
+            <div class="lm-balance-value" id="userBalanceWrapper">¥<span id="userBalance">0.00</span></div>
+            <div class="lm-balance-actions">
+                <a href="/index.php/index/lottery/recharge" class="lm-balance-btn"><i class="fa-solid fa-plus"></i> 充值</a>
+                <a href="/index.php/index/lottery/withdraw" class="lm-balance-btn"><i class="fa-solid fa-arrow-up-from-bracket"></i> 提现</a>
+                <a href="/index.php/index/lottery/transfer" class="lm-balance-btn"><i class="fa-solid fa-right-left"></i> 转账</a>
+            </div>
+        </div>
+
+        <!-- 功能菜单 - 统一一个列表 -->
+        <div class="lm-menu-group">
+            <div class="lm-menu-list">
+                <a class="lm-menu-item" href="/index.php/index/lottery/verify">
+                    <div class="lm-menu-icon" style="background: linear-gradient(135deg, #7b1fa2, #9c27b0); color: #fff;"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div class="lm-menu-text"><span>实名认证</span><small id="verifyStatusText">查看认证状态</small></div>
+                    <span id="verifyBadge" style="display:none;font-size:12px;padding:2px 8px;border-radius:10px;margin-right:8px;"></span>
+                    <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
+                </a>
+                <a class="lm-menu-item" href="javascript:;" onclick="goIfVerified('/index.php/index/lottery/recharge')">
+                    <div class="lm-menu-icon green"><i class="fa-solid fa-plus"></i></div>
+                    <div class="lm-menu-text"><span>充值</span><small>微信、支付宝、USDT</small></div>
+                    <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
+                </a>
+                <a class="lm-menu-item" href="javascript:;" onclick="goIfVerified('/index.php/index/lottery/withdraw')">
+                    <div class="lm-menu-icon blue"><i class="fa-solid fa-arrow-up-from-bracket"></i></div>
+                    <div class="lm-menu-text"><span>提现</span><small>快速提现，安全便捷</small></div>
+                    <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
+                </a>
+                <a class="lm-menu-item" href="/index.php/index/lottery/transfer">
+                    <div class="lm-menu-icon teal"><i class="fa-solid fa-right-left"></i></div>
+                    <div class="lm-menu-text"><span>站内转账</span><small>转账给好友</small></div>
+                    <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
+                </a>
+                <a class="lm-menu-item" href="/index.php/index/lottery/transactions">
+                    <div class="lm-menu-icon" style="background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;"><i class="fa-solid fa-list"></i></div>
+                    <div class="lm-menu-text"><span>交易明细</span><small>查看所有资金变动</small></div>
+                    <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="lm-menu-group" id="rebateGroup" style="display:none;">
+            <div class="lm-menu-list">
+                <a class="lm-menu-item" href="/index.php/index/lottery/xima">
+                    <div class="lm-menu-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: #fff;"><i class="fa-solid fa-recycle"></i></div>
+                    <div class="lm-menu-text"><span>洗码中心</span><small id="ximaHint">投注产生洗码，随时领取</small></div>
+                    <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
+                </a>
+
+                <a class="lm-menu-item" href="/index.php/index/lottery/agent">
+                    <div class="lm-menu-icon" style="background: linear-gradient(135deg, #FF6B6B, #E3001B); color: #fff;"><i class="fa-solid fa-users"></i></div>
+                    <div class="lm-menu-text"><span>全民代理</span><small>邀请好友赚佣金</small></div>
+                    <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="lm-menu-group">
+            <div class="lm-menu-list">
+                <a class="lm-menu-item" href="/index.php/index/lottery/records">
+                    <div class="lm-menu-icon orange"><i class="fa-solid fa-receipt"></i></div>
+                    <div class="lm-menu-text"><span>投注记录</span><small>查看历史投注</small></div>
+                    <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
+                </a>
+                <a class="lm-menu-item" href="/index.php/index/lottery/trend#trend">
+                    <div class="lm-menu-icon purple"><i class="fa-solid fa-chart-line"></i></div>
+                    <div class="lm-menu-text"><span>走势分析</span><small>走势图、路子图、长龙</small></div>
+                    <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
+                </a>
+                <a class="lm-menu-item" href="/index.php/index/lottery/kefu">
+                    <div class="lm-menu-icon" style="background: linear-gradient(135deg, #36d1dc 0%, #5b86e5 100%);"><i class="fa-solid fa-headset"></i></div>
+                    <div class="lm-menu-text"><span>在线客服</span><small id="kefuUnreadText">联系官方客服</small></div>
+                    <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
+                </a>
+                <a class="lm-menu-item" href="javascript:void(0)" id="logoutBtn" style="display:none;" onclick="LotteryAuth.logout()">
+                    <div class="lm-menu-icon red"><i class="fa-solid fa-right-from-bracket"></i></div>
+                    <div class="lm-menu-text"><span>退出登录</span></div>
+                    <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 底部导航 -->
+    <nav class="m-bottom-nav">
+        <a href="/index.php/index/lottery/index" class="m-nav-item">
+            <i class="fa-solid fa-dice"></i>
+            <span>彩票</span>
+        </a>
+        <a href="/index.php/index/lottery/trend#trend" class="m-nav-item">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>走势</span>
+        </a>
+        <a href="/index.php/index/lottery/records" class="m-nav-item">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>记录</span>
+        </a>
+        <a href="/index.php/index/lottery/user" class="m-nav-item active">
+            <i class="fa-solid fa-user"></i>
+            <span>我的</span>
+        </a>
+    </nav>
+
+
+
+
+    <script src="/assets/lottery/js/auth.js"></script>
+    <script src="/assets/lottery/js/currency_picker.js"></script>
+    <script>
+    // ===== 退出登录 =====
+    function doLogout() {
+        if (confirm('确认退出登录？')) {
+            localStorage.removeItem('lottery_token');
+            localStorage.removeItem('lottery_user');
+            window.location.href = '/index.php/index/lottery/login';
+        }
+    }
+
+    // ===== 头像上传 =====
+    function triggerAvatarUpload() {
+        if (!LotteryAuth.isLoggedIn()) return;
+        document.getElementById('avatarInput').click();
+    }
+
+    function handleAvatarUpload(input) {
+        var file = input.files && input.files[0];
+        if (!file) return;
+        // 限制大小 2MB
+        if (file.size > 2 * 1024 * 1024) {
+            alert('图片不能超过2MB'); return;
+        }
+
+        var formData = new FormData();
+        formData.append('file', file);
+
+        var token = LotteryAuth.getToken();
+
+        // 第1步: 上传文件
+        fetch('/index.php/api/common/upload', {
+            method: 'POST',
+            headers: { 'token': token },
+            body: formData
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.code === 1 && res.data && res.data.url) {
+                // 第2步: 更新用户头像
+                return saveAvatar(res.data.fullurl || res.data.url, res.data.url);
+            } else {
+                alert(res.msg || '上传失败');
+            }
+        })
+        .catch(function(e) {
+            alert('上传出错: ' + e.message);
+        });
+
+        // 清空 input，允许重复选同一文件
+        input.value = '';
+    }
+
+    function saveAvatar(displayUrl, saveUrl) {
+        var token = LotteryAuth.getToken();
+        var formData = new FormData();
+        formData.append('avatar', saveUrl);
+
+        return fetch('/index.php/api/user/profile', {
+            method: 'POST',
+            headers: { 'token': token },
+            body: formData
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.code === 1) {
+                // 更新页面显示
+                setAvatarDisplay(displayUrl);
+                // 更新缓存
+                var u = LotteryAuth.getCachedUser();
+                if (u) {
+                    u.avatar = displayUrl;
+                    localStorage.setItem('lottery_user', JSON.stringify(u));
+                }
+            } else {
+                alert(res.msg || '保存头像失败');
+            }
+        });
+    }
+
+    function setAvatarDisplay(url) {
+        var el = document.getElementById('userAvatar');
+        var icon = document.getElementById('avatarIcon');
+        if (el && url) {
+            el.style.backgroundImage = 'url(' + url + ')';
+            el.style.backgroundColor = 'transparent';
+            if (icon) icon.style.display = 'none';
+        }
+    }
+
+    // ===== 页面初始化 =====
+    document.addEventListener('DOMContentLoaded', function() {
+        if (LotteryAuth.isLoggedIn()) {
+            // 先用缓存快速显示
+            var u = LotteryAuth.getCachedUser();
+            if (u) showUserUI(u);
+
+            // 再从服务器获取最新数据（刷新余额等）
+            LotteryAuth.fetchUserInfo(function(freshUser) {
+                if (freshUser) showUserUI(freshUser);
+            });
+        }
+
+        function showUserUI(u) {
+            document.getElementById('loggedOutView').style.display = 'none';
+            document.getElementById('loggedInView').style.display = 'block';
+            document.getElementById('balanceCard').style.display = 'block';
+            document.getElementById('logoutBtn').style.display = '';
+
+            document.getElementById('userName').textContent = u.nickname || u.username || '--';
+            document.getElementById('userId').textContent = 'ID: ' + (u.id || u.user_id || '--');
+
+            var uw = document.getElementById('userBalanceWrapper');
+            if (uw) uw.innerHTML = LotteryAuth.formatMoney(u.money);
+
+            // 显示头像
+            if (u.avatar) setAvatarDisplay(u.avatar);
+
+            // 显示相机小图标
+            var badge = document.getElementById('avatarBadge');
+            if (badge) badge.style.display = 'flex';
+
+            // 显示流水返利入口
+            var rg = document.getElementById('rebateGroup');
+            if (rg) rg.style.display = '';
+
+            // 显示实名认证状态
+            var vs = (u.verify_status !== undefined) ? u.verify_status : -1;
+            var badge = document.getElementById('verifyBadge');
+            var vText = document.getElementById('verifyStatusText');
+            if (vs === 1) {
+                if (badge) { badge.textContent = '已认证'; badge.style.display = 'inline'; badge.style.background = '#e8f5e9'; badge.style.color = '#2e7d32'; }
+                if (vText) vText.textContent = '已通过实名认证';
+            } else {
+                if (badge) { badge.textContent = '未认证'; badge.style.display = 'inline'; badge.style.background = '#f5f5f5'; badge.style.color = '#888'; }
+                if (vText) vText.textContent = '请完成实名认证';
+            }
+            window._verifyStatus = vs;
+        }
+
+        // 实名认证拦截：充值/提现需已认证
+        window.goIfVerified = function(url) {
+            var vs = window._verifyStatus;
+            if (vs === 1) {
+                location.href = url;
+            } else {
+                alert('请先完成实名认证，微信/支付宝充提需使用认证姓名的账号');
+                location.href = '/index.php/index/lottery/verify';
+            }
+        };
+
+        // logout handled by doLogout() onclick
+
+        // 检查客服未读
+        if (LotteryAuth.isLoggedIn()) {
+            LotteryAuth.request('/index.php/api/kefu/unreadCount', {method: 'GET'})
+                .then(function(res) {
+                    if (res.code === 1 && res.data && res.data.count > 0) {
+                        var textEl = document.getElementById('kefuUnreadText');
+                        if (textEl) {
+                            textEl.innerHTML = '<span style="color:var(--m-accent);font-weight:bold;">您有 ' + res.data.count + ' 条未读消息</span>';
+                        }
+                    }
+                });
+        }
+    });
+
+
+    </script>
+</body>
+</html>

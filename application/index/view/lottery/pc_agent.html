@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全民代理 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/lottery.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body.lottery-page { background:#f0f2f5; }
+        .pc-page { max-width:720px; margin:80px auto 40px; padding:0 24px; }
+        .pc-card { background:#fff; border-radius:14px; padding:32px; margin-bottom:20px; color:#333; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
+        .pc-card-title { font-size:20px; font-weight:700; margin-bottom:24px; display:flex; align-items:center; gap:10px; }
+        .pc-card-title i { color:#0d6efd; }
+        .pc-back { display:inline-flex; align-items:center; gap:8px; color:#0d6efd; text-decoration:none; font-size:13px; font-weight:600; margin-bottom:18px; padding:8px 18px; border-radius:20px; background:#fff; border:1px solid #d0e0f8; box-shadow:0 1px 3px rgba(0,0,0,0.04); transition:all 0.2s; }
+        .pc-back:hover { background:#e8f0fe; border-color:#0d6efd; transform:translateX(-2px); }
+        .pc-stats { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:24px; }
+        .pc-stat-item { background:#f8f9fa; border-radius:12px; padding:20px; text-align:center; border:1px solid #e0e0e0; }
+        .pc-stat-value { font-size:28px; font-weight:800; margin-bottom:4px; }
+        .pc-stat-label { font-size:12px; color:#888; }
+        .pc-invite-box { background:linear-gradient(135deg,#1a3a6c,#0d6efd); border-radius:12px; padding:24px; margin-bottom:24px; }
+        .pc-invite-box label { font-size:13px; color:rgba(255,255,255,0.7); margin-bottom:8px; display:block; }
+        .pc-invite-row { display:flex; gap:10px; }
+        .pc-invite-row input { flex:1; padding:12px 16px; border-radius:10px; border:none; background:rgba(255,255,255,0.15); color:#fff; font-size:14px; }
+        .pc-invite-row button { padding:12px 24px; border:none; border-radius:10px; background:#fff; color:#0d6efd; font-weight:700; cursor:pointer; white-space:nowrap; }
+        .pc-invite-row button:hover { background:#e8f0fe; }
+        .pc-table { width:100%; border-collapse:collapse; font-size:14px; }
+        .pc-table th { text-align:left; padding:12px; color:#888; font-weight:600; border-bottom:1px solid #e0e0e0; }
+        .pc-table td { padding:12px; border-bottom:1px solid #f0f0f0; color:#555; }
+        .pc-table tr:hover td { background:#f8f9fa; }
+        .pc-tabs { display:flex; gap:0; margin-bottom:24px; border-radius:10px; overflow:hidden; border:1px solid #e0e0e0; }
+        .pc-tab { flex:1; padding:12px; text-align:center; cursor:pointer; font-size:14px; font-weight:600; color:#888; background:#f8f9fa; transition:all 0.2s; }
+        .pc-tab.active { background:linear-gradient(135deg,#1a3a6c,#0d6efd); color:#fff; }
+        .pc-tab:hover:not(.active) { background:#e8f0fe; color:#333; }
+        .pc-empty { text-align:center; padding:40px; color:#999; }
+    </style>
+</head>
+<body class="lottery-page">
+    {include file="lottery/pc_header" /}
+
+    <div class="pc-page">
+        <a href="/index.php/index/lottery/user" class="pc-back"><i class="fa-solid fa-arrow-left"></i> 返回个人中心</a>
+
+        <!-- 数据概览 -->
+        <div class="pc-card">
+            <div class="pc-card-title"><i class="fa-solid fa-chart-pie"></i> 代理概览</div>
+            <div class="pc-stats">
+                <div class="pc-stat-item">
+                    <div class="pc-stat-value" style="color:#4da3ff;" id="agTeamSize">0</div>
+                    <div class="pc-stat-label">直推人数</div>
+                </div>
+                <div class="pc-stat-item">
+                    <div class="pc-stat-value" style="color:#f5a623;" id="agCommission">¥ 0.00</div>
+                    <div class="pc-stat-label">累计佣金</div>
+                </div>
+                <div class="pc-stat-item">
+                    <div class="pc-stat-value" style="color:#34d399;" id="agRate">--%</div>
+                    <div class="pc-stat-label">佣金比例</div>
+                </div>
+            </div>
+
+            <!-- 邀请链接 -->
+            <div class="pc-invite-box">
+                <label><i class="fa-solid fa-link"></i> 我的邀请链接</label>
+                <div class="pc-invite-row">
+                    <input type="text" id="inviteUrl" readonly placeholder="登录后显示">
+                    <button onclick="copyInvite()"><i class="fa-solid fa-copy"></i> 复制</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 下级列表 & 佣金记录 -->
+        <div class="pc-card">
+            <div class="pc-tabs">
+                <div class="pc-tab active" onclick="switchAgTab('team')">下级列表</div>
+                <div class="pc-tab" onclick="switchAgTab('logs')">佣金记录</div>
+            </div>
+
+            <div id="agTeamPanel">
+                <table class="pc-table">
+                    <thead><tr><th>用户名</th><th>昵称</th><th>注册时间</th></tr></thead>
+                    <tbody id="agTeamBody"><tr><td colspan="3" class="pc-empty">加载中...</td></tr></tbody>
+                </table>
+            </div>
+
+            <div id="agLogsPanel" style="display:none;">
+                <table class="pc-table">
+                    <thead><tr><th>下级</th><th>佣金金额</th><th>时间</th></tr></thead>
+                    <tbody id="agLogsBody"><tr><td colspan="3" class="pc-empty">加载中...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/lottery/js/auth.js"></script>
+    <script>
+    function switchAgTab(t) {
+        document.getElementById('agTeamPanel').style.display = t==='team' ? '' : 'none';
+        document.getElementById('agLogsPanel').style.display = t==='logs' ? '' : 'none';
+        document.querySelectorAll('.pc-tab').forEach(function(el,i){ el.classList.toggle('active', (i===0&&t==='team')||(i===1&&t==='logs')); });
+    }
+
+    function copyInvite() {
+        var inp = document.getElementById('inviteUrl');
+        inp.select();
+        document.execCommand('copy');
+        alert('邀请链接已复制');
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+        LotteryAuth.initHeader && LotteryAuth.initHeader();
+        if(!LotteryAuth.isLoggedIn()) return;
+
+        // 代理概览
+        LotteryAuth.request('/index.php/api/agent/summary',{method:'GET'}).then(function(res){
+            if(res.code===1) {
+                var d = res.data;
+                document.getElementById('agTeamSize').textContent = d.team_size;
+                document.getElementById('agCommission').textContent = '¥ ' + d.total_commission;
+                document.getElementById('inviteUrl').value = d.invite_url;
+                if (d.commission_rate) document.getElementById('agRate').textContent = d.commission_rate;
+            }
+        });
+
+        // 下级列表
+        LotteryAuth.request('/index.php/api/agent/subordinates',{method:'GET'}).then(function(res){
+            if(res.code===1) {
+                var list = res.data||[];
+                if(!list.length) { document.getElementById('agTeamBody').innerHTML = '<tr><td colspan="3" class="pc-empty">暂无下级用户</td></tr>'; return; }
+                var h = '';
+                list.forEach(function(u){ h += '<tr><td>'+u.username+'</td><td>'+(u.nickname||'--')+'</td><td>'+u.date+'</td></tr>'; });
+                document.getElementById('agTeamBody').innerHTML = h;
+            }
+        });
+
+        // 佣金记录
+        LotteryAuth.request('/index.php/api/agent/commission_logs',{method:'GET'}).then(function(res){
+            if(res.code===1) {
+                var list = res.data||[];
+                if(!list.length) { document.getElementById('agLogsBody').innerHTML = '<tr><td colspan="3" class="pc-empty">暂无佣金记录</td></tr>'; return; }
+                var h = '';
+                list.forEach(function(c){ h += '<tr><td>'+c.sub_name+'</td><td style="color:#f5a623;font-weight:700;">¥'+c.amount+'</td><td>'+c.date+'</td></tr>'; });
+                document.getElementById('agLogsBody').innerHTML = h;
+            }
+        });
+    });
+    </script>
+</body>
+</html>

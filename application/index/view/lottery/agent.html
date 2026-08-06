@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>全民代理 - 邀请好友赚佣金</title>
+    <link rel="stylesheet" href="/assets/lottery/css/mobile_light.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .agent-header {
+            background: linear-gradient(135deg, #FF6B6B 0%, #E3001B 100%);
+            color: #fff;
+            padding: 30px 20px 40px;
+            text-align: center;
+            position: relative;
+        }
+        .agent-header h1 { font-size: 24px; font-weight: 800; margin-bottom: 10px; }
+        .agent-header p { font-size: 14px; opacity: 0.9; margin-bottom: 20px; }
+        .agent-stats {
+            display: flex;
+            background: #fff;
+            margin: -30px 16px 16px;
+            border-radius: 12px;
+            box-shadow: var(--m-shadow);
+            padding: 20px 0;
+            position: relative;
+            z-index: 2;
+        }
+        .agent-stat-item {
+            flex: 1;
+            text-align: center;
+            border-right: 1px solid #f0f0f0;
+        }
+        .agent-stat-item:last-child { border-right: none; }
+        .stat-val { font-size: 24px; font-weight: 800; color: var(--m-text); margin-bottom: 4px; }
+        .stat-val.red { color: var(--m-accent); }
+        .stat-label { font-size: 13px; color: var(--m-text-sub); }
+        
+        .invite-box {
+            background: #fff;
+            margin: 16px;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--m-shadow);
+            text-align: center;
+        }
+        .qrcode-wrap {
+            margin: 0 auto 12px;
+            position: relative;
+        }
+        /* Hidden: only used for generation */
+        .qrcode-gen { width: 0; height: 0; overflow: hidden; position: absolute; }
+        .qr-poster-img {
+            width: 200px;
+            height: 260px;
+            border-radius: 12px;
+            border: 1px solid #eef0f5;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            display: block;
+            margin: 0 auto;
+        }
+        .qr-hint {
+            font-size: 12px;
+            color: var(--m-text-light);
+            margin-top: 10px;
+        }
+        .qr-hint i { color: var(--m-primary); margin-right: 4px; }
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .btn-row .lm-btn { flex: 1; padding: 12px; font-size: 15px; }
+        .btn-save {
+            background: var(--m-green-grad) !important;
+            color: #fff !important;
+        }
+        .invite-link {
+            background: #f7f8fa;
+            border: 1px dashed #bac1cc;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--m-primary);
+            word-break: break-all;
+            margin-bottom: 16px;
+        }
+        
+        .list-tab-active { color: var(--m-primary); font-weight: 800; }
+        .list-item { padding: 14px 16px; border-bottom: 1px solid #f0f2f5; background: #fff; display: flex; justify-content: space-between; align-items: center; }
+        .list-title { font-size: 15px; font-weight: 700; color: var(--m-text); }
+        .list-time { font-size: 12px; color: var(--m-text-light); margin-top: 4px; }
+        .list-val { font-size: 16px; font-weight: 800; color: var(--m-accent); }
+    </style>
+</head>
+<body class="light-mobile">
+
+    <!-- 顶部 -->
+    <div class="lm-topbar" style="background: linear-gradient(135deg, #FF6B6B 0%, #E3001B 100%);">
+        <a href="javascript:history.back();" class="back"><i class="fa-solid fa-chevron-left"></i></a>
+        <h2>全民代理</h2>
+    </div>
+
+    <!-- 头部背景与概览 -->
+    <div class="agent-header">
+        <h1>分享创造财富</h1>
+        <p>邀请好友注册投注，享受终身<span id="stRate">--</span>%返佣奖励</p>
+    </div>
+    
+    <div class="agent-stats">
+        <div class="agent-stat-item">
+            <div class="stat-val" id="stTeamSize">0</div>
+            <div class="stat-label">直推人数</div>
+        </div>
+        <div class="agent-stat-item">
+            <div class="stat-val red" id="stCommission">0.00</div>
+            <div class="stat-label">累计佣金(元)</div>
+        </div>
+        <div class="agent-stat-item">
+            <div class="stat-val" id="stRateVal">--%</div>
+            <div class="stat-label">佣金比例</div>
+        </div>
+    </div>
+
+    <!-- 邀请链接区 -->
+    <div class="invite-box">
+        <div style="font-size:15px;font-weight:700;margin-bottom:16px;">推广二维码 / 邀请链接</div>
+
+        <!-- Hidden QR generator -->
+        <div class="qrcode-gen" id="qrcodeGen"></div>
+
+        <!-- Poster image (long-press saveable) -->
+        <div class="qrcode-wrap">
+            <img class="qr-poster-img" id="qrPosterImg" src="" alt="长按保存推广二维码" style="display:none;">
+            <div id="qrLoading" style="color:#ccc;font-size:13px;padding:40px 0;">生成中...</div>
+        </div>
+        <div class="qr-hint"><i class="fa-solid fa-hand-pointer"></i> 长按上方图片即可保存到相册</div>
+
+        <div class="invite-link" id="inviteUrl">--</div>
+        <div class="btn-row">
+            <button class="lm-btn lm-btn-primary" id="btnCopy"><i class="fa-solid fa-copy"></i> 复制链接</button>
+            <button class="lm-btn btn-save" id="btnSaveQr"><i class="fa-solid fa-download"></i> 保存二维码</button>
+        </div>
+    </div>
+
+    <!-- 标签页 -->
+    <div class="lm-tabs" style="margin-top:16px;">
+        <div class="lm-tab active" data-target="teamList">直推列表</div>
+        <div class="lm-tab" data-target="commList">佣金明细</div>
+    </div>
+
+    <!-- 列表区 -->
+    <div class="lm-safe-bottom" style="margin-top:8px;">
+        <div id="teamList"></div>
+        <div id="commList" style="display:none;"></div>
+    </div>
+
+    <div class="lm-toast" id="toastContainer"></div>
+
+    <script src="/assets/lottery/js/auth.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!LotteryAuth.isLoggedIn()) {
+            window.location.href = '/index.php/index/lottery/login';
+            return;
+        }
+
+        // 切换Tab
+        var tabs = document.querySelectorAll('.lm-tab');
+        tabs.forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                tabs.forEach(function(t) { t.classList.remove('active'); });
+                this.classList.add('active');
+                var target = this.getAttribute('data-target');
+                document.getElementById('teamList').style.display = target === 'teamList' ? 'block' : 'none';
+                document.getElementById('commList').style.display = target === 'commList' ? 'block' : 'none';
+            });
+        });
+
+        // 提示
+        function showToast(msg) {
+            var c = document.getElementById('toastContainer');
+            var t = document.createElement('div');
+            t.className = 'lm-toast success';
+            t.style.display = 'block';
+            t.innerHTML = msg;
+            c.appendChild(t);
+            setTimeout(function() { t.remove(); }, 2000);
+        }
+
+        var headers = {'Token': LotteryAuth.getToken()};
+
+        // 获取概览
+        fetch('/index.php/api/agent/summary', {headers: headers})
+            .then(res => res.json())
+            .then(res => {
+                if(res.code == 1) {
+                    document.getElementById('stTeamSize').innerText = res.data.team_size;
+                    document.getElementById('stCommission').innerText = res.data.total_commission;
+                    if (res.data.commission_rate) {
+                        document.getElementById('stRate').innerText = res.data.commission_rate.replace('%','');
+                        document.getElementById('stRateVal').innerText = res.data.commission_rate;
+                    }
+                    var inviteUrl = res.data.invite_url;
+                    document.getElementById('inviteUrl').innerText = inviteUrl;
+                    
+                    // 生成二维码 → 合成海报 → 转为 img（可长按保存）
+                    var genDiv = document.getElementById('qrcodeGen');
+                    genDiv.innerHTML = '';
+                    var qr = new QRCode(genDiv, {
+                        text: inviteUrl,
+                        width: 300,
+                        height: 300,
+                        colorDark : '#000000',
+                        colorLight : '#ffffff',
+                        correctLevel : QRCode.CorrectLevel.H
+                    });
+
+                    // 等 canvas 渲染完毕再合成海报
+                    setTimeout(function() {
+                        var srcCanvas = genDiv.querySelector('canvas');
+                        if (!srcCanvas) return;
+
+                        // 合成海报 canvas
+                        var W = 400, H = 520;
+                        var poster = document.createElement('canvas');
+                        poster.width = W;
+                        poster.height = H;
+                        var ctx = poster.getContext('2d');
+
+                        // 背景
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, W, H);
+
+                        // 顶部品牌色块
+                        var grad = ctx.createLinearGradient(0, 0, W, 0);
+                        grad.addColorStop(0, '#FF6B6B');
+                        grad.addColorStop(1, '#E3001B');
+                        ctx.fillStyle = grad;
+                        ctx.fillRect(0, 0, W, 80);
+
+                        // 品牌文字
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 26px "PingFang SC", sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('好运北彩', W / 2, 52);
+
+                        // 二维码
+                        var qrSize = 280;
+                        var qrX = (W - qrSize) / 2;
+                        var qrY = 105;
+                        // 白底 + 圆角阴影
+                        ctx.save();
+                        ctx.shadowColor = 'rgba(0,0,0,0.08)';
+                        ctx.shadowBlur = 16;
+                        ctx.fillStyle = '#fff';
+                        ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
+                        ctx.restore();
+                        ctx.drawImage(srcCanvas, qrX, qrY, qrSize, qrSize);
+
+                        // 底部提示
+                        ctx.fillStyle = '#333';
+                        ctx.font = 'bold 18px "PingFang SC", sans-serif';
+                        ctx.fillText('扫码注册  邀您赚钱', W / 2, qrY + qrSize + 40);
+                        ctx.fillStyle = '#999';
+                        ctx.font = '13px "PingFang SC", sans-serif';
+                        ctx.fillText('邀请好友投注  终身享受返佣', W / 2, qrY + qrSize + 65);
+
+                        // 转为 img
+                        var dataUrl = poster.toDataURL('image/png');
+                        var imgEl = document.getElementById('qrPosterImg');
+                        imgEl.src = dataUrl;
+                        imgEl.style.display = 'block';
+                        document.getElementById('qrLoading').style.display = 'none';
+
+                        // 保存按钮
+                        document.getElementById('btnSaveQr').onclick = function() {
+                            var a = document.createElement('a');
+                            a.href = dataUrl;
+                            a.download = 'invite_qrcode.png';
+                            a.click();
+                            showToast('已开始下载，请查看相册或下载目录');
+                        };
+                    }, 500);
+                    
+                    document.getElementById('btnCopy').onclick = function() {
+                        var textarea = document.createElement('textarea');
+                        textarea.value = inviteUrl;
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textarea);
+                        showToast('复制成功！快去分享给好友吧');
+                    };
+                }
+            });
+
+        // 获取团队
+        fetch('/index.php/api/agent/subordinates', {headers: headers})
+            .then(res => res.json())
+            .then(res => {
+                var html = '';
+                if(res.code == 1 && res.data.length > 0) {
+                    res.data.forEach(function(item) {
+                        html += '<div class="list-item">' +
+                                '<div><div class="list-title">' + item.name + '</div><div class="list-time">注册: ' + item.date + '</div></div>' +
+                                '<div class="list-val" style="color:var(--m-text-sub);font-size:13px;">已绑定</div>' +
+                                '</div>';
+                    });
+                } else {
+                    html = '<div class="lm-empty">暂无直推好友</div>';
+                }
+                document.getElementById('teamList').innerHTML = html;
+            });
+
+        // 获取佣金
+        fetch('/index.php/api/agent/commission_logs', {headers: headers})
+            .then(res => res.json())
+            .then(res => {
+                var html = '';
+                if(res.code == 1 && res.data.length > 0) {
+                    res.data.forEach(function(item) {
+                        html += '<div class="list-item">' +
+                                '<div><div class="list-title">' + item.remark + '</div><div class="list-time">' + item.date + '</div></div>' +
+                                '<div class="list-val">+' + parseFloat(item.amount).toFixed(2) + '</div>' +
+                                '</div>';
+                    });
+                } else {
+                    html = '<div class="lm-empty">暂无佣金记录</div>';
+                }
+                document.getElementById('commList').innerHTML = html;
+            });
+    });
+    </script>
+</body>
+</html>

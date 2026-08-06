@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>实名认证 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/mobile_light.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .vf-status-card { border-radius: 14px; padding: 20px; margin: 16px; text-align: center; }
+        .vf-status-card.approved { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); color: #2e7d32; }
+        .vf-status-icon { font-size: 40px; margin-bottom: 10px; }
+        .vf-status-text { font-size: 18px; font-weight: 700; }
+        .vf-status-hint { font-size: 13px; margin-top: 6px; opacity: 0.8; }
+        .vf-form { padding: 0 16px; }
+        .vf-field { margin-bottom: 16px; }
+        .vf-label { font-size: 14px; font-weight: 600; color: #555; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .vf-label .required { color: #e74c3c; }
+        .vf-input { width: 100%; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 10px; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
+        .vf-input:focus { border-color: #1c9eff; }
+        .vf-submit { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #1c9eff, #0066cc); cursor: pointer; margin-top: 8px; }
+        .vf-submit:disabled { opacity: 0.5; }
+        .vf-tips { margin: 16px; padding: 14px; background: #f5f5f5; border-radius: 10px; font-size: 12px; color: #888; line-height: 1.8; }
+        .vf-tips li { list-style: none; padding-left: 16px; position: relative; }
+        .vf-tips li::before { content: '•'; position: absolute; left: 0; color: #1c9eff; }
+        .vf-notice { margin: 16px; padding: 16px; background: linear-gradient(135deg, #fff3e0, #ffe0b2); border-radius: 12px; border-left: 4px solid #e65100; }
+        .vf-notice-title { font-size: 15px; font-weight: 700; color: #e65100; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .vf-notice-text { font-size: 13px; color: #bf360c; line-height: 1.8; }
+    </style>
+</head>
+<body class="light-mobile">
+
+    <div class="lm-topbar">
+        <a class="back" href="/index.php/index/lottery/user"><i class="fa-solid fa-arrow-left"></i></a>
+        <h2>实名认证</h2>
+    </div>
+
+    <div class="lm-safe-bottom" id="pageContent">
+        <div style="text-align:center;padding:40px;color:#999;">加载中...</div>
+    </div>
+
+    <div class="lm-toast" id="toast"></div>
+
+<script src="/assets/lottery/js/auth.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (!LotteryAuth.isLoggedIn()) { location.href = '/index.php/index/lottery/login'; return; }
+    loadVerifyStatus();
+});
+
+function loadVerifyStatus() {
+    LotteryAuth.request('/index.php/api/user/verifyStatus', {method:'GET'}).then(function(res) {
+        var d = res.data || {};
+        var status = d.status !== undefined ? d.status : -1;
+        var container = document.getElementById('pageContent');
+
+        if (status === 1) {
+            // 已通过
+            container.innerHTML = '<div class="vf-status-card approved">' +
+                '<div class="vf-status-icon"><i class="fa-solid fa-circle-check"></i></div>' +
+                '<div class="vf-status-text">实名认证已通过</div>' +
+                '<div class="vf-status-hint">姓名：' + maskName(d.real_name) + '　身份证：' + maskId(d.id_card) + '</div>' +
+                '</div>' + renderNotice();
+        } else {
+            // 未认证（无审核中/被拒绝状态了，直接显示表单）
+            container.innerHTML = renderForm(d);
+        }
+    }).catch(function() {
+        document.getElementById('pageContent').innerHTML = renderForm({});
+    });
+}
+
+function renderForm(prev) {
+    return renderNotice() +
+        '<div class="vf-form">' +
+        '<div class="vf-field"><div class="vf-label"><span class="required">*</span> 真实姓名</div>' +
+        '<input class="vf-input" id="realName" placeholder="请输入真实姓名" value="' + (prev.real_name||'') + '"></div>' +
+        '<div class="vf-field"><div class="vf-label"><span class="required">*</span> 身份证号</div>' +
+        '<input class="vf-input" id="idCard" placeholder="请输入18位身份证号码" maxlength="18" value="' + (prev.id_card||'') + '"></div>' +
+        '<button class="vf-submit" id="submitBtn" onclick="submitVerify()">提交认证</button>' +
+        '</div>' +
+        '<ul class="vf-tips">' +
+        '<li>请确保填写真实姓名和身份证号</li>' +
+        '<li>提交后将立即生效，无需等待审核</li>' +
+        '<li>认证后充值和提现的微信/支付宝账号必须与认证姓名一致</li>' +
+        '<li>每位用户只能认证一次，认证后不可修改</li>' +
+        '</ul>';
+}
+
+function renderNotice() {
+    return '<div class="vf-notice">' +
+        '<div class="vf-notice-title"><i class="fa-solid fa-triangle-exclamation"></i> 重要提示</div>' +
+        '<div class="vf-notice-text">' +
+        '为保障资金安全，微信、支付宝充值和提现时，<strong>只能使用与实名认证姓名一致的账号</strong>进行操作。<br>' +
+        '• 充值时请使用本人微信/支付宝付款<br>' +
+        '• 提现时收款账户姓名必须与认证姓名一致<br>' +
+        '• 姓名不一致的充提申请将被拒绝' +
+        '</div></div>';
+}
+
+function submitVerify() {
+    var name = document.getElementById('realName').value.trim();
+    var card = document.getElementById('idCard').value.trim();
+    if (!name) { showToast('请输入真实姓名', 'error'); return; }
+    if (!card || card.length !== 18) { showToast('请输入18位身份证号', 'error'); return; }
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = '提交中...';
+
+    var fd = new FormData();
+    fd.append('real_name', name);
+    fd.append('id_card', card);
+
+    fetch('/index.php/api/user/submitVerify', {
+        method: 'POST',
+        headers: { 'token': LotteryAuth.getToken() },
+        body: fd
+    }).then(function(r){ return r.json(); }).then(function(res) {
+        btn.disabled = false; btn.textContent = '提交认证';
+        if (res.code === 1) {
+            showToast(res.msg || '认证成功', 'success');
+            setTimeout(function(){ loadVerifyStatus(); }, 1500);
+        } else {
+            showToast(res.msg || '提交失败', 'error');
+        }
+    }).catch(function() {
+        btn.disabled = false; btn.textContent = '提交认证';
+        showToast('网络错误', 'error');
+    });
+}
+
+function maskName(n) { return n ? n.charAt(0) + '**' : ''; }
+function maskId(id) { return id ? id.substring(0,4) + '**********' + id.substring(14) : ''; }
+function showToast(m,t) { var e=document.getElementById('toast'); e.textContent=m; e.className='lm-toast '+t; e.style.display='block'; setTimeout(function(){e.style.display='none';},3000); }
+</script>
+</body>
+</html>

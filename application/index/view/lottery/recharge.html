@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>充值 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/mobile_light.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="light-mobile">
+
+    <div class="lm-topbar">
+        <a class="back" href="/index.php/index/lottery/user"><i class="fa-solid fa-arrow-left"></i></a>
+        <h2>充值</h2>
+    </div>
+
+    <div class="lm-safe-bottom" id="pageContent" style="display:none;">
+        <!-- 支付方式 -->
+        <div class="lm-pay-tabs" id="payTabs"></div>
+
+        <!-- 收款码 -->
+        <div class="lm-qr-card" id="qrSection">
+            <div style="color:var(--m-text-sub);font-size:13px;margin-bottom:10px;">请使用对应APP扫码转账</div>
+            <div class="lm-qr-img" id="qrDisplay" style="display:flex;align-items:center;justify-content:center;color:var(--m-text-light);">加载中...</div>
+            <div id="qrAccount" style="font-size:13px;color:var(--m-text-sub);margin:8px 0;word-break:break-all;"></div>
+            <div class="lm-qr-hint" id="qrRemark"></div>
+        </div>
+
+        <!-- USDT 钱包地址输入（仅 USDT 充值时显示） -->
+        <div class="lm-card" id="mUsdtAddrCard" style="display:none;">
+            <div class="lm-label">您的USDT钱包地址</div>
+            <input type="text" class="lm-input" id="mUsdtAddress" placeholder="请输入USDT地址(TRC20)" style="font-size:14px;">
+        </div>
+
+        <!-- 金额 -->
+        <div class="lm-card">
+            <div class="lm-label">充值金额 <span id="lblUnit"></span></div>
+            <input type="number" class="lm-input" id="amountInput" placeholder="请输入金额" style="font-size:20px;font-weight:700;" oninput="mUpdateUsdt()">
+            <div class="lm-quick-grid" id="quickGrid">
+                <!-- 快捷按钮动态渲染 -->
+            </div>
+            <div id="mRateRow" style="margin-top:10px;padding:8px 12px;background:#f0f6ff;border-radius:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:13px;font-weight:700;color:#333;">≈ <span id="mUsdtAmount">0.0000</span> USDT</span>
+                    <span style="font-size:12px;color:#999;">实时: 1U≈<span id="mExchangeRate" style="color:#0d6efd;font-weight:600;">--</span>元 <span id="mRateSource" style="color:#aaa;"></span> <i class="fa-solid fa-arrows-rotate" style="font-size:10px;cursor:pointer;" onclick="mFetchRate()"></i></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 凭证 -->
+        <div class="lm-card">
+            <div class="lm-label">上传转账凭证</div>
+            <div class="lm-upload" onclick="document.getElementById('proofFile').click()">
+                <i class="fa-solid fa-cloud-arrow-up" style="display:block;"></i>
+                <p>点击上传转账截图</p>
+            </div>
+            <input type="file" id="proofFile" accept="image/*" style="display:none" onchange="previewImg(this,'proofPrev')">
+            <div id="proofPrev" style="margin-top:10px;text-align:center;"></div>
+        </div>
+
+        <div style="padding:0 16px;margin-bottom:12px;">
+            <button class="lm-btn lm-btn-primary" id="submitBtn" onclick="submitRecharge()"><i class="fa-solid fa-paper-plane"></i> 提交充值</button>
+        </div>
+
+        <!-- 记录 -->
+        <div class="lm-card" id="recordsCard" style="display:none;">
+            <div class="lm-card-title" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';"><i class="fa-solid fa-clock-rotate-left"></i> 充值记录 <i class="fa-solid fa-chevron-down" style="margin-left:auto;color:var(--m-text-light);font-size:12px;"></i></div>
+            <div id="recordsList"></div>
+        </div>
+    </div>
+
+    <div class="lm-toast" id="toast"></div>
+
+<script src="/assets/lottery/js/auth.js"></script>
+<script>
+var payConfigs=[],curPayId=0;
+document.addEventListener('DOMContentLoaded',function(){
+    if(!LotteryAuth.isLoggedIn()){location.href='/index.php/index/lottery/login';return;}
+    // 实名认证检查
+    LotteryAuth.request('/index.php/api/user/verifyStatus',{method:'GET'}).then(function(res){
+        var st = (res.data && res.data.status !== undefined) ? res.data.status : -1;
+        if(st === 1) { document.getElementById('pageContent').style.display=''; loadPayConfig(); renderQuickBtns(); loadRecords(); return; }
+        var msg = st === 0 ? '您的实名认证正在审核中，请耐心等待' : '请先完成实名认证后才能充值';
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#f5f5f5;">' +
+            '<div style="background:#fff;padding:40px;border-radius:16px;text-align:center;width:360px;box-shadow:0 4px 20px rgba(0,0,0,0.1);">' +
+            '<i class="fa-solid fa-shield-halved" style="font-size:48px;color:#f59e0b;margin-bottom:16px;display:block;"></i>' +
+            '<div style="font-size:20px;font-weight:700;color:#333;margin-bottom:10px;">实名认证提示</div>' +
+            '<div style="font-size:14px;color:#666;margin-bottom:24px;line-height:1.6;">' + msg + '</div>' +
+            (st === 0 ? '<a href="/index.php/index/lottery/user" style="display:block;padding:12px;border-radius:10px;background:#1890ff;color:#fff;text-decoration:none;font-weight:600;">返回个人中心</a>' :
+            '<a href="/index.php/index/lottery/verify" style="display:block;padding:12px;border-radius:10px;background:#1890ff;color:#fff;text-decoration:none;font-weight:600;margin-bottom:10px;">去实名认证</a>' +
+            '<a href="/index.php/index/lottery/user" style="display:block;padding:12px;border-radius:10px;background:#f0f0f0;color:#666;text-decoration:none;font-weight:600;">返回个人中心</a>') +
+            '</div></div>';
+    }).catch(function(){ loadPayConfig(); renderQuickBtns(); loadRecords(); });
+});
+function renderQuickBtns() {
+    var mode = LotteryAuth.getCurrency();
+    document.getElementById('lblUnit').textContent = mode === 'usdt' ? '(USDT)' : '(元)';
+    var amounts = mode === 'usdt' ? [10, 50, 100, 200, 500, 1000] : [50, 100, 200, 500, 1000, 2000, 5000, 10000];
+    var html = '';
+    amounts.forEach(function(a) {
+        var txt = mode === 'usdt' ? ('¥'+a) : (a>=10000 ? '¥'+(a/10000)+'万' : '¥'+a);
+        html += '<div class="lm-quick-btn" onclick="setAmt('+a+')">'+txt+'</div>';
+    });
+    document.getElementById('quickGrid').innerHTML = html;
+}
+function loadPayConfig(){
+    fetch('/index.php/api/payment/getPaymentConfig',{headers:{'token':LotteryAuth.getToken()}})
+    .then(function(r){return r.json();})
+    .then(function(res){
+        if(res.code===1&&res.data){payConfigs=res.data;renderTabs();if(payConfigs.length){curPayId=payConfigs[0].id;selectTab(curPayId);}}
+        else{document.getElementById('qrDisplay').innerHTML='<div style="color:#e74c3c;">加载支付配置失败</div>';}
+    })
+    .catch(function(e){document.getElementById('qrDisplay').innerHTML='<div style="color:#e74c3c;">网络错误:'+e.message+'</div>';});
+}
+function renderTabs(){
+    var icons={wechat:'fa-brands fa-weixin',alipay:'fa-brands fa-alipay',usdt:'fa-solid fa-coins',bank:'fa-solid fa-building-columns'};
+    var cls={wechat:'wechat',alipay:'alipay',usdt:'usdt',bank:'bank'};
+    var names={wechat:'微信',alipay:'支付宝',usdt:'USDT',bank:'银行卡'};
+    document.getElementById('payTabs').innerHTML=payConfigs.map(function(c,i){
+        var label=c.title||names[c.pay_type]||c.pay_type;
+        return '<div class="lm-pay-tab'+(i===0?' active':'')+'" data-id="'+c.id+'" onclick="selectTab('+c.id+')"><i class="lm-pay-icon '+(cls[c.pay_type]||'')+' '+(icons[c.pay_type]||'fa-solid fa-credit-card')+'"></i><span class="lm-pay-name">'+label+'</span></div>';
+    }).join('');
+}
+function selectTab(id){
+    curPayId=id;
+    document.querySelectorAll('.lm-pay-tab').forEach(function(el){el.classList.toggle('active',el.dataset.id==id);});
+    var c=payConfigs.find(function(x){return x.id==id;});
+    if(!c)return;
+    var qd=document.getElementById('qrDisplay');
+    if(c.qr_image) qd.innerHTML='<img src="'+c.qr_image+'" style="width:100%;height:100%;object-fit:contain;border-radius:6px;">';
+    else qd.innerHTML='<div style="text-align:center;"><i class="fa-solid fa-qrcode" style="font-size:40px;color:#D9D9D9;"></i><br><span style="font-size:12px;color:var(--m-text-light);">后台未上传</span></div>';
+    document.getElementById('qrAccount').innerHTML=c.account?'<strong>收款账号: </strong>'+c.account:'';
+    document.getElementById('qrRemark').textContent=c.remark||'';
+    // 实时汇率始终显示（含 USDT）
+    var rr=document.getElementById('mRateRow');
+    if(rr) rr.style.display='';
+    mUpdateUsdt();
+    // USDT 地址卡片显隐
+    var addrCard = document.getElementById('mUsdtAddrCard');
+    if (addrCard) addrCard.style.display = (c.pay_type === 'usdt') ? '' : 'none';
+}
+function setAmt(v){
+    document.getElementById('amountInput').value=v;
+    document.querySelectorAll('.lm-quick-btn').forEach(function(b){b.classList.toggle('active',b.textContent.replace('¥','').replace('万','0000')===String(v));});
+    mUpdateUsdt();
+}
+var mRate=0;
+function mUpdateUsdt(){
+    var v=parseFloat(document.getElementById('amountInput').value)||0;
+    if(mRate>0){
+        document.getElementById('mUsdtAmount').textContent=(v/mRate).toFixed(4);
+    }
+}
+function mSetRate(rate, src){
+    mRate=parseFloat(rate);
+    var el=document.getElementById('mExchangeRate');
+    if(el)el.textContent=mRate.toFixed(2);
+    var s=document.getElementById('mRateSource');
+    if(s)s.textContent=src?'('+src+')':'';
+    mUpdateUsdt();
+}
+function mFetchRate(){
+    var el=document.getElementById('mExchangeRate'); if(el) el.textContent='...';
+    // 优先：本站后端代理（服务器拉取OKX+缓存，最稳定）
+    fetch('/index.php/api/lottery/getUsdtRate')
+    .then(function(r){return r.json();}).then(function(d){
+        if(d&&d.code===1&&d.data&&d.data.rate>0){mSetRate(d.data.rate, d.data.source||'欧意');}
+        else{mTryOkx();}
+    }).catch(function(){mTryOkx();});
+}
+function mTryOkx(){
+    fetch('https://www.okx.com/api/v5/market/exchange-rate')
+    .then(function(r){return r.json();}).then(function(d){
+        if(d&&d.data&&d.data[0]&&d.data[0].usdCny>0){mSetRate(d.data[0].usdCny,'OKX');}
+        else{mTryCoinGecko();}
+    }).catch(function(){mTryCoinGecko();});
+}
+function mTryCoinGecko(){
+    fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=cny')
+    .then(function(r){return r.json();}).then(function(d){
+        if(d&&d.tether&&d.tether.cny){mSetRate(d.tether.cny,'CoinGecko');}
+        else{mTryFx();}
+    }).catch(function(){mTryFx();});
+}
+function mTryFx(){
+    fetch('https://api.coinbase.com/v2/exchange-rates?currency=USDT')
+    .then(function(r){return r.json();}).then(function(d){
+        if(d&&d.data&&d.data.rates&&d.data.rates.CNY){mSetRate(d.data.rates.CNY,'Coinbase');}
+        else{mSetRate(7.20,'默认');}
+    }).catch(function(){mSetRate(7.20,'默认');});
+}
+mFetchRate();
+setInterval(mFetchRate, 60000);
+function previewImg(input,id){
+    if(input.files&&input.files[0]){var r=new FileReader();r.onload=function(e){document.getElementById(id).innerHTML='<img src="'+e.target.result+'" style="max-width:180px;border-radius:8px;border:1px solid var(--m-border);">';};r.readAsDataURL(input.files[0]);}
+}
+function submitRecharge(){
+    var displayAmt=parseFloat(document.getElementById('amountInput').value);
+    if(!displayAmt||displayAmt<=0){showToast('请输入金额','error');return;}
+    if(!curPayId){showToast('请选择支付方式','error');return;}
+    var cfg=payConfigs.find(function(c){return c.id==curPayId;});
+    var cnyAmt=LotteryAuth.toCny(displayAmt);
+    var btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='提交中...';
+    var fd=new FormData();fd.append('amount',cnyAmt);fd.append('pay_type',cfg?cfg.pay_type:curPayId);
+    // USDT 充值时附带钱包地址
+    if(cfg && cfg.pay_type==='usdt'){
+        var addr=(document.getElementById('mUsdtAddress').value||'').trim();
+        if(addr)fd.append('usdt_address',addr);
+    }
+    var f=document.getElementById('proofFile').files[0];if(f)fd.append('pay_proof',f);
+    fetch('/index.php/api/payment/recharge',{method:'POST',headers:{'token':LotteryAuth.getToken()},body:fd})
+    .then(function(r){return r.json();}).then(function(res){
+        btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane"></i> 提交充值';
+        if(res.code===1){showToast(res.msg||'充值申请已提交','success');document.getElementById('amountInput').value='';document.getElementById('proofPrev').innerHTML='';setTimeout(function(){location.href='/index.php/index/lottery/user';},2000);}
+        else showToast(res.msg||'失败','error');
+    }).catch(function(){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane"></i> 提交充值';showToast('网络错误','error');});
+}
+function loadRecords(){
+    document.getElementById('recordsCard').style.display='';
+    var el=document.getElementById('recordsList');
+    el.innerHTML='<div style="text-align:center;padding:10px;color:#999;">加载中...</div>';
+    fetch('/index.php/api/payment/getOrders?type=recharge',{headers:{'token':LotteryAuth.getToken()}})
+    .then(function(r){return r.json();}).then(function(res){
+        var list=(res.code===1&&res.data)?res.data.list||[]:[];
+        if(!list.length){el.innerHTML='<div class="lm-empty">暂无记录</div>';return;}
+        var tn={wechat:'微信',alipay:'支付宝',usdt:'USDT',bank:'银行卡'};
+        el.innerHTML=list.map(function(o){
+            var sc=o.status==0?'pending':(o.status==1?'success':'rejected');
+            return '<div class="lm-record-item"><div><div class="lm-record-label"><strong>'+(tn[o.pay_type]||o.pay_type)+'充值</strong></div><div class="lm-record-time">'+o.create_date+'</div></div><div style="text-align:right;"><div class="lm-record-amount plus">+'+LotteryAuth.formatMoney(o.amount)+'</div><div class="lm-status '+sc+'">'+o.status_text+'</div></div></div>';
+        }).join('');
+    }).catch(function(e){el.innerHTML='<div style="text-align:center;padding:10px;color:#e74c3c;">加载失败: '+e.message+'</div>';});
+}
+function showToast(m,t){var e=document.getElementById('toast');e.textContent=m;e.className='lm-toast '+t;e.style.display='block';setTimeout(function(){e.style.display='none';},3000);}
+</script>
+</body>
+</html>

@@ -1,0 +1,370 @@
+<div class="panel panel-default panel-intro">
+    <div class="panel-heading">
+        <div class="panel-lead"><em>赔率管理</em>管理福彩3D和排列三所有玩法的赔率，修改后立即生效</div>
+        <ul class="nav nav-tabs">
+            <li class="active"><a href="#t-all" data-toggle="tab">全部赔率</a></li>
+        </ul>
+    </div>
+    <div class="panel-body">
+        <!-- 筛选工具栏 -->
+        <div id="toolbar" class="toolbar" style="margin-bottom:15px;">
+            <div class="form-inline">
+                <div class="form-group" style="margin-right:15px;">
+                    <label>彩种：</label>
+                    <select class="form-control" id="filterLottery" onchange="onLotteryChange()">
+                        <option value="">全部</option>
+                        <option value="1">福彩3D</option>
+                        <option value="2">排列三</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-right:15px;">
+                    <label>玩法：</label>
+                    <select class="form-control" id="filterPlayType" onchange="onPlayTypeChange()">
+                        <option value="">全部</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-right:15px;">
+                    <label>子项：</label>
+                    <select class="form-control" id="filterBetKey" onchange="doFilter()" style="min-width:120px;">
+                        <option value="">全部</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-right:15px;">
+                    <label>搜索：</label>
+                    <input type="text" class="form-control" id="filterKeyword" placeholder="投注名/Key" style="width:140px;" onkeyup="if(event.keyCode===13)doFilter()">
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="doFilter()"><i class="fa fa-search"></i> 筛选</button>
+                <button class="btn btn-default btn-sm" onclick="resetFilter()"><i class="fa fa-refresh"></i> 重置</button>
+                <button class="btn btn-warning btn-sm" onclick="openBatchOdds()" style="margin-left:15px;"><i class="fa fa-pencil"></i> 批量修改赔率</button>
+            </div>
+        </div>
+
+        <table id="table" class="table table-striped table-bordered table-hover table-condensed"
+               data-toolbar="#toolbar"
+               data-url="lottery/odds/index"
+               data-side-pagination="server"
+               data-pagination="true"
+               data-page-size="50"
+               data-page-list="[50,100,200]"
+               data-query-params="queryParams">
+            <thead>
+                <tr>
+                    <th data-field="id" data-sortable="true" data-width="50">ID</th>
+                    <th data-field="lottery_name" data-width="70" data-formatter="lotteryFormatter">彩种</th>
+                    <th data-field="play_type_name" data-width="100">玩法</th>
+                    <th data-field="bet_key" data-width="90">Key</th>
+                    <th data-field="bet_name" data-width="80">选项</th>
+                    <th data-field="odds" data-formatter="oddsFormatter" data-width="100">赔率(最低)</th>
+                    <th data-field="max_odds" data-formatter="maxOddsFormatter" data-width="100">赔率(最高)</th>
+                    <th data-field="status" data-formatter="statusFormatter" data-width="60">状态</th>
+                    <th data-field="id" data-formatter="actionFormatter" data-width="180">操作</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<!-- 编辑弹窗 -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#2c3e50;color:#fff;padding:10px 15px;">
+                <button type="button" class="close" data-dismiss="modal" style="color:#fff;">&times;</button>
+                <h4 class="modal-title" style="font-size:15px;"><i class="fa fa-pencil"></i> 修改赔率</h4>
+            </div>
+            <form id="editForm">
+                <div class="modal-body" style="padding:15px;">
+                    <input type="hidden" name="id" id="editId">
+                    <div style="background:#f8f9fa;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:13px;">
+                        <div><b id="editLottery"></b> / <span id="editPlayType"></span></div>
+                        <div style="color:#666;margin-top:4px;">选项: <b id="editBetName" style="color:#333;"></b></div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:10px;">
+                        <label style="font-size:13px;">赔率(最低) <small class="text-danger">修改后立即生效</small></label>
+                        <input type="number" class="form-control input-lg" name="odds" id="editOdds" step="0.0001" min="0.01" required style="font-size:22px;font-weight:bold;color:#e74c3c;text-align:center;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:10px;">
+                        <label style="font-size:13px;">赔率(最高) <small class="text-muted">范围奖金玩法填写，固定赔率留空或填0</small></label>
+                        <input type="number" class="form-control" name="max_odds" id="editMaxOdds" step="0.0001" min="0" style="font-size:18px;font-weight:bold;color:#e67e22;text-align:center;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label style="font-size:13px;">状态</label>
+                        <select class="form-control" name="status" id="editStatus">
+                            <option value="1">启用</option>
+                            <option value="0">禁用</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding:10px 15px;">
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="submitEdit()"><i class="fa fa-check"></i> 保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 批量编辑赔率弹窗（逐项编辑） -->
+<div class="modal fade" id="batchModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#e67e22;color:#fff;padding:10px 15px;">
+                <button type="button" class="close" data-dismiss="modal" style="color:#fff;">&times;</button>
+                <h4 class="modal-title" style="font-size:15px;"><i class="fa fa-pencil"></i> 编辑玩法赔率</h4>
+            </div>
+            <div class="modal-body" style="padding:15px;">
+                <div class="row" style="margin-bottom:12px;">
+                    <div class="col-sm-4">
+                        <label style="font-size:13px;">彩种 <span class="text-danger">*</span></label>
+                        <select class="form-control" id="batchLottery" onchange="onBatchLotteryChange()">
+                            <option value="">请选择</option>
+                            <option value="1">福彩3D</option>
+                            <option value="2">排列三</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-4">
+                        <label style="font-size:13px;">玩法分类 <span class="text-danger">*</span></label>
+                        <select class="form-control" id="batchPlayType" onchange="loadBatchItems()"></select>
+                    </div>
+                    <div class="col-sm-4">
+                        <label style="font-size:13px;">快捷设置</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="quickOdds" step="0.0001" min="0.01" placeholder="统一赔率">
+                            <span class="input-group-btn"><button class="btn btn-default" onclick="applyQuickOdds()">应用全部</button></span>
+                        </div>
+                    </div>
+                </div>
+                <div id="batchItemsWrap" style="max-height:400px;overflow-y:auto;border:1px solid #ddd;border-radius:4px;padding:10px;background:#fafafa;">
+                    <p style="text-align:center;color:#999;">请选择彩种和玩法</p>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:10px 15px;">
+                <span id="batchCount" style="float:left;color:#666;line-height:30px;"></span>
+                <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-warning btn-sm" onclick="submitBatchItems()"><i class="fa fa-check"></i> 保存全部修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 玩法分类配置
+var playTypes = {
+    fc3d: [
+        {v:'baiwei',n:'百位(号码/属性)'},{v:'shiwei',n:'十位(号码/属性)'},{v:'gewei',n:'个位(号码/属性)'},
+        {v:'shuangmian',n:'总和属性'},{v:'shuangmian_combo',n:'两两组合(百十/百个/十个)'},{v:'shuangmian_total',n:'总和扩展(百十个)'},
+        {v:'longhu',n:'龙虎和'},{v:'xingtai',n:'形态'},
+        {v:'yizi_zuhe',n:'一字组合'},{v:'erzi_zuhe',n:'二字组合'},{v:'sanzi_zuhe',n:'三字组合'},
+        {v:'yizi_dingwei',n:'一字定位'},{v:'erzi_dingwei',n:'二字定位'},{v:'sanzi_dingwei',n:'三字定位'},
+        {v:'erzi_heshu_baishi',n:'百十和数'},{v:'erzi_heshu_baige',n:'百个和数'},{v:'erzi_heshu_shige',n:'十个和数'},
+        {v:'erzi_heshu_baishi_ws',n:'百十和数尾数'},{v:'erzi_heshu_baige_ws',n:'百个和数尾数'},{v:'erzi_heshu_shige_ws',n:'十个和数尾数'},
+        {v:'hezhi',n:'三字和值'},{v:'hezhi_ws',n:'三字和值尾数'},
+        {v:'zusan',n:'组三'},{v:'zuliu',n:'组六'},{v:'kuadu',n:'跨度'},
+        {v:'bzp_sanxing',n:'【标准盘】三星'},{v:'bzp_qianer',n:'【标准盘】前二'},{v:'bzp_houer',n:'【标准盘】后二'},
+        {v:'bzp_dingweidan',n:'【标准盘】定位胆'},{v:'bzp_budindan',n:'【标准盘】不定胆'},{v:'bzp_dxds',n:'【标准盘】大小单双'}
+    ]
+};
+playTypes.pl3 = playTypes.fc3d;
+
+function fillPlayTypeSelect(selectId, lotteryVal) {
+    var sel = $(selectId);
+    sel.html('<option value="">全部</option>');
+    var list = [];
+    if (lotteryVal === '1') list = playTypes.fc3d;
+    else if (lotteryVal === '2') list = playTypes.pl3;
+    else list = playTypes.fc3d.concat(playTypes.pl3);
+    // 去重
+    var seen = {};
+    list.forEach(function(item) {
+        if (!seen[item.v]) { seen[item.v] = 1; sel.append('<option value="'+item.v+'">'+item.n+'</option>'); }
+    });
+}
+
+function onLotteryChange() { fillPlayTypeSelect('#filterPlayType', $('#filterLottery').val()); $('#filterBetKey').html('<option value="">全部</option>'); doFilter(); }
+function onBatchLotteryChange() { fillPlayTypeSelect('#batchPlayType', $('#batchLottery').val()); }
+
+function onPlayTypeChange() {
+    var lt = $('#filterLottery').val();
+    var pt = $('#filterPlayType').val();
+    var sel = $('#filterBetKey');
+    sel.html('<option value="">全部</option>');
+    if (!pt) { doFilter(); return; }
+    // AJAX加载该玩法下的子项
+    $.getJSON('lottery/odds/subkeys', {lottery_type: lt, play_type: pt}, function(res) {
+        if (res && res.length) {
+            res.forEach(function(item) {
+                sel.append('<option value="'+item.bet_key+'">'+item.bet_name+' ('+item.odds+')</option>');
+            });
+        }
+    });
+    doFilter();
+}
+
+// 初始化
+$(function(){ fillPlayTypeSelect('#filterPlayType', ''); });
+
+function queryParams(params) {
+    params.lottery_type = $('#filterLottery').val();
+    params.play_type = $('#filterPlayType').val();
+    params.bet_key = $('#filterBetKey').val();
+    params.keyword = $('#filterKeyword').val();
+    return params;
+}
+
+function doFilter() { $('#table').bootstrapTable('refresh'); }
+function resetFilter() { $('#filterLottery').val(''); $('#filterKeyword').val(''); $('#filterBetKey').html('<option value="">全部</option>'); fillPlayTypeSelect('#filterPlayType',''); doFilter(); }
+
+// 格式化
+function lotteryFormatter(v, row) {
+    return row.lottery_type == 1
+        ? '<span class="label label-primary" style="font-size:11px;">福彩3D</span>'
+        : '<span class="label label-success" style="font-size:11px;">排列三</span>';
+}
+
+function oddsFormatter(v, row) {
+    var val = parseFloat(v);
+    var cls = val >= 50 ? 'danger' : (val >= 5 ? 'warning' : 'info');
+    var maxVal = parseFloat(row.max_odds);
+    if (maxVal > 0 && maxVal !== val) {
+        return '<span class="label label-' + cls + '" style="font-size:13px;font-weight:bold;">' + fmtOddsAdmin(val) + '~' + fmtOddsAdmin(maxVal) + '</span>';
+    }
+    return '<span class="label label-' + cls + '" style="font-size:13px;font-weight:bold;">' + fmtOddsAdmin(val) + '</span>';
+}
+
+function maxOddsFormatter(v) {
+    var val = parseFloat(v);
+    if (!val || val <= 0) return '<span class="text-muted">-</span>';
+    var cls = val >= 50 ? 'danger' : (val >= 5 ? 'warning' : 'info');
+    return '<span class="label label-' + cls + '" style="font-size:13px;font-weight:bold;">' + fmtOddsAdmin(val) + '</span>';
+}
+
+function fmtOddsAdmin(v) {
+    if (v === Math.floor(v)) return v.toString();
+    var s = v.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
+    return s;
+}
+
+function statusFormatter(v) {
+    return v == 1 ? '<span class="label label-success">启用</span>' : '<span class="label label-default">禁用</span>';
+}
+
+function actionFormatter(v, row) {
+    var rowJson = JSON.stringify(row).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    return '<a href="javascript:;" class="btn btn-xs btn-info" onclick=\'openEdit(' + JSON.stringify(row).replace(/'/g, "\\'") + ')\'>修改</a> ' +
+           '<a href="javascript:;" class="btn btn-xs btn-' + (row.status==1?'default':'success') + '" onclick="toggleStatus(' + row.id + ',' + (row.status==1?0:1) + ')">' + (row.status==1?'禁用':'启用') + '</a>';
+}
+
+// 编辑
+function openEdit(row) {
+    $('#editId').val(row.id);
+    $('#editLottery').text(row.lottery_name);
+    $('#editPlayType').text(row.play_type_name);
+    $('#editBetName').text(row.bet_name + ' (' + row.bet_key + ')');
+    $('#editOdds').val(parseFloat(row.odds));
+    var maxOdds = parseFloat(row.max_odds);
+    $('#editMaxOdds').val(maxOdds > 0 ? maxOdds : '');
+    $('#editStatus').val(row.status);
+    $('#editModal').modal('show');
+}
+
+function submitEdit() {
+    var odds = parseFloat($('#editOdds').val());
+    if (!odds || odds <= 0) { Toastr.error('赔率必须大于0'); return; }
+    $.post('lottery/odds/edit', $('#editForm').serialize(), function(res) {
+        if (res.code === 1) { Toastr.success(res.msg); $('#editModal').modal('hide'); $('#table').bootstrapTable('refresh'); }
+        else { Toastr.error(res.msg); }
+    }, 'json');
+}
+
+// 批量编辑（逐项模式）
+var batchItemsData = [];
+
+function openBatchOdds() {
+    var lt = $('#filterLottery').val();
+    if (lt) { $('#batchLottery').val(lt); onBatchLotteryChange(); }
+    var pt = $('#filterPlayType').val();
+    if (pt) { $('#batchPlayType').val(pt); loadBatchItems(); }
+    $('#batchModal').modal('show');
+}
+
+function loadBatchItems() {
+    var lt = $('#batchLottery').val();
+    var pt = $('#batchPlayType').val();
+    var wrap = $('#batchItemsWrap');
+    if (!lt || !pt) { wrap.html('<p style="text-align:center;color:#999;">请选择彩种和玩法</p>'); return; }
+    wrap.html('<p style="text-align:center;color:#999;"><i class="fa fa-spinner fa-spin"></i> 加载中...</p>');
+    $.getJSON('lottery/odds/subkeys', {lottery_type: lt, play_type: pt}, function(list) {
+        batchItemsData = list || [];
+        if (!batchItemsData.length) { wrap.html('<p style="text-align:center;color:#999;">暂无数据</p>'); return; }
+        var html = '<table class="table table-condensed table-bordered" style="margin:0;font-size:13px;background:#fff;">';
+        html += '<thead><tr style="background:#f5f5f5;"><th width="30">#</th><th>选项</th><th>Key</th><th width="120">赔率(最低)</th><th width="120">赔率(最高)</th></tr></thead><tbody>';
+        for (var i = 0; i < batchItemsData.length; i++) {
+            var item = batchItemsData[i];
+            var maxOdds = parseFloat(item.max_odds) > 0 ? parseFloat(item.max_odds) : '';
+            html += '<tr>' +
+                '<td>' + (i+1) + '</td>' +
+                '<td><b>' + item.bet_name + '</b></td>' +
+                '<td><code>' + item.bet_key + '</code></td>' +
+                '<td><input type="number" class="form-control input-sm batch-odds-input" data-key="' + item.bet_key + '" value="' + parseFloat(item.odds) + '" step="0.0001" min="0.01" style="font-weight:bold;color:#e74c3c;text-align:center;"></td>' +
+                '<td><input type="number" class="form-control input-sm batch-maxodds-input" data-key="' + item.bet_key + '" value="' + maxOdds + '" step="0.0001" min="0" placeholder="留空=固定" style="font-weight:bold;color:#e67e22;text-align:center;"></td>' +
+                '</tr>';
+        }
+        html += '</tbody></table>';
+        wrap.html(html);
+        $('#batchCount').text('共 ' + batchItemsData.length + ' 项');
+    });
+}
+
+function applyQuickOdds() {
+    var v = $('#quickOdds').val();
+    if (!v || parseFloat(v) <= 0) { Toastr.error('请输入有效赔率'); return; }
+    $('.batch-odds-input').val(v);
+}
+
+function submitBatchItems() {
+    var lt = $('#batchLottery').val();
+    var pt = $('#batchPlayType').val();
+    if (!lt || !pt) { Toastr.error('请选择彩种和玩法'); return; }
+    var items = [];
+    $('.batch-odds-input').each(function() {
+        var key = $(this).data('key');
+        var odds = parseFloat($(this).val());
+        var maxOdds = parseFloat($('.batch-maxodds-input[data-key="'+key+'"]').val()) || 0;
+        if (key && odds > 0) items.push({bet_key: key, odds: odds, max_odds: maxOdds});
+    });
+    if (!items.length) { Toastr.error('无有效数据'); return; }
+
+    // 防重复点击 + loading
+    var btn = $('#batchModal .modal-footer .btn-warning');
+    if (btn.prop('disabled')) return;
+    btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> 保存中...');
+
+    $.ajax({
+        url: 'lottery/odds/batchUpdateItems',
+        type: 'POST',
+        data: {lottery_type: lt, play_type: pt, items: JSON.stringify(items)},
+        dataType: 'json',
+        timeout: 30000,
+        success: function(res) {
+            if (res.code === 1) { Toastr.success(res.msg); $('#batchModal').modal('hide'); $('#table').bootstrapTable('refresh'); }
+            else { Toastr.error(res.msg || '保存失败'); }
+        },
+        error: function(xhr, status, err) {
+            Toastr.error('请求失败: ' + (status === 'timeout' ? '超时' : (err || status)));
+            console.error('保存赔率失败:', status, err, xhr.responseText);
+        },
+        complete: function() {
+            btn.prop('disabled', false).html('<i class="fa fa-check"></i> 保存全部修改');
+        }
+    });
+}
+
+function toggleStatus(id, status) {
+    Layer.confirm('确认' + (status==1?'启用':'禁用') + '？', function() {
+        $.post('lottery/odds/batchStatus', {ids:id, status:status}, function(res) {
+            if (res.code === 1) { Toastr.success(res.msg); $('#table').bootstrapTable('refresh'); }
+            else { Toastr.error(res.msg); }
+        }, 'json');
+    });
+}
+</script>

@@ -1,0 +1,354 @@
+<style>
+.profile-header { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; padding: 24px; border-radius: 8px; margin-bottom: 20px; }
+.profile-header h3 { margin: 0 0 4px; font-weight: 700; }
+.profile-header .meta { opacity: 0.85; font-size: 13px; }
+.stat-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+.stat-item { flex: 1; min-width: 140px; background: #fff; border-radius: 8px; padding: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); text-align: center; }
+.stat-item .val { font-size: 20px; font-weight: 700; color: #333; }
+.stat-item .lbl { font-size: 12px; color: #999; margin-top: 2px; }
+.record-tabs { margin-bottom: 16px; }
+.record-tabs .btn { margin-right: 4px; margin-bottom: 4px; }
+.record-tabs .btn.active { background: #667eea; color: #fff; border-color: #667eea; }
+.record-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.record-table th { background: #f5f7fa; padding: 8px 10px; text-align: left; border-bottom: 2px solid #eee; font-weight:
+600; color: #555; }
+.record-table td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; }
+.record-table tr:hover td { background: #fafbfc; }
+.info-table td { padding: 6px 12px; }
+.info-table td:first-child { font-weight: 600; color: #666; width: 100px; }
+.status-normal { color: #27C24C; font-weight: 600; }
+.status-hidden { color: #F05050; font-weight: 600; }
+</style>
+
+<div class="panel panel-default" style="border:none;box-shadow:none;">
+    <div class="panel-body" style="padding:20px;">
+
+        <!-- 用户头部 -->
+        <div class="profile-header">
+            <div class="row">
+                <div class="col-sm-8">
+                    <h3><i class="fa fa-user-circle"></i> {$user.nickname|htmlentities} <small
+                            style="color:rgba(255,255,255,0.7);">(@{$user.username|htmlentities})</small></h3>
+                    <div class="meta">
+                        UID: {$user.id} &nbsp;|&nbsp;
+                        余额: <strong>¥{$user.money|htmlentities}</strong> &nbsp;|&nbsp;
+                        状态: {if $user.status == 'normal'}<span style="color:#8f8;">正常</span>{else}<span
+                            style="color:#f88;">已禁用</span>{/if} &nbsp;|&nbsp;
+                        注册: {$user.jointime_fmt} &nbsp;|&nbsp;
+                        最近登录: {$user.logintime_fmt}
+                        {if $parent} &nbsp;|&nbsp; 邀请人: {$parent.nickname} (UID:{$parent.id}){/if}
+                    </div>
+                </div>
+                <div class="col-sm-4 text-right" style="padding-top:8px;">
+                    {if $user.status == 'normal'}
+                    <button class="btn btn-sm btn-danger" onclick="toggleUser('disable')"><i class="fa fa-ban"></i>
+                        禁用会员</button>
+                    {else}
+                    <button class="btn btn-sm btn-success" onclick="toggleUser('enable')"><i class="fa fa-check"></i>
+                        启用会员</button>
+                    {/if}
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stat-grid">
+            <div class="stat-item">
+                <div class="val" style="color:#667eea;">¥{$stats.recharge_total|number_format=2}</div>
+                <div class="lbl">充值总额 ({$stats.recharge_count}笔)</div>
+            </div>
+            <div class="stat-item">
+                <div class="val" style="color:#f5576c;">¥{$stats.bet_total|number_format=2}</div>
+                <div class="lbl">投注总额 ({$stats.bet_count}笔)</div>
+            </div>
+            <div class="stat-item">
+                <div class="val" style="color:#4facfe;">¥{$stats.win_total|number_format=2}</div>
+                <div class="lbl">中奖总额</div>
+            </div>
+            <div class="stat-item">
+                <div class="val" style="color:#43e97b;">¥{$stats.xima_total|number_format=2}</div>
+                <div class="lbl">洗码总额</div>
+            </div>
+            <div class="stat-item">
+                <div class="val" style="color:#fa709a;">¥{$stats.commission_total|number_format=2}</div>
+                <div class="lbl">推荐反佣</div>
+            </div>
+            <div class="stat-item">
+                <div class="val" style="color:#e67e22;">¥{$stats.rebate_total|number_format=2}</div>
+                <div class="lbl">流水返利</div>
+            </div>
+            <div class="stat-item">
+                <div class="val" style="color:#a18cd1;">¥{$stats.withdraw_total|number_format=2}</div>
+                <div class="lbl">提现总额</div>
+            </div>
+            <div class="stat-item">
+                <div class="val" style="color:#333;">{$stats.sub_count}</div>
+                <div class="lbl">下级人数</div>
+            </div>
+        </div>
+
+        <!-- 返佣参数设置 -->
+        <div
+            style="background:#fff;border-radius:12px;padding:20px 24px;margin-bottom:20px;box-shadow:0 1px 6px rgba(0,0,0,0.06);">
+            <div
+                style="font-size:15px;font-weight:700;color:#333;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+                <i class="fa fa-percent" style="color:#fa709a;"></i> 返佣参数设置
+            </div>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-end;">
+                <div style="flex:1;min-width:200px;">
+                    <label
+                        style="font-size:13px;color:#666;font-weight:600;display:block;margin-bottom:6px;">自身返佣比例</label>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <input type="number" id="selfRebateRate" value="{$user.self_rebate_rate|default=0}"
+                            step="0.0001" min="0" max="1"
+                            style="flex:1;padding:8px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;">
+                        <span style="font-size:13px;color:#999;">= <b
+                                id="selfPct">{:round(($user['self_rebate_rate']??0)*100,2)}%</b></span>
+                    </div>
+                    <div style="font-size:11px;color:#aaa;margin-top:4px;">用户自身每次投注 × 该比例 = 自身返佣</div>
+                </div>
+                <div style="flex:1;min-width:200px;">
+                    <label
+                        style="font-size:13px;color:#666;font-weight:600;display:block;margin-bottom:6px;">邀请返佣比例</label>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <input type="number" id="inviteRebateRate" value="{$user.invite_rebate_rate|default=0.02}"
+                            step="0.0001" min="0" max="1"
+                            style="flex:1;padding:8px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;">
+                        <span style="font-size:13px;color:#999;">= <b
+                                id="invitePct">{:round(($user['invite_rebate_rate']??0.02)*100,2)}%</b></span>
+                    </div>
+                    <div style="font-size:11px;color:#aaa;margin-top:4px;">下级每次投注 × 该比例 = 邀请人获得佣金</div>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-success" onclick="saveRebateRates()" id="saveRateBtn"
+                        style="padding:8px 24px;">
+                        <i class="fa fa-check"></i> 保存设置
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 记录Tab -->
+        <div class="record-tabs" id="recordTabs">
+            <button class="btn btn-sm btn-default active" onclick="loadRecords('bet',this)"><i
+                    class="fa fa-gamepad"></i> 投注记录</button>
+            <button class="btn btn-sm btn-default" onclick="loadRecords('recharge',this)"><i
+                    class="fa fa-plus-circle"></i> 充值记录</button>
+            <button class="btn btn-sm btn-default" onclick="loadRecords('withdraw',this)"><i
+                    class="fa fa-minus-circle"></i> 提现记录</button>
+            <button class="btn btn-sm btn-default" onclick="loadRecords('transfer',this)"><i class="fa fa-exchange"></i>
+                转账记录</button>
+            <button class="btn btn-sm btn-default" onclick="loadRecords('commission',this)"><i
+                    class="fa fa-share-alt"></i> 反佣记录</button>
+            <button class="btn btn-sm btn-default" onclick="loadRecords('xima',this)"><i class="fa fa-recycle"></i>
+                洗码记录</button>
+            <button class="btn btn-sm btn-default" onclick="loadRecords('rebate',this)"><i class="fa fa-gift"></i>
+                返利记录</button>
+        </div>
+
+        <div id="recordContent"
+            style="background:#fff;border-radius:8px;padding:16px;box-shadow:0 1px 6px rgba(0,0,0,0.06);min-height:200px;">
+            <div style="text-align:center;color:#999;padding:40px;">加载中...</div>
+        </div>
+        <div id="recordPagination" style="text-align:center;margin-top:12px;"></div>
+
+    </div>
+</div>
+
+<script>
+    var userId = {$user.id};
+{literal}
+    var currentType = 'bet';
+    var currentPage = 1;
+    // 从当前URL提取admin入口 (如 /BzgHoaJvCX.php)
+    var adminEntry = (function () {
+        var m = location.pathname.match(/^(\/[^\/]+\.php)/);
+        return m ? m[1] : '';
+    })();
+    var baseUrl = adminEntry + '/user/user/records';
+    var toggleUrl = adminEntry + '/user/user/toggleStatus';
+
+    function loadRecords(type, btn) {
+        currentType = type;
+        currentPage = 1;
+        if (btn) {
+            document.querySelectorAll('#recordTabs .btn').forEach(function (b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+        }
+        fetchRecords();
+    }
+
+    function fetchRecords(page) {
+        currentPage = page || currentPage;
+        var url = baseUrl + '?user_id=' + userId + '&type=' + currentType + '&page=' + currentPage + '&limit=20';
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.onload = function () {
+            try {
+                var res = JSON.parse(xhr.responseText);
+                if (res.code !== 1) { document.getElementById('recordContent').innerHTML = '<div style="color:red;padding:20px;">' + res.msg + '</div>'; return; }
+                var d = res.data, list = d.list || [];
+                if (!list.length) {
+                    document.getElementById('recordContent').innerHTML = '<div style="text-align:center;color:#999;padding:40px;">暂无记录</div>';
+                    document.getElementById('recordPagination').innerHTML = '';
+                    return;
+                }
+                var html = renderTable(currentType, list);
+                // 投注汇总
+                if (currentType === 'bet' && d.summary) {
+                    var s = d.summary;
+                    var profitColor = s.profit >= 0 ? '#27C24C' : '#F05050';
+                    var winRate = s.total_count > 0 ? (s.win_count / s.total_count * 100).toFixed(1) : '0';
+                    html = '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">' +
+                        '<div style="flex:1;min-width:120px;background:#f0f6ff;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:11px;color:#999;">总投注</div><div style="font-size:18px;font-weight:800;color:#1890ff;">¥' + parseFloat(s.total_bet).toFixed(2) + '</div><div style="font-size:11px;color:#aaa;">' + s.total_count + '笔</div></div>' +
+                        '<div style="flex:1;min-width:120px;background:#f0fdf4;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:11px;color:#999;">总中奖</div><div style="font-size:18px;font-weight:800;color:#27C24C;">¥' + parseFloat(s.total_win).toFixed(2) + '</div><div style="font-size:11px;color:#aaa;">' + s.win_count + '笔中奖</div></div>' +
+                        '<div style="flex:1;min-width:120px;background:#fef3f2;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:11px;color:#999;">平台盈亏</div><div style="font-size:18px;font-weight:800;color:' + profitColor + ';">¥' + parseFloat(s.profit).toFixed(2) + '</div></div>' +
+                        '<div style="flex:1;min-width:120px;background:#fff8ed;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:11px;color:#999;">中奖率</div><div style="font-size:18px;font-weight:800;color:#e67e22;">' + winRate + '%</div><div style="font-size:11px;color:#aaa;">待开奖: ' + s.pending_count + '</div></div>' +
+                        '</div>' + html;
+                }
+                document.getElementById('recordContent').innerHTML = html;
+                renderPagination(d.total, currentPage, 20);
+            } catch (e) { document.getElementById('recordContent').innerHTML = '<div style="color:red;padding:20px;">解析错误:' + e.message + '</div>'; }
+        };
+        xhr.send();
+    }
+
+    function renderTable(type, list) {
+        var html = '<table class="record-table"><thead><tr>';
+        var headers = {
+            'bet': ['ID', '期号', '彩种', '玩法', '投注内容', '开奖号码', '注数', '金额', '中奖', '状态', '时间'],
+            'recharge': ['ID', '订单号', '金额', '支付方式', '状态', '时间'],
+            'withdraw': ['ID', '订单号', '金额', '方式', '状态', '时间'],
+            'transfer': ['ID', '订单号', '方向', '对方', '金额', '时间'],
+            'commission': ['ID', '来源用户', '金额', '备注', '时间'],
+            'xima': ['ID', '类型', '投注额', '洗码率', '洗码额', '状态', '时间'],
+            'rebate': ['ID', '日期', '投注额', '返利率', '返利额', '状态', '时间']
+        };
+        (headers[type] || []).forEach(function (h) { html += '<th>' + h + '</th>'; });
+        html += '</tr></thead><tbody>';
+
+        list.forEach(function (r) {
+            html += '<tr>';
+            switch (type) {
+                case 'bet':
+                    var sc = { 0: 'label-warning', 1: 'label-success', 2: 'label-default', 3: 'label-danger' }[r.status] || '';
+                    html += '<td>' + r.id + '</td><td>' + r.period + '</td><td>' + (r.lottery_name || '') + '</td><td><small>' + (r.play_name || r.play_type || '-') + '</small></td>';
+                    html += '<td style="max-width:150px;word-break:break-all;"><b style="color:#1890ff;">' + (r.bet_display || '-') + '</b></td>';
+                    html += '<td><span style="color:#e67e22;font-weight:700;">' + (r.draw_result || '-') + '</span></td>';
+                    html += '<td>' + r.bet_count + '</td><td><b>¥' + parseFloat(r.total_amount).toFixed(2) + '</b></td>';
+                    html += '<td>' + (parseFloat(r.win_amount) > 0 ? '<b style="color:#27C24C;">+¥' + parseFloat(r.win_amount).toFixed(2) + '</b>' : '<span style="color:#ccc;">-</span>') + '</td>';
+                    html += '<td><span class="label ' + sc + '">' + (r.status_text || '') + '</span></td><td><small>' + r.create_date + '</small></td>';
+                    break;
+                case 'recharge':
+                    html += '<td>' + r.id + '</td><td><small>' + (r.order_no || '') + '</small></td><td><b>¥' + parseFloat(r.amount).toFixed(2) + '</b></td>';
+                    html += '<td>' + (r.pay_type || '') + '</td><td>' + r.status_text + '</td><td><small>' + r.create_date + '</small></td>';
+                    break;
+                case 'withdraw':
+                    html += '<td>' + r.id + '</td><td><small>' + (r.order_no || '') + '</small></td><td><b>¥' + parseFloat(r.amount).toFixed(2) + '</b></td>';
+                    html += '<td>' + (r.withdraw_type || '') + '</td><td>' + r.status_text + '</td><td><small>' + r.create_date + '</small></td>';
+                    break;
+                case 'transfer':
+                    html += '<td>' + r.id + '</td><td><small>' + (r.order_no || '') + '</small></td>';
+                    html += '<td><span class="label ' + (r.direction === '转出' ? 'label-danger' : 'label-success') + '">' + r.direction + '</span></td>';
+                    html += '<td>' + r.other_name + '</td><td><b>¥' + parseFloat(r.amount).toFixed(2) + '</b></td><td><small>' + r.create_date + '</small></td>';
+                    break;
+                case 'commission':
+                    html += '<td>' + r.id + '</td><td>' + r.sub_name + '</td><td><b style="color:#fa709a;">¥' + parseFloat(r.amount).toFixed(2) + '</b></td>';
+                    html += '<td><small>' + (r.remark || '') + '</small></td><td><small>' + r.create_date + '</small></td>';
+                    break;
+                case 'xima':
+                    html += '<td>' + r.id + '</td><td>' + r.type_text + '</td><td>¥' + parseFloat(r.bet_amount || 0).toFixed(2) + '</td>';
+                    html += '<td>' + (parseFloat(r.xima_rate || 0) * 100).toFixed(2) + '%</td><td><b style="color:#43e97b;">¥' + parseFloat(r.xima_amount).toFixed(2) + '</b></td>';
+                    html += '<td>' + r.status_text + '</td><td><small>' + r.create_date + '</small></td>';
+                    break;
+                case 'rebate':
+                    html += '<td>' + r.id + '</td><td>' + (r.period_start || '') + '</td><td>¥' + parseFloat(r.bet_amount || 0).toFixed(2) + '</td>';
+                    html += '<td>' + (parseFloat(r.rebate_rate || 0) * 100).toFixed(2) + '%</td><td><b style="color:#e67e22;">¥' + parseFloat(r.rebate_amount).toFixed(2) + '</b></td>';
+                    html += '<td>' + r.status_text + '</td><td><small>' + r.create_date + '</small></td>';
+                    break;
+            }
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+        return html;
+    }
+
+    function renderPagination(total, page, limit) {
+        var pages = Math.ceil(total / limit), html = '';
+        if (pages <= 1) { document.getElementById('recordPagination').innerHTML = ''; return; }
+        if (page > 1) html += '<button class="btn btn-sm btn-default" onclick="fetchRecords(' + (page - 1) + ')" style="margin:2px;">上一页</button>';
+        var s = Math.max(1, page - 3), e = Math.min(pages, page + 3);
+        for (var i = s; i <= e; i++) {
+            html += '<button class="btn btn-sm ' + (i === page ? 'btn-primary' : 'btn-default') + '" onclick="fetchRecords(' + i + ')" style="margin:2px;">' + i + '</button>';
+        }
+        if (page < pages) html += '<button class="btn btn-sm btn-default" onclick="fetchRecords(' + (page + 1) + ')" style="margin:2px;">下一页</button>';
+        document.getElementById('recordPagination').innerHTML = '<div>共' + total + '条 / ' + pages + '页 ' + html + '</div>';
+    }
+
+    function toggleUser(action) {
+        var msg = (action === 'disable') ? '确定禁用该会员？禁用后无法登录。' : '确定启用该会员？';
+        if (!confirm(msg)) return;
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', toggleUrl, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.onload = function () {
+            try {
+                var res = JSON.parse(xhr.responseText);
+                alert(res.msg);
+                if (res.code === 1) location.reload();
+            } catch (e) { alert('操作失败'); }
+        };
+        xhr.send('id=' + userId + '&action=' + action);
+    }
+
+    // 返佣参数保存
+    var saveRateUrl = adminEntry + '/user/user/saveRebateRates';
+    function saveRebateRates() {
+        var selfRate = parseFloat(document.getElementById('selfRebateRate').value) || 0;
+        var inviteRate = parseFloat(document.getElementById('inviteRebateRate').value) || 0;
+        if (selfRate < 0 || selfRate > 1 || inviteRate < 0 || inviteRate > 1) {
+            alert('比例范围须在 0 ~ 1 之间（如 0.02 = 2%）'); return;
+        }
+        var btn = document.getElementById('saveRateBtn');
+        btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 保存中...';
+
+        console.log('saveRebateRates 请求URL:', saveRateUrl, 'userId:', userId);
+        $.ajax({
+            url: saveRateUrl,
+            type: 'POST',
+            data: {id: userId, self_rebate_rate: selfRate, invite_rebate_rate: inviteRate},
+            dataType: 'json',
+            timeout: 15000,
+            success: function(res) {
+                console.log('saveRebateRates 响应:', res);
+                btn.disabled = false; btn.innerHTML = '<i class="fa fa-check"></i> 保存设置';
+                if (res.code === 1) {
+                    Toastr.success(res.msg || '保存成功');
+                } else {
+                    Toastr.error(res.msg || '保存失败');
+                }
+            },
+            error: function(xhr, status, err) {
+                console.error('saveRebateRates 失败:', status, err, xhr.responseText);
+                btn.disabled = false; btn.innerHTML = '<i class="fa fa-check"></i> 保存设置';
+                Toastr.error('请求失败: ' + (err || status));
+            }
+        });
+    }
+
+    // 输入框联动百分比显示
+    document.getElementById('selfRebateRate').addEventListener('input', function () { document.getElementById('selfPct').textContent = (parseFloat(this.value || 0) * 100).toFixed(2) + '%'; });
+    document.getElementById('inviteRebateRate').addEventListener('input', function () { document.getElementById('invitePct').textContent = (parseFloat(this.value || 0) * 100).toFixed(2) + '%'; });
+
+    // 全局暴露
+    window.loadRecords = loadRecords;
+    window.fetchRecords = fetchRecords;
+    window.toggleUser = toggleUser;
+    window.saveRebateRates = saveRebateRates;
+
+    // 初始加载投注记录
+    loadRecords('bet', document.querySelector('#recordTabs .active'));
+{/literal}
+</script>

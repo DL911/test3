@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>交易明细 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/mobile_light.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .tx-tabs { display:flex; gap:0; margin:12px 16px; background:#f5f5f5; border-radius:10px; overflow:hidden; }
+        .tx-tab { flex:1; text-align:center; padding:10px 0; font-size:13px; color:#999; cursor:pointer; transition:all 0.2s; font-weight:600; }
+        .tx-tab.active { background:#fff; color:#333; box-shadow:0 1px 4px rgba(0,0,0,0.08); border-radius:10px; }
+
+        .tx-list { padding:0 16px; }
+        .tx-item { display:flex; align-items:center; padding:14px 0; border-bottom:1px solid #f5f5f5; }
+        .tx-item:last-child { border:none; }
+        .tx-icon { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:16px; color:#fff; flex-shrink:0; margin-right:12px; }
+        .tx-info { flex:1; min-width:0; }
+        .tx-info .title { font-size:14px; font-weight:600; color:#333; }
+        .tx-info .meta { font-size:12px; color:#bbb; margin-top:2px; }
+        .tx-amount { font-size:16px; font-weight:700; text-align:right; flex-shrink:0; }
+        .tx-amount.positive { color:#27C24C; }
+        .tx-amount.negative { color:#F05050; }
+
+        .tx-empty { text-align:center; padding:60px 20px; color:#ccc; }
+        .tx-empty i { font-size:40px; display:block; margin-bottom:10px; }
+        .tx-more { text-align:center; padding:16px; color:#1c9eff; font-size:14px; cursor:pointer; font-weight:600; }
+        .tx-loading { text-align:center; padding:20px; color:#ccc; font-size:13px; }
+    </style>
+</head>
+<body class="light-mobile">
+
+    <div class="lm-topbar">
+        <a href="javascript:history.back();" class="back"><i class="fa-solid fa-arrow-left"></i></a>
+        <h2>交易明细</h2>
+    </div>
+
+    <div class="tx-tabs" id="typeTabs">
+        <div class="tx-tab active" data-type="all" onclick="switchTab('all',this)">全部</div>
+        <div class="tx-tab" data-type="recharge" onclick="switchTab('recharge',this)">充值</div>
+        <div class="tx-tab" data-type="withdraw" onclick="switchTab('withdraw',this)">提现</div>
+        <div class="tx-tab" data-type="transfer" onclick="switchTab('transfer',this)">转账</div>
+        <div class="tx-tab" data-type="bet" onclick="switchTab('bet',this)">投注</div>
+        <div class="tx-tab" data-type="commission" onclick="switchTab('commission',this)">佣金</div>
+    </div>
+
+    <div id="txContent">
+        <div class="tx-loading">加载中...</div>
+    </div>
+    <div id="txMore" class="tx-more" style="display:none;" onclick="loadMore()">加载更多</div>
+
+    <div style="height:30px;"></div>
+
+<script src="/assets/lottery/js/auth.js"></script>
+<script>
+var txPage = 1, txType = 'all', txHasMore = true;
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (!LotteryAuth.isLoggedIn()) { location.href = '/index.php/index/lottery/login'; return; }
+    loadTx();
+});
+
+function switchTab(type, el) {
+    txType = type; txPage = 1; txHasMore = true;
+    document.querySelectorAll('.tx-tab').forEach(function(t){ t.classList.remove('active'); });
+    el.classList.add('active');
+    document.getElementById('txContent').innerHTML = '<div class="tx-loading">加载中...</div>';
+    document.getElementById('txMore').style.display = 'none';
+    loadTx();
+}
+
+function loadTx() {
+    LotteryAuth.request('/index.php/api/user/transactions?type=' + txType + '&page=' + txPage + '&limit=20', {method:'GET'})
+        .then(function(res) {
+            if (res.code !== 1) return;
+            var list = res.data.list || [], total = res.data.total || 0;
+            var html = '';
+
+            if (list.length === 0 && txPage === 1) {
+                html = '<div class="tx-empty"><i class="fa-solid fa-inbox"></i>暂无交易记录</div>';
+                document.getElementById('txMore').style.display = 'none';
+            } else {
+                var iconMap = {
+                    recharge: {icon:'fa-plus', bg:'linear-gradient(135deg,#34d399,#059669)'},
+                    withdraw: {icon:'fa-arrow-up', bg:'linear-gradient(135deg,#60a5fa,#2563eb)'},
+                    bet: {icon:'fa-gamepad', bg:'linear-gradient(135deg,#f093fb,#f5576c)'},
+                    win: {icon:'fa-trophy', bg:'linear-gradient(135deg,#fbbf24,#d97706)'},
+                    transfer: {icon:'fa-right-left', bg:'linear-gradient(135deg,#a78bfa,#7c3aed)'},
+                    commission: {icon:'fa-share-alt', bg:'linear-gradient(135deg,#fa709a,#fee140)'},
+                    rebate: {icon:'fa-gift', bg:'linear-gradient(135deg,#f5a623,#e67e22)'}
+                };
+
+                list.forEach(function(r) {
+                    var cfg = iconMap[r.type] || {icon:'fa-circle', bg:'#ccc'};
+                    var amtClass = r.amount.charAt(0) === '+' ? 'positive' : 'negative';
+                    var extra = r.extra ? '<span style="margin-left:6px;opacity:0.6;">' + r.extra + '</span>' : '';
+                    // 充值/提现显示状态标签
+                    var statusTag = '';
+                    if (r.status_text) {
+                        var stColor = '#f59e0b'; // 默认黄色(待审核)
+                        if (r.status == 1) stColor = '#10b981'; // 已完成绿色
+                        if (r.status == 2) stColor = '#ef4444'; // 已拒绝红色
+                        statusTag = '<span style="font-size:11px;color:#fff;background:'+stColor+';padding:1px 6px;border-radius:8px;margin-left:6px;">' + r.status_text + '</span>';
+                    }
+                    html += '<div class="tx-item">' +
+                        '<div class="tx-icon" style="background:' + cfg.bg + ';"><i class="fa-solid ' + cfg.icon + '"></i></div>' +
+                        '<div class="tx-info"><div class="title">' + r.type_text + statusTag + extra + '</div><div class="meta">' + r.date + '</div></div>' +
+                        '<div class="tx-amount ' + amtClass + '">¥' + r.amount + '</div>' +
+                        '</div>';
+                });
+
+                var loaded = (txPage - 1) * 20 + list.length;
+                if (loaded < total) {
+                    txPage++;
+                    document.getElementById('txMore').style.display = 'block';
+                } else {
+                    document.getElementById('txMore').style.display = 'none';
+                    txHasMore = false;
+                }
+            }
+
+            if (txPage <= 2) {
+                document.getElementById('txContent').innerHTML = '<div class="tx-list">' + html + '</div>';
+            } else {
+                document.querySelector('.tx-list').innerHTML += html;
+            }
+        }).catch(function() {
+            document.getElementById('txContent').innerHTML = '<div class="tx-empty" style="color:#f66;">加载失败</div>';
+        });
+}
+
+function loadMore() {
+    if (!txHasMore) return;
+    loadTx();
+}
+</script>
+</body>
+</html>

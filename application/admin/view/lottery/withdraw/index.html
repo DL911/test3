@@ -1,0 +1,135 @@
+<div class="panel panel-default panel-intro">
+    <div class="panel-heading"><h3 class="panel-title">提现订单管理</h3></div>
+    <div class="panel-body">
+        <div style="margin-bottom:15px;">
+            <select id="filterStatus" class="form-control" style="width:120px;display:inline-block;margin-right:10px;">
+                <option value="">全部状态</option>
+                <option value="0">待审核</option>
+                <option value="1">已打款</option>
+                <option value="2">已拒绝</option>
+            </select>
+            <input type="text" id="filterKeyword" class="form-control" placeholder="订单号/用户名" style="width:200px;display:inline-block;margin-right:10px;">
+            <button class="btn btn-primary" onclick="wdLoadList()"><i class="fa fa-search"></i> 搜索</button>
+        </div>
+        <table class="table table-bordered table-hover">
+            <thead><tr>
+                <th width="50">ID</th><th>订单号</th><th>用户</th><th>金额</th><th>方式</th><th>收款码</th><th>收款信息</th><th>状态</th><th>备注</th><th>时间</th><th width="160">操作</th>
+            </tr></thead>
+            <tbody id="tableBody"><tr><td colspan="11" style="text-align:center;color:#999;">加载中...</td></tr></tbody>
+        </table>
+        <div id="pagination" style="text-align:center;"></div>
+    </div>
+</div>
+
+<div id="qrOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:none;align-items:center;justify-content:center;" onclick="this.style.display='none'">
+    <img id="qrImg" src="" style="max-width:90%;max-height:90%;border-radius:8px;">
+</div>
+
+<script>
+var wdPage = 1;
+
+function wdLoadList(page) {
+    wdPage = page || 1;
+    var status = document.getElementById('filterStatus').value;
+    var keyword = document.getElementById('filterKeyword').value;
+    var url = location.href + (location.href.indexOf('?')>-1?'&':'?') + 'page='+wdPage+'&limit=20&status='+encodeURIComponent(status)+'&keyword='+encodeURIComponent(keyword);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function(){
+        try {
+            var res = JSON.parse(xhr.responseText);
+            if(res.code !== 1) { document.getElementById('tableBody').innerHTML='<tr><td colspan="11" style="color:red;">'+res.msg+'</td></tr>'; return; }
+            var d = res.data, list = d.list || [], html = '';
+            if(!list.length){
+                html = '<tr><td colspan="11" style="text-align:center;color:#999;">暂无数据</td></tr>';
+            } else {
+                for(var i=0;i<list.length;i++){
+                    var r = list[i];
+                    var sc = r.status==0?'label-warning':(r.status==1?'label-success':'label-danger');
+                    var qrBtn = r.qr_image ? '<a href="javascript:;" onclick="wdShowQR(\''+r.qr_image+'\')" class="btn btn-xs btn-info"><i class="fa fa-qrcode"></i> 查看</a>' : '<span class="text-muted">无</span>';
+                    var acctInfo = '';
+                    try {
+                        var ai = JSON.parse(r.account_info);
+                        var parts = [];
+                        if(ai.name) parts.push(ai.name);
+                        if(ai.account_no) parts.push(ai.account_no);
+                        var addr = ai.usdt_address || r.usdt_address || '';
+                        if(addr) parts.push('<span style="color:#1890ff;word-break:break-all;">'+addr+'</span>');
+                        acctInfo = parts.join('<br>') || '--';
+                    } catch(e){ acctInfo = r.account_info||'--'; }
+                    // 兜底：如果 JSON 中没有但字段有
+                    if(r.usdt_address && acctInfo.indexOf(r.usdt_address)===-1) acctInfo += '<br><span style="color:#1890ff;">'+r.usdt_address+'</span>';
+                    var actions = '';
+                    if(r.status == 0){
+                        actions = '<button class="btn btn-xs btn-success" onclick="wdAudit('+r.id+',\'approve\')"><i class="fa fa-check"></i> 已打款</button> '+
+                                  '<button class="btn btn-xs btn-danger" onclick="wdAudit('+r.id+',\'reject\')"><i class="fa fa-times"></i> 拒绝</button>';
+                    } else { actions = '<span class="text-muted">已处理</span>'; }
+                    html += '<tr>'+
+                        '<td>'+r.id+'</td>'+
+                        '<td><small>'+r.order_no+'</small></td>'+
+                        '<td>'+(r.nickname||r.username||'--')+'<br><small class="text-muted">余额:¥'+(r.user_balance||0)+'</small></td>'+
+                        '<td><strong style="color:#d9534f;">¥'+parseFloat(r.amount).toFixed(2)+'</strong></td>'+
+                        '<td>'+(r.withdraw_type_text||r.withdraw_type||'-')+'</td>'+
+                        '<td>'+qrBtn+'</td>'+
+                        '<td><small>'+acctInfo+'</small></td>'+
+                        '<td><span class="label '+sc+'">'+(r.status_text||'未知')+'</span></td>'+
+                        '<td><small>'+(r.admin_remark||'-')+'</small></td>'+
+                        '<td><small>'+(r.create_date||'-')+'</small></td>'+
+                        '<td>'+actions+'</td></tr>';
+                }
+            }
+            document.getElementById('tableBody').innerHTML = html;
+            wdRenderPage(d.total||0, wdPage, 20);
+        } catch(e){
+            document.getElementById('tableBody').innerHTML='<tr><td colspan="11" style="color:red;">解析错误: '+e.message+'</td></tr>';
+        }
+    };
+    xhr.send();
+}
+
+function wdAudit(id, action){
+    if(action === 'reject') {
+        var remark = window.prompt('请输入拒绝原因(可留空):');
+        if(remark === null) return;
+    } else {
+        var remark = '';
+    }
+
+    var fd = new FormData();
+    fd.append('id', id);
+    fd.append('action', action);
+    fd.append('remark', remark);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', location.pathname.replace(/\/index$/i, '/audit'), true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function(){
+        try { var res=JSON.parse(xhr.responseText); alert(res.msg); wdLoadList(wdPage); }
+        catch(e){ alert('操作失败'); }
+    };
+    xhr.send(fd);
+}
+
+function wdShowQR(url){
+    document.getElementById('qrImg').src = url;
+    document.getElementById('qrOverlay').style.display = 'flex';
+}
+
+function wdRenderPage(total, page, limit){
+    var pages = Math.ceil(total / limit), html = '';
+    if(pages <= 1){ document.getElementById('pagination').innerHTML=''; return; }
+    for(var i=1;i<=pages;i++){
+        html += '<button class="btn btn-sm '+(i===page?'btn-primary':'btn-default')+'" onclick="wdLoadList('+i+')" style="margin:2px;">'+i+'</button>';
+    }
+    document.getElementById('pagination').innerHTML = '<div>共'+total+'条 '+html+'</div>';
+}
+
+window.wdLoadList = wdLoadList;
+window.wdAudit = wdAudit;
+window.wdShowQR = wdShowQR;
+window.wdRenderPage = wdRenderPage;
+
+wdLoadList();
+</script>

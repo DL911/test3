@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>走势分析 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/lottery.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', -apple-system, sans-serif; }
+        body.lottery-page { background:#f0f2f5; }
+
+        .trend-layout { max-width:1200px; margin:90px auto 40px; padding:0 24px; display:flex; gap:20px; }
+
+        /* 左侧功能切换 */
+        .trend-sidebar { width:200px; flex-shrink:0; }
+        .trend-type-card { background:#fff; border-radius:14px; padding:12px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
+        .trend-type-item {
+            display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:10px;
+            cursor:pointer; color:#888; font-size:14px; font-weight:600; transition:all 0.15s;
+        }
+        .trend-type-item:hover { background:#f8f6ff; color:#555; }
+        .trend-type-item.active { background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; }
+        .trend-type-item i { width:18px; text-align:center; }
+
+        .trend-nav { background:#fff; border-radius:14px; padding:8px; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
+        .trend-nav-item {
+            display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:10px;
+            cursor:pointer; color:#888; font-size:14px; font-weight:500; transition:all 0.15s; border-left:3px solid transparent;
+        }
+        .trend-nav-item:hover { background:#f8f6ff; color:#555; }
+        .trend-nav-item.active { color:#764ba2; font-weight:700; background:#f3f0ff; border-left-color:#764ba2; }
+        .trend-nav-item i { width:18px; text-align:center; font-size:15px; }
+
+        /* 右侧内容 */
+        .trend-main { flex:1; min-width:0; }
+        .trend-card { background:#fff; border-radius:14px; padding:28px 32px; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
+        .trend-card-title { font-size:17px; font-weight:700; color:#333; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+        .trend-card-title i { color:#764ba2; }
+        .trend-card-title .badge { margin-left:auto; font-size:11px; color:#999; font-weight:400; background:#f3f0ff; padding:4px 10px; border-radius:20px; }
+
+        /* 走势表 */
+        .t-table-wrap { overflow-x:auto; max-height:calc(100vh - 240px); overflow-y:auto; border-radius:10px; border:1px solid #f0f0f0; }
+        .t-table { width:100%; border-collapse:collapse; font-size:13px; }
+        .t-table th { background:#f9f8ff; color:#999; font-weight:600; font-size:12px; padding:8px 6px; position:sticky; top:0; z-index:3; border-bottom:2px solid #ede9fe; }
+        .t-table td { padding:6px; text-align:center; border-bottom:1px solid #f8f8f8; color:#555; }
+        .t-table tr:hover td { background:#faf8ff; }
+
+        /* 走势冻结列 */
+        .t-table th:nth-child(-n+4), .t-table td:nth-child(-n+4) { position:sticky; z-index:2; background:#fff; }
+        .t-table th:nth-child(1), .t-table td:nth-child(1) { left:0; min-width:56px; }
+        .t-table th:nth-child(2), .t-table td:nth-child(2) { left:56px; }
+        .t-table th:nth-child(3), .t-table td:nth-child(3) { left:84px; }
+        .t-table th:nth-child(4), .t-table td:nth-child(4) { left:112px; box-shadow:2px 0 6px rgba(118,75,162,0.06); }
+        .t-table th:nth-child(-n+4) { z-index:4; background:#f9f8ff; }
+        .t-table tr:hover td:nth-child(-n+4) { background:#faf8ff; }
+
+        /* 号码命中/未中 */
+        .t-hit { display:inline-flex; width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; font-weight:700; font-size:12px; align-items:center; justify-content:center; }
+        .t-miss { color:#e0e0e0; font-size:12px; }
+        .t-period { font-weight:700; color:#764ba2; font-size:12px; }
+        .t-num { font-weight:800; font-size:14px; color:#333; }
+        .t-sum { font-weight:700; color:#333; }
+        .tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; }
+        .tag-r { background:#fef2f2; color:#dc2626; }
+        .tag-b { background:#eff6ff; color:#2563eb; }
+
+        /* 路子图 */
+        .pattern-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; padding:4px 0; }
+        .pattern-card { background:#f9f8ff; border-radius:12px; padding:18px 20px; border:1px solid #ede9fe; }
+        .pattern-card h4 { font-size:13px; color:#764ba2; font-weight:700; margin:0 0 10px; }
+        .pcell { display:inline-flex; width:26px; height:22px; border-radius:4px; align-items:center; justify-content:center; font-size:11px; font-weight:700; margin:1px; }
+        .pcell.red { background:#fef2f2; color:#dc2626; }
+        .pcell.blue { background:#eff6ff; color:#2563eb; }
+        .pcell.empty { background:#f5f5f5; color:transparent; }
+
+        /* 长龙 */
+        .streak-item { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid #f5f5f5; }
+        .streak-item:last-child { border-bottom:none; }
+        .streak-rank { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; color:#fff; flex-shrink:0; }
+        .streak-rank.r1 { background:linear-gradient(135deg,#f59e0b,#f97316); }
+        .streak-rank.r2 { background:linear-gradient(135deg,#94a3b8,#64748b); }
+        .streak-rank.r3 { background:linear-gradient(135deg,#d97706,#b45309); }
+        .streak-rank.rn { background:#e5e7eb; color:#9ca3af; }
+        .streak-name { flex:1; font-size:14px; font-weight:600; color:#333; }
+        .streak-count { font-size:24px; font-weight:800; color:#764ba2; }
+        .streak-unit { font-size:12px; color:#999; margin-left:2px; }
+
+        /* 对奖 */
+        .check-input-row { display:flex; gap:10px; align-items:center; margin-bottom:20px; }
+        .check-input { width:60px; height:52px; border-radius:12px; border:2px solid #ede9fe; background:#f9f8ff; text-align:center; font-size:24px; font-weight:800; color:#764ba2; }
+        .check-input:focus { outline:none; border-color:#764ba2; background:#fff; }
+        .check-btn { padding:14px 28px; border:none; border-radius:12px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; font-weight:700; font-size:14px; cursor:pointer; }
+        .check-btn:hover { box-shadow:0 4px 16px rgba(118,75,162,0.3); }
+        .check-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #f8f8f8; font-size:14px; }
+        .check-row:last-child { border-bottom:none; }
+        .check-period { font-weight:700; color:#764ba2; min-width:60px; }
+        .check-nums { flex:1; font-weight:700; color:#333; font-size:16px; }
+        .check-nums .matched { color:#dc2626; text-decoration:underline; }
+
+        /* 记录表 */
+        .rec-ball { display:inline-flex; width:30px; height:30px; border-radius:50%; color:#fff; font-weight:800; font-size:14px; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="lottery-page">
+    {include file="lottery/pc_header" /}
+
+    <div class="trend-layout">
+        <!-- 左侧 -->
+        <div class="trend-sidebar">
+            <div class="trend-type-card">
+                <div class="trend-type-item active" data-type="1" onclick="switchType(1)"><i class="fa-solid fa-cube"></i> 福彩3D</div>
+                <div class="trend-type-item" data-type="2" onclick="switchType(2)"><i class="fa-solid fa-cubes-stacked"></i> 排列三</div>
+            </div>
+            <div class="trend-nav">
+                <div class="trend-nav-item active" data-func="trend" onclick="switchFunc('trend')"><i class="fa-solid fa-chart-line"></i> 完整走势</div>
+                <div class="trend-nav-item" data-func="pattern" onclick="switchFunc('pattern')"><i class="fa-solid fa-table-cells"></i> 路子图</div>
+                <div class="trend-nav-item" data-func="check" onclick="switchFunc('check')"><i class="fa-solid fa-trophy"></i> 对奖信息</div>
+                <div class="trend-nav-item" data-func="streak" onclick="switchFunc('streak')"><i class="fa-solid fa-fire-flame-curved"></i> 长龙排行</div>
+                <div class="trend-nav-item" data-func="records" onclick="switchFunc('records')"><i class="fa-solid fa-clock-rotate-left"></i> 开奖记录</div>
+            </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div class="trend-main">
+            <!-- 走势图 -->
+            <div class="trend-panel" id="panel-trend">
+                <div class="trend-card">
+                    <div class="trend-card-title"><i class="fa-solid fa-chart-bar"></i> 号码走势图 <span class="badge">最近50期</span></div>
+                    <div class="t-table-wrap">
+                        <table class="t-table" id="trendTable"></table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 路子图 -->
+            <div class="trend-panel" id="panel-pattern" style="display:none;">
+                <div class="trend-card">
+                    <div class="trend-card-title"><i class="fa-solid fa-table-cells"></i> 大小单双路子图 <span class="badge">最近15期</span></div>
+                    <div class="pattern-grid" id="patternGrid"></div>
+                </div>
+            </div>
+
+            <!-- 对奖 -->
+            <div class="trend-panel" id="panel-check" style="display:none;">
+                <div class="trend-card">
+                    <div class="trend-card-title"><i class="fa-solid fa-trophy"></i> 对奖查询</div>
+                    <div class="check-input-row">
+                        <input type="text" class="check-input" id="checkB" maxlength="1" placeholder="百">
+                        <input type="text" class="check-input" id="checkS" maxlength="1" placeholder="十">
+                        <input type="text" class="check-input" id="checkG" maxlength="1" placeholder="个">
+                        <button class="check-btn" onclick="doCheck()"><i class="fa-solid fa-search"></i> 查询</button>
+                    </div>
+                    <div id="checkResult"></div>
+                </div>
+            </div>
+
+            <!-- 长龙 -->
+            <div class="trend-panel" id="panel-streak" style="display:none;">
+                <div class="trend-card">
+                    <div class="trend-card-title"><i class="fa-solid fa-fire-flame-curved"></i> 长龙排行榜</div>
+                    <div id="streakList"></div>
+                </div>
+            </div>
+
+            <!-- 记录 -->
+            <div class="trend-panel" id="panel-records" style="display:none;">
+                <div class="trend-card">
+                    <div class="trend-card-title"><i class="fa-solid fa-clock-rotate-left"></i> 开奖记录 <span class="badge">最近50期</span></div>
+                    <div class="t-table-wrap">
+                        <table class="t-table" id="recordTable"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/lottery/js/auth.js"></script>
+    <script>
+    var currentType = 1, currentFunc = 'trend', drawData = [];
+
+    function switchType(t) {
+        currentType = t;
+        document.querySelectorAll('.trend-type-item').forEach(function(el){ el.classList.toggle('active', el.dataset.type == t); });
+        loadData();
+    }
+
+    function switchFunc(f) {
+        currentFunc = f;
+        document.querySelectorAll('.trend-nav-item').forEach(function(el){ el.classList.toggle('active', el.dataset.func === f); });
+        document.querySelectorAll('.trend-panel').forEach(function(el){ el.style.display = el.id === 'panel-'+f ? '' : 'none'; });
+        history.replaceState(null, '', '#' + f);
+        renderCurrent();
+    }
+
+    function loadData() {
+        fetch('/index.php/api/trend/history?type='+currentType+'&limit=50')
+        .then(function(r){ return r.json(); })
+        .then(function(res) { if(res.code===1) { drawData = res.data||[]; renderCurrent(); } });
+    }
+
+    function renderCurrent() {
+        if(currentFunc==='trend') renderTrend();
+        else if(currentFunc==='pattern') renderPattern();
+        else if(currentFunc==='streak') loadStreaks();
+        else if(currentFunc==='records') renderRecords();
+    }
+
+    function renderTrend() {
+        if(!drawData.length) { document.getElementById('trendTable').innerHTML='<tr><td colspan="16" style="padding:40px;color:#ccc;text-align:center;">暂无数据</td></tr>'; return; }
+        var h = '<thead><tr><th>期号</th><th>百</th><th>十</th><th>个</th>';
+        for(var i=0;i<10;i++) h+='<th>'+i+'</th>';
+        h+='<th>和</th><th>大小</th><th>单双</th></tr></thead><tbody>';
+        drawData.forEach(function(d){
+            h+='<tr><td class="t-period">'+d.period.slice(-5)+'</td>';
+            h+='<td class="t-num">'+d.b+'</td><td class="t-num">'+d.s+'</td><td class="t-num">'+d.g+'</td>';
+            for(var n=0;n<10;n++) h+='<td>'+(d.b===n||d.s===n||d.g===n?'<span class="t-hit">'+n+'</span>':'<span class="t-miss">'+n+'</span>')+'</td>';
+            h+='<td class="t-sum">'+d.sum+'</td>';
+            h+='<td><span class="tag '+(d.big_small==='大'?'tag-r':'tag-b')+'">'+d.big_small+'</span></td>';
+            h+='<td><span class="tag '+(d.odd_even==='单'?'tag-r':'tag-b')+'">'+d.odd_even+'</span></td></tr>';
+        });
+        document.getElementById('trendTable').innerHTML=h+'</tbody>';
+    }
+
+    function renderPattern() {
+        var g=document.getElementById('patternGrid');
+        if(!drawData.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:#ccc;">暂无数据</div>';return;}
+        var cfgs=[
+            {t:'总和大小',k:'big_small',v:['大','小']},{t:'总和单双',k:'odd_even',v:['单','双']},
+            {t:'百位大小',k:'b_bs',v:['大','小']},{t:'十位大小',k:'s_bs',v:['大','小']},
+            {t:'个位大小',k:'g_bs',v:['大','小']},{t:'百位单双',k:'b_oe',v:['单','双']},
+            {t:'十位单双',k:'s_oe',v:['单','双']},{t:'个位单双',k:'g_oe',v:['单','双']}
+        ], h='';
+        var recent = drawData.slice(-15);
+        cfgs.forEach(function(c){
+            h+='<div class="pattern-card"><h4>'+c.t+'</h4><div style="display:flex;flex-wrap:wrap;gap:2px;">';
+            recent.forEach(function(d){
+                var val=d[c.k];
+                c.v.forEach(function(v){
+                    var cls = val===v ? (v==='大'||v==='单'?'red':'blue') : 'empty';
+                    h+='<span class="pcell '+cls+'">'+(val===v?v:'')+'</span>';
+                });
+            });
+            h+='</div></div>';
+        });
+        g.innerHTML=h;
+    }
+
+    function loadStreaks() {
+        fetch('/index.php/api/trend/streaks?type='+currentType)
+        .then(function(r){return r.json();})
+        .then(function(res){
+            var el=document.getElementById('streakList'), list=(res.code===1)?res.data||[]:[];
+            if(!list.length){el.innerHTML='<div style="text-align:center;padding:40px;color:#ccc;">当前无长龙</div>';return;}
+            el.innerHTML=list.map(function(s,i){
+                var rc=i===0?'r1':(i===1?'r2':(i===2?'r3':'rn'));
+                return '<div class="streak-item"><div class="streak-rank '+rc+'">'+(i+1)+'</div><div class="streak-name">'+s.name+'</div><div><span class="streak-count">'+s.count+'</span><span class="streak-unit">期</span></div></div>';
+            }).join('');
+        });
+    }
+
+    function doCheck() {
+        var b=document.getElementById('checkB').value,s=document.getElementById('checkS').value,g=document.getElementById('checkG').value;
+        if(!b||!s||!g){alert('请填写完整3位号码');return;}
+        fetch('/index.php/api/trend/check?type='+currentType+'&numbers='+b+','+s+','+g)
+        .then(function(r){return r.json();})
+        .then(function(res){
+            var el=document.getElementById('checkResult'),list=(res.code===1)?res.data||[]:[];
+            if(!list.length){el.innerHTML='<div style="text-align:center;padding:40px;color:#ccc;">暂无数据</div>';return;}
+            el.innerHTML=list.map(function(r){
+                var nums=r.numbers.split(','),my=[b,s,g];
+                var nh=nums.map(function(n,i){return n.trim()===my[i].trim()?'<span class="matched">'+n+'</span>':n;}).join(' ');
+                var st='';
+                if(r.is_win) st='<span class="tag tag-r">🎉 中奖</span>';
+                else if(r.group_match) st='<span class="tag tag-b">组选</span>';
+                else if(r.direct_match>0) st='<span style="color:#999;">'+r.direct_match+'位</span>';
+                else st='<span style="color:#ddd;">—</span>';
+                return '<div class="check-row"><span class="check-period">'+r.period+'</span><span class="check-nums">'+nh+'</span>'+st+'</div>';
+            }).join('');
+        });
+    }
+
+    function renderRecords() {
+        if(!drawData.length){document.getElementById('recordTable').innerHTML='<tr><td colspan="5" style="padding:40px;color:#ccc;text-align:center;">暂无数据</td></tr>';return;}
+        var colors=['#7c3aed','#0891b2','#e11d48'];
+        var h='<thead><tr><th>期号</th><th>开奖号码</th><th>和值</th><th>大小</th><th>单双</th></tr></thead><tbody>';
+        drawData.slice().reverse().forEach(function(d){
+            var balls='<div style="display:inline-flex;gap:6px;">';
+            [d.b,d.s,d.g].forEach(function(n,i){
+                balls+='<span class="rec-ball" style="background:'+colors[i]+';">'+n+'</span>';
+            });
+            balls+='</div>';
+            h+='<tr><td class="t-period">'+d.period.slice(-5)+'</td><td>'+balls+'</td>';
+            h+='<td class="t-sum">'+d.sum+'</td>';
+            h+='<td><span class="tag '+(d.big_small==='大'?'tag-r':'tag-b')+'">'+d.big_small+'</span></td>';
+            h+='<td><span class="tag '+(d.odd_even==='单'?'tag-r':'tag-b')+'">'+d.odd_even+'</span></td></tr>';
+        });
+        document.getElementById('recordTable').innerHTML=h+'</tbody>';
+    }
+
+    // 对奖输入自动跳转
+    document.querySelectorAll('.check-input').forEach(function(inp,i,list){
+        inp.addEventListener('input',function(){if(this.value.length>=1&&list[i+1])list[i+1].focus();});
+    });
+
+    // hash 支持 - 初始加载
+    var hash = window.location.hash.replace('#','');
+    if(hash && ['trend','pattern','check','streak','records'].indexOf(hash)!==-1) {
+        switchFunc(hash);
+    }
+    loadData();
+
+    // 监听 hash 变化（顶部导航点击时触发）
+    window.addEventListener('hashchange', function() {
+        var h = window.location.hash.replace('#','');
+        if(h && ['trend','pattern','check','streak','records'].indexOf(h)!==-1) {
+            switchFunc(h);
+            highlightNav();
+        }
+    });
+
+    function highlightNav() {
+        var h = window.location.hash;
+        document.querySelectorAll('.header-nav a').forEach(function(a){
+            a.classList.remove('active');
+            if(h && a.href.indexOf(h)>-1) a.classList.add('active');
+        });
+    }
+
+    // 导航高亮
+    document.addEventListener('DOMContentLoaded', function(){
+        LotteryAuth.initHeader && LotteryAuth.initHeader();
+        highlightNav();
+    });
+    </script>
+</body>
+</html>

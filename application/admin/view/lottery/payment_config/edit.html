@@ -1,0 +1,76 @@
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">通道名称:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="text" class="form-control" name="row[title]" value="{$row.title|htmlentities}" data-rule="required" />
+        </div>
+    </div>
+
+    <!-- 上传组件 -->
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">收款码截图 (必登):</label>
+        <div class="col-xs-12 col-sm-8">
+            <div class="input-group">
+                <input id="c-qr_image" class="form-control" size="50" name="row[qr_image]" type="text" value="{$row.qr_image|htmlentities}">
+                <div class="input-group-addon no-border no-padding">
+                    <span><button type="button" id="faupload-qr_image" class="btn btn-danger faupload" data-input-id="c-qr_image" data-mimetype="image/gif,image/jpeg,image/png,image/jpg" data-multiple="false" data-preview-id="p-qr_image"><i class="fa fa-upload"></i> 上传</button></span>
+                    <span><button type="button" id="fachoose-qr_image" class="btn btn-primary fachoose" data-input-id="c-qr_image" data-mimetype="image/*" data-multiple="false"><i class="fa fa-list"></i> 选择</button></span>
+                </div>
+                <span class="msg-box n-right" for="c-qr_image"></span>
+            </div>
+            <ul class="row list-inline faupload-preview" id="p-qr_image"></ul>
+            <span class="help-block">如果是USDT不需要图片，可以留空</span>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">收款账号/地址:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="text" class="form-control" name="row[account]" value="{$row.account|htmlentities}" />
+            <span class="help-block">如果二维码不方便扫，用户可以复制这个账号（比如微信号或USDT地址）转账</span>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">前台提示文字:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="text" class="form-control" name="row[remark]" value="{$row.remark|htmlentities}" />
+            <span class="help-block">显示在充值界面的红字要求提醒</span>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">最低充值金额:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" class="form-control" name="row[min_amount]" value="{$row.min_amount|htmlentities}" data-rule="required;digits" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">状态:</label>
+        <div class="col-xs-12 col-sm-8">
+            {:build_radios('row[status]', ['1'=>__('Normal'), '0'=>__('Hidden')], $row['status'])}
+        </div>
+    </div>
+
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-success btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
+
+<script>
+    // 监听表单提交成功事件，刷新父窗口列表
+    var require = {
+        paths: {
+            'form': 'backend/form'
+        }
+    };
+    $(function () {
+        Controller.api.bindevent();
+    });
+</script>

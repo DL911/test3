@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>站内转账 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/mobile_light.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="light-mobile">
+
+    <div class="lm-topbar">
+        <a class="back" href="/index.php/index/lottery/user"><i class="fa-solid fa-arrow-left"></i></a>
+        <h2>站内转账</h2>
+    </div>
+
+    <div class="lm-safe-bottom">
+
+        <div class="lm-balance-card">
+            <div class="lm-balance-label">可用余额</div>
+            <div class="lm-balance-value" id="tfBalance">¥0.00</div>
+        </div>
+
+        <div class="lm-card">
+            <div style="margin-bottom:14px;"><div class="lm-label">对方账号</div><input type="text" class="lm-input" id="toAccount" placeholder="用户名、手机号或昵称"><div style="font-size:11px;color:var(--m-text-light);margin-top:4px;">支持用户名、手机号、昵称查找</div></div>
+            <div style="margin-bottom:14px;"><div class="lm-label" id="tfUnitLabel">转账金额</div><input type="number" class="lm-input" id="tfAmount" placeholder="输入转账额" style="font-size:20px;font-weight:700;"></div>
+            <div><div class="lm-label">备注 (选填)</div><input type="text" class="lm-input" id="tfRemark" placeholder="给对方留言"></div>
+        </div>
+
+        <div style="padding:0 16px;margin-bottom:12px;">
+            <button class="lm-btn lm-btn-primary" id="tfBtn" onclick="submitTransfer()"><i class="fa-solid fa-paper-plane"></i> 确认转账</button>
+        </div>
+
+        <!-- 转账凭证 -->
+        <div class="lm-receipt" id="receipt" style="display:none;">
+            <h3><i class="fa-solid fa-circle-check"></i> 转账成功</h3>
+            <div class="lm-receipt-row"><span class="lm-receipt-label">订单号</span><span class="lm-receipt-value" id="rcOrderNo">--</span></div>
+            <div class="lm-receipt-row"><span class="lm-receipt-label">对方</span><span class="lm-receipt-value" id="rcToUser">--</span></div>
+            <div class="lm-receipt-row"><span class="lm-receipt-label">金额</span><span class="lm-receipt-value" id="rcAmount" style="color:var(--m-primary);font-size:18px;">--</span></div>
+            <div class="lm-receipt-row"><span class="lm-receipt-label">余额</span><span class="lm-receipt-value" id="rcBalance">--</span></div>
+            <div style="margin-top:12px;font-size:12px;color:var(--m-text-light);"><i class="fa-solid fa-clock"></i> <span id="rcTime"></span></div>
+        </div>
+
+        <!-- 转账记录 -->
+        <div class="lm-card">
+            <div class="lm-card-title" onclick="toggleRec()"><i class="fa-solid fa-clock-rotate-left"></i> 转账记录 <i class="fa-solid fa-chevron-down" style="margin-left:auto;color:var(--m-text-light);font-size:12px;"></i></div>
+            <div id="tfRecordsList" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div class="lm-toast" id="toast"></div>
+
+<script src="/assets/lottery/js/auth.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+    if(!LotteryAuth.isLoggedIn()){location.href='/index.php/index/lottery/login';return;}
+    document.getElementById('tfUnitLabel').textContent = '转账金额 (' + (LotteryAuth.getCurrency()==='usdt' ? 'USDT' : '元') + ')';
+    LotteryAuth.fetchUserInfo(function(u){if(u)document.getElementById('tfBalance').textContent=LotteryAuth.formatMoney(u.money);});
+});
+function submitTransfer(){
+    var to=document.getElementById('toAccount').value.trim(),displayAmt=parseFloat(document.getElementById('tfAmount').value),remark=document.getElementById('tfRemark').value.trim();
+    if(!to){showToast('请输入对方账号','error');return;}
+    if(!displayAmt||displayAmt<=0){showToast('请输入有效金额','error');return;}
+    
+    var cnyAmt=LotteryAuth.toCny(displayAmt);
+    var minAmt = 1;
+    if(cnyAmt < minAmt){showToast('最低转账相当于¥1','error');return;}
+    if(!confirm('确认转账 '+LotteryAuth.formatMoney(cnyAmt)+' 给 '+to+'？'))return;
+    
+    var btn=document.getElementById('tfBtn');btn.disabled=true;btn.textContent='转账中...';
+    var fd=new FormData();fd.append('to_account',to);fd.append('amount',cnyAmt);fd.append('remark',remark);
+    fetch('/index.php/api/payment/transfer',{method:'POST',headers:{'token':LotteryAuth.getToken()},body:fd})
+    .then(function(r){return r.json();}).then(function(res){
+        btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane"></i> 确认转账';
+        if(res.code===1){
+            showToast('转账成功','success');
+            try {
+                var d = res.data || {};
+                document.getElementById('rcOrderNo').textContent = d.order_no || '--';
+                document.getElementById('rcToUser').textContent = d.to_user || to;
+                document.getElementById('rcAmount').textContent = '¥' + (d.amount || displayAmt);
+                document.getElementById('rcBalance').textContent = '¥' + (parseFloat(d.balance) || 0).toFixed(2);
+                document.getElementById('rcTime').textContent = new Date().toLocaleString('zh-CN');
+                document.getElementById('receipt').style.display = '';
+                document.getElementById('tfBalance').textContent = '¥' + (parseFloat(d.balance) || 0).toFixed(2);
+            } catch(e) { console.error('receipt render error:', e); }
+            document.getElementById('toAccount').value='';document.getElementById('tfAmount').value='';document.getElementById('tfRemark').value='';
+            LotteryAuth.fetchUserInfo(function(){});
+        } else showToast(res.msg||'转账失败','error');
+    }).catch(function(e){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-paper-plane"></i> 确认转账';showToast('网络错误，请重试','error');console.error('Transfer error:',e);});
+}
+function toggleRec(){var el=document.getElementById('tfRecordsList');if(el.style.display==='none'){el.style.display='';loadRec();}else el.style.display='none';}
+function loadRec(){
+    fetch('/index.php/api/payment/getTransfers',{headers:{'token':LotteryAuth.getToken()}})
+    .then(function(r){return r.json();}).then(function(res){
+        var el=document.getElementById('tfRecordsList'),list=(res.code===1&&res.data)?res.data.list||[]:[];
+        if(!list.length){el.innerHTML='<div class="lm-empty">暂无记录</div>';return;}
+        el.innerHTML=list.map(function(o){
+            var dir=o.direction==='out'?'转出':'转入',cls=o.direction==='out'?'minus':'plus',sign=o.direction==='out'?'-':'+';
+            return '<div class="lm-record-item"><div><div class="lm-record-label"><strong>'+dir+'</strong> → '+o.other_name+'</div><div class="lm-record-time">'+o.create_date+'</div></div><div><div class="lm-record-amount '+cls+'">'+sign+LotteryAuth.formatMoney(o.amount)+'</div></div></div>';
+        }).join('');
+    });
+}
+function showToast(m,t){var e=document.getElementById('toast');e.textContent=m;e.className='lm-toast '+t;e.style.display='block';setTimeout(function(){e.style.display='none';},3000);}
+</script>
+</body>
+</html>

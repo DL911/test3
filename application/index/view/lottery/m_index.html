@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <title>彩票大厅 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/lottery_m.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="m-lottery">
+
+    <!-- ===== 顶部栏 ===== -->
+    <header class="m-header">
+        <div class="m-header-left">
+            <div class="m-logo" style="background:transparent;padding:0;"><img src="/thumb.php?src=/c788ffd04d7bbafa657bd2dcf4c6ecc4.png&w=200&q=80" style="width:100%;height:100%;object-fit:contain;border-radius:12px;"></div>
+            <span class="m-title">好运北彩</span>
+        </div>
+        <div class="m-header-right">
+            <div id="authBtnWrap">
+                <a href="/index.php/index/lottery/login" style="color:#fff;font-size:13px;padding:4px 12px;background:rgba(255,255,255,0.2);border-radius:16px;text-decoration:none;">登录</a>
+            </div>
+            <div id="userInfoWrap" style="display:none;">
+                <div class="m-balance" style="cursor:default;">
+                    <i class="fa-solid fa-wallet"></i>
+                    <span id="currencySymbol">¥</span>
+                    <span id="userBalance">0.00</span>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== 轮播图 ===== -->
+    <div class="m-banner" id="mBanner" style="display:none;">
+        <div class="m-banner-track" id="mBannerTrack"></div>
+        <div class="m-banner-dots" id="mBannerDots"></div>
+    </div>
+    <style>
+        .m-banner { position:relative; margin:0; overflow:hidden; }
+        .m-banner-track { display:flex; transition:transform 0.4s ease; }
+        .m-banner-slide { min-width:100%; }
+        .m-banner-slide img { width:100%; height:auto; display:block; }
+        .m-banner-dots { position:absolute; bottom:8px; left:50%; transform:translateX(-50%); display:flex; gap:5px; }
+        .m-banner-dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.5); border:none; padding:0; }
+        .m-banner-dot.active { background:#fff; width:16px; border-radius:3px; }
+    </style>
+
+    <!-- ===== 彩种Tab ===== -->
+    <div class="m-type-tabs">
+        <div class="m-type-tab active" data-type="all"><i class="fa-solid fa-fire"></i> 全部</div>
+        <div class="m-type-tab" data-type="fc3d"><i class="fa-solid fa-cube"></i> 福彩3D</div>
+        <div class="m-type-tab" data-type="pl3"><i class="fa-solid fa-list-ol"></i> 排列三</div>
+    </div>
+
+    <!-- ===== 彩票卡片 ===== -->
+    <div class="m-card-list" id="cardList">
+
+        <!-- 福彩3D -->
+        <div class="m-lottery-card" data-lottery="fc3d" onclick="location.href='/index.php/index/lottery/m_bet?type=fc3d'">
+            <div class="m-card-top">
+                <div class="m-card-icon fc3d"><img src="/thumb.php?src=/c788ffd04d7bbafa657bd2dcf4c6ecc4.png&w=200&q=80" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"></div>
+                <div class="m-card-info">
+                    <div class="m-card-name">福彩3D</div>
+                    <div class="m-card-period">第 <span id="fc3dPeriod">2026102</span> 期</div>
+                </div>
+                <div class="m-card-countdown" id="fc3dCountdown">
+                    <div class="m-countdown-label">距下期</div>
+                    <div class="m-countdown-time js-countdown" data-draw-time="21:15:00">计算中...</div>
+                </div>
+            </div>
+            <div class="m-card-numbers" id="fc3dNumbers">
+                <span class="m-num purple">4</span>
+                <span class="m-num cyan">2</span>
+                <span class="m-num pink">0</span>
+            </div>
+            <div class="m-card-stats">
+                <span class="m-stat">总和 <strong>6</strong></span>
+                <span class="m-stat blue">小</span>
+                <span class="m-stat red">双</span>
+            </div>
+            <div class="m-card-action">
+                <span class="m-bet-btn"><i class="fa-solid fa-pen-to-square"></i> 立即投注</span>
+            </div>
+        </div>
+
+        <!-- 排列三 -->
+        <div class="m-lottery-card" data-lottery="pl3" onclick="location.href='/index.php/index/lottery/m_bet?type=pl3'">
+            <div class="m-card-top">
+                <div class="m-card-icon pl3"><img src="/thumb.php?src=/c788ffd04d7bbafa657bd2dcf4c6ecc4.png&w=200&q=80" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"></div>
+                <div class="m-card-info">
+                    <div class="m-card-name">排列三</div>
+                    <div class="m-card-period">第 <span id="pl3Period">2026102</span> 期</div>
+                </div>
+                <div class="m-card-countdown" id="pl3Countdown">
+                    <div class="m-countdown-label">距下期</div>
+                    <div class="m-countdown-time js-countdown" data-draw-time="21:25:00">计算中...</div>
+                </div>
+            </div>
+            <div class="m-card-numbers" id="pl3Numbers">
+                <span class="m-num blue">4</span>
+                <span class="m-num green">9</span>
+                <span class="m-num orange">0</span>
+            </div>
+            <div class="m-card-stats">
+                <span class="m-stat">总和 <strong>13</strong></span>
+                <span class="m-stat blue">小</span>
+                <span class="m-stat red">单</span>
+            </div>
+            <div class="m-card-action">
+                <span class="m-bet-btn"><i class="fa-solid fa-pen-to-square"></i> 立即投注</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===== 底部导航 ===== -->
+    <nav class="m-bottom-nav">
+        <a href="/index.php/index/lottery/index" class="m-nav-item active">
+            <i class="fa-solid fa-dice"></i>
+            <span>彩票</span>
+        </a>
+        <a href="/index.php/index/lottery/trend#trend" class="m-nav-item">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>走势</span>
+        </a>
+        <a href="/index.php/index/lottery/records" class="m-nav-item">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>记录</span>
+        </a>
+        <a href="/index.php/index/lottery/user" class="m-nav-item">
+            <i class="fa-solid fa-user"></i>
+            <span>我的</span>
+        </a>
+    </nav>
+
+
+    <div class="lottery-toast" id="toastContainer"></div>
+
+    <script src="/assets/lottery/js/auth.js"></script>
+    <script src="/assets/lottery/js/currency_picker.js"></script>
+    <script src="/assets/lottery/js/lottery.js"></script>
+    <script>
+        function showToast(msg) {
+            var m = document.createElement('div');
+            m.className = 'm-toast show';
+            m.textContent = msg;
+            document.body.appendChild(m);
+            setTimeout(function(){ m.remove(); }, 2000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            LotteryApp.initCountdowns();
+            loadLatestDraws();
+            // Tab 切换过滤
+            document.querySelectorAll('.m-type-tab').forEach(function(tab) {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.m-type-tab').forEach(function(t) { t.classList.remove('active'); });
+                    tab.classList.add('active');
+                    var type = tab.dataset.type;
+                    document.querySelectorAll('.m-lottery-card').forEach(function(card) {
+                        if (type === 'all' || card.dataset.lottery === type) {
+                            card.style.display = '';
+                            card.style.animation = 'cardFadeIn 0.3s ease';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        });
+
+        // 颜色映射
+        var ballColors = ['purple','cyan','pink','blue','green','orange','red','teal','indigo','amber'];
+
+        function loadLatestDraws() {
+            // 加载福彩3D
+            fetch('/index.php/api/lottery/getLatestDraw?type=fc3d')
+                .then(function(r){ return r.json(); })
+                .then(function(res){
+                    if(res.code===1 && res.data && res.data.latest) updateCard('fc3d', res.data);
+                }).catch(function(){});
+            // 加载排列三
+            fetch('/index.php/api/lottery/getLatestDraw?type=pl3')
+                .then(function(r){ return r.json(); })
+                .then(function(res){
+                    if(res.code===1 && res.data && res.data.latest) updateCard('pl3', res.data);
+                }).catch(function(){});
+        }
+
+        function updateCard(type, data) {
+            var latest = data.latest;
+            var nums = latest.numbers_arr || latest.numbers.split(',');
+            var sum = 0;
+            for(var i=0;i<nums.length;i++) sum += parseInt(nums[i]);
+            var daxiao = sum >= 14 ? '大' : '小';
+            var danshuang = sum % 2 === 1 ? '单' : '双';
+
+            // 更新期号
+            var periodEl = document.getElementById(type === 'fc3d' ? 'fc3dPeriod' : 'pl3Period');
+            if(periodEl) periodEl.textContent = latest.period;
+
+            // 更新开奖号码球
+            var numbersEl = document.getElementById(type === 'fc3d' ? 'fc3dNumbers' : 'pl3Numbers');
+            if(numbersEl) {
+                var html = '';
+                for(var j=0;j<nums.length;j++) {
+                    var c = ballColors[j % ballColors.length];
+                    if(type==='fc3d') c = ['purple','cyan','pink'][j] || c;
+                    else c = ['blue','green','orange'][j] || c;
+                    html += '<span class="m-num ' + c + '">' + nums[j] + '</span>';
+                }
+                numbersEl.innerHTML = html;
+            }
+
+            // 更新统计
+            var card = document.querySelector('.m-lottery-card[data-lottery="'+type+'"]');
+            if(card) {
+                var statsEl = card.querySelector('.m-card-stats');
+                if(statsEl) {
+                    statsEl.innerHTML = '<span class="m-stat">\u603b\u548c <strong>' + sum + '</strong></span>' +
+                        '<span class="m-stat ' + (daxiao==='大'?'red':'blue') + '">' + daxiao + '</span>' +
+                        '<span class="m-stat ' + (danshuang==='单'?'red':'blue') + '">' + danshuang + '</span>';
+                }
+            }
+        }
+    </script>
+
+    <!-- 轮播图 JS -->
+    <script>
+    (function(){
+        var idx=0, cnt=0, timer=null, startX=0;
+        fetch('/index.php/api/lottery/banners').then(function(r){return r.json()}).then(function(res){
+            if(res.code!==1||!res.data||!res.data.length) return;
+            var list=res.data; cnt=list.length;
+            var track=document.getElementById('mBannerTrack'), dots=document.getElementById('mBannerDots');
+            var h='', d='';
+            list.forEach(function(b,i){
+                h+='<div class="m-banner-slide"'+(b.url?' onclick="window.location.href=\''+b.url+'\'"':'')+'>'; 
+                h+='<img src="/thumb.php?src='+encodeURIComponent(b.image)+'&w=800&q=72" alt="'+(b.title||'')+'" loading="lazy"></div>';
+                d+='<span class="m-banner-dot'+(i===0?' active':'')+'"></span>';
+            });
+            track.innerHTML=h; dots.innerHTML=d;
+            document.getElementById('mBanner').style.display='';
+            if(cnt>1) timer=setInterval(function(){go((idx+1)%cnt);},4000);
+
+            // 触摸滑动
+            track.addEventListener('touchstart',function(e){startX=e.touches[0].clientX;},{passive:true});
+            track.addEventListener('touchend',function(e){
+                var dx=e.changedTouches[0].clientX-startX;
+                if(Math.abs(dx)>40){ go(dx<0?(idx+1)%cnt:(idx-1+cnt)%cnt); }
+            });
+        });
+        function go(i){
+            idx=i;
+            document.getElementById('mBannerTrack').style.transform='translateX(-'+(i*100)+'%)';
+            var dots=document.querySelectorAll('.m-banner-dot');
+            dots.forEach(function(d,j){d.classList.toggle('active',j===i);});
+            if(timer){clearInterval(timer);timer=setInterval(function(){go((idx+1)%cnt);},4000);}
+        }
+    })();
+    </script>
+</body>
+</html>

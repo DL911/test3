@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>好运北彩 - 官方APP下载</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(160deg, #e8f0ff 0%, #f0e6ff 25%, #fff5eb 50%, #e0f4ff 75%, #f5f0ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* ===== 动态光斑背景 ===== */
+        .bg-orbs {
+            position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+        }
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: orbFloat 20s ease-in-out infinite alternate;
+        }
+        .orb-1 { width: 500px; height: 500px; background: rgba(99, 102, 241, 0.12); top: -10%; left: -10%; animation-duration: 18s; }
+        .orb-2 { width: 400px; height: 400px; background: rgba(245, 166, 35, 0.1); top: 50%; right: -10%; animation-duration: 22s; animation-delay: -5s; }
+        .orb-3 { width: 350px; height: 350px; background: rgba(16, 185, 129, 0.08); bottom: -5%; left: 30%; animation-duration: 25s; animation-delay: -10s; }
+        .orb-4 { width: 300px; height: 300px; background: rgba(236, 72, 153, 0.07); top: 20%; right: 20%; animation-duration: 20s; animation-delay: -3s; }
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -40px) scale(1.05); }
+            66% { transform: translate(-20px, 30px) scale(0.95); }
+            100% { transform: translate(15px, -20px) scale(1.02); }
+        }
+
+        /* ===== 浮动光点 ===== */
+        .sparkles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+        .sparkle {
+            position: absolute;
+            width: 4px; height: 4px;
+            border-radius: 50%;
+            background: rgba(245, 166, 35, 0.5);
+            animation: sparkleFloat linear infinite;
+            opacity: 0;
+        }
+        @keyframes sparkleFloat {
+            0% { opacity: 0; transform: translateY(0) scale(0); }
+            20% { opacity: 1; transform: scale(1); }
+            80% { opacity: 0.6; }
+            100% { opacity: 0; transform: translateY(-100vh) scale(0.3); }
+        }
+
+        /* ===== 主容器 ===== */
+        .container {
+            position: relative; z-index: 10;
+            width: 100%; max-width: 440px;
+        }
+
+        /* ===== 主卡片 ===== */
+        .glass-card {
+            position: relative;
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 32px;
+            padding: 48px 32px 40px;
+            text-align: center;
+            color: #1a1a2e;
+            overflow: hidden;
+            box-shadow:
+                0 4px 6px rgba(0,0,0,0.02),
+                0 12px 24px rgba(0,0,0,0.04),
+                0 24px 60px rgba(99, 102, 241, 0.06);
+        }
+        .glass-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.9) 50%, transparent 90%);
+        }
+
+        /* ===== Logo ===== */
+        .logo-wrap {
+            width: 100px; height: 100px;
+            margin: 0 auto 22px;
+            position: relative;
+        }
+        .logo-wrap::before {
+            content: '';
+            position: absolute; inset: -5px;
+            border-radius: 28px;
+            background: conic-gradient(from 0deg, #6366f1, #f59e0b, #10b981, #ec4899, #6366f1);
+            animation: logoSpin 8s linear infinite;
+            opacity: 0.5;
+            filter: blur(3px);
+        }
+        @keyframes logoSpin { 100% { transform: rotate(360deg); } }
+        .logo-wrap img {
+            position: relative; z-index: 1;
+            width: 100%; height: 100%;
+            border-radius: 24px;
+            object-fit: cover;
+            border: 3px solid #fff;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+
+        /* ===== 标题 ===== */
+        .app-name {
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, #1a1a2e, #4338ca, #1a1a2e);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: textShine 5s linear infinite;
+            margin-bottom: 8px;
+        }
+        @keyframes textShine {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+        .app-desc {
+            font-size: 14px;
+            color: #8b8fa3;
+            letter-spacing: 2px;
+            font-weight: 400;
+            margin-bottom: 32px;
+        }
+
+        /* ===== 特性标签 ===== */
+        .features {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+        .feature-tag {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 18px;
+            background: rgba(255,255,255,0.7);
+            border: 1px solid rgba(0,0,0,0.04);
+            border-radius: 100px;
+            font-size: 12px;
+            color: #555;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .feature-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+            background: #fff;
+        }
+        .feature-tag i { font-size: 14px; }
+        .feature-tag:nth-child(1) i { color: #f59e0b; }
+        .feature-tag:nth-child(2) i { color: #6366f1; }
+        .feature-tag:nth-child(3) i { color: #10b981; }
+
+        /* ===== 下载按钮 ===== */
+        .btn-wrap {
+            display: flex; flex-direction: column;
+            gap: 14px; position: relative; z-index: 2;
+        }
+
+        .download-btn {
+            position: relative;
+            display: flex; align-items: center; gap: 16px;
+            padding: 18px 24px;
+            border-radius: 18px;
+            text-decoration: none;
+            color: #fff;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+        }
+        .download-btn:active { transform: scale(0.97); }
+
+        .ios-btn {
+            background: linear-gradient(135deg, #4338ca, #6366f1, #818cf8);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.35);
+        }
+        .ios-btn:hover {
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.5);
+            transform: translateY(-3px);
+        }
+
+        .android-btn {
+            background: linear-gradient(135deg, #0d9488, #14b8a6, #2dd4bf);
+            box-shadow: 0 8px 30px rgba(20, 184, 166, 0.3);
+        }
+        .android-btn:hover {
+            box-shadow: 0 12px 40px rgba(20, 184, 166, 0.45);
+            transform: translateY(-3px);
+        }
+
+        .download-btn::before {
+            content: '';
+            position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: btnShimmer 3s ease-in-out infinite;
+        }
+        .android-btn::before { animation-delay: 1.5s; }
+        @keyframes btnShimmer {
+            0%, 100% { left: -100%; }
+            50% { left: 100%; }
+        }
+
+        .btn-icon-wrap {
+            width: 46px; height: 46px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.2);
+            flex-shrink: 0;
+            font-size: 24px;
+        }
+
+        .btn-info { text-align: left; flex: 1; }
+        .btn-title { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+        .btn-sub { font-size: 11px; opacity: 0.75; margin-top: 3px; font-weight: 400; }
+        .btn-arrow { font-size: 16px; opacity: 0.5; transition: all 0.3s; }
+        .download-btn:hover .btn-arrow { opacity: 1; transform: translateX(4px); }
+
+        .rec-badge {
+            position: absolute; top: 0; right: 20px;
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: #fff; font-size: 10px; font-weight: 800;
+            padding: 3px 12px; border-radius: 0 0 8px 8px;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .device-hint {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #aaa;
+            font-weight: 400;
+        }
+
+        .divider {
+            display: flex; align-items: center; gap: 16px;
+            margin: 28px 0 0;
+            color: #bbb;
+            font-size: 11px;
+            letter-spacing: 2px;
+            font-weight: 500;
+        }
+        .divider::before, .divider::after {
+            content: ''; flex: 1; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent);
+        }
+
+        .qr-section { margin-top: 24px; text-align: center; }
+        .qr-frame {
+            display: inline-block; padding: 10px;
+            border-radius: 20px;
+            background: #fff;
+            border: 1px solid rgba(0,0,0,0.04);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            margin-bottom: 12px;
+        }
+        .qr-frame img {
+            width: 130px; height: 130px;
+            border-radius: 12px;
+            display: block;
+        }
+        .qr-hint {
+            font-size: 11px; color: #aaa;
+            line-height: 1.7; font-weight: 400;
+        }
+
+        .footer-info {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(0,0,0,0.04);
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+        }
+        .footer-stat { text-align: center; }
+        .footer-stat .num {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #4338ca, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .footer-stat .label {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 4px;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        .trust-bar {
+            margin-top: 24px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .trust-item {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 10px; color: #bbb; font-weight: 500;
+        }
+        .trust-item i { font-size: 12px; color: #10b981; }
+
+        /* ===== 微信遮罩 ===== */
+        .wx-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0, 0, 0, 0.88);
+            z-index: 9999;
+            display: none;
+            align-items: flex-start;
+            justify-content: flex-end;
+            padding: 24px 32px;
+            backdrop-filter: blur(8px);
+        }
+        .wx-overlay.show { display: flex; }
+        .wx-tip { text-align: right; color: #fff; max-width: 260px; }
+        .wx-tip .arrow-icon {
+            font-size: 48px; margin-bottom: 16px;
+            color: #f59e0b;
+            animation: bounceUp 1s infinite alternate;
+        }
+        @keyframes bounceUp {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-15px); }
+        }
+        .wx-tip p { font-size: 16px; line-height: 1.7; }
+        .wx-tip strong { color: #f59e0b; font-size: 18px; }
+
+        /* ===== 注册弹窗 ===== */
+        .reg-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            z-index: 8000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .reg-overlay.show { display: flex; }
+
+        .reg-modal {
+            width: 100%; max-width: 400px;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255,255,255,0.9);
+            border-radius: 28px;
+            padding: 36px 28px 32px;
+            position: relative;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.15);
+            animation: modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(40px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .reg-modal-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .reg-modal-header .reg-logo {
+            width: 60px; height: 60px;
+            margin: 0 auto 12px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .reg-modal-header .reg-logo img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .reg-modal-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+        .reg-modal-subtitle {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .reg-field {
+            margin-bottom: 16px;
+        }
+        .reg-field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+        }
+        .reg-input-wrap {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.8);
+            border: 1.5px solid rgba(0,0,0,0.08);
+            border-radius: 14px;
+            padding: 0 16px;
+            transition: all 0.3s;
+        }
+        .reg-input-wrap:focus-within {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
+        }
+        .reg-input-wrap.error {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 4px rgba(239,68,68,0.1);
+        }
+        .reg-input-wrap i {
+            font-size: 14px;
+            color: #aaa;
+            margin-right: 10px;
+            width: 16px; text-align: center;
+        }
+        .reg-input-wrap input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            padding: 14px 0;
+            font-size: 14px;
+            color: #1a1a2e;
+            font-family: inherit;
+        }
+        .reg-input-wrap input::placeholder { color: #bbb; }
+
+        .reg-error-msg {
+            font-size: 11px;
+            color: #ef4444;
+            margin-top: 4px;
+            display: none;
+            padding-left: 4px;
+        }
+        .reg-input-wrap.error + .reg-error-msg { display: block; }
+
+        .reg-invite-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(245,166,35,0.08));
+            border-radius: 100px;
+            font-size: 12px;
+            color: #6366f1;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .reg-invite-tag i { color: #f59e0b; }
+
+        .reg-submit {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #4338ca, #6366f1);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 8px;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+        .reg-submit:hover {
+            box-shadow: 0 8px 30px rgba(99,102,241,0.4);
+            transform: translateY(-2px);
+        }
+        .reg-submit:active { transform: scale(0.98); }
+        .reg-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .reg-submit .spinner {
+            display: none;
+            width: 20px; height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin: 0 auto;
+        }
+        .reg-submit.loading .spinner { display: block; }
+        .reg-submit.loading .btn-label { display: none; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .reg-agreement {
+            margin-top: 16px;
+            text-align: center;
+            font-size: 11px;
+            color: #aaa;
+        }
+        .reg-agreement a {
+            color: #6366f1;
+            text-decoration: none;
+        }
+
+        .reg-login-link {
+            margin-top: 16px;
+            text-align: center;
+            font-size: 13px;
+            color: #888;
+        }
+        .reg-login-link a {
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* 注册成功状态 */
+        .reg-success-view {
+            display: none;
+            text-align: center;
+            padding: 20px 0;
+        }
+        .reg-success-view.show { display: block; }
+        .reg-success-icon {
+            width: 72px; height: 72px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; color: #fff;
+            box-shadow: 0 8px 24px rgba(16,185,129,0.3);
+            animation: successPop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes successPop {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
+        }
+        .reg-success-title {
+            font-size: 20px; font-weight: 800; color: #1a1a2e;
+            margin-bottom: 6px;
+        }
+        .reg-success-desc {
+            font-size: 13px; color: #888;
+            margin-bottom: 24px;
+        }
+        .reg-success-countdown {
+            font-size: 14px; color: #6366f1; font-weight: 600;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 40px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .toast-item {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            animation: toastIn 0.3s ease-out;
+            pointer-events: auto;
+            white-space: nowrap;
+        }
+        .toast-item.success { background: linear-gradient(135deg, #10b981, #34d399); }
+        .toast-item.error { background: linear-gradient(135deg, #ef4444, #f87171); }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== 动画入场 ===== */
+        .fade-up {
+            opacity: 0; transform: translateY(25px);
+            animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .d1 { animation-delay: 0.05s; }
+        .d2 { animation-delay: 0.15s; }
+        .d3 { animation-delay: 0.25s; }
+        .d4 { animation-delay: 0.35s; }
+        .d5 { animation-delay: 0.45s; }
+        .d6 { animation-delay: 0.55s; }
+        .d7 { animation-delay: 0.65s; }
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 480px) {
+            body { padding: 16px; }
+            .glass-card { padding: 36px 22px 32px; border-radius: 26px; }
+            .app-name { font-size: 28px; letter-spacing: 2px; }
+            .download-btn { padding: 16px 18px; }
+            .features { gap: 8px; }
+            .feature-tag { padding: 6px 14px; font-size: 11px; }
+            .footer-info { gap: 20px; }
+            .reg-modal { padding: 28px 22px 24px; border-radius: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景 -->
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="orb orb-4"></div>
+    </div>
+    <div class="sparkles" id="sparkles"></div>
+
+    <!-- 微信提示 -->
+    <div id="wxOverlay" class="wx-overlay" onclick="this.classList.remove('show');">
+        <div class="wx-tip">
+            <i class="fa-solid fa-turn-up arrow-icon" style="margin-right:20px; margin-top:20px;"></i>
+            <p>点击右上角 <strong>&#x22EF;</strong><br>选择 <strong>&quot;在浏览器中打开&quot;</strong><br>即可继续安全下载</p>
+        </div>
+    </div>
+
+    <!-- ===== 注册弹窗 ===== -->
+    <div id="regOverlay" class="reg-overlay">
+        <div class="reg-modal">
+            <!-- 注册表单 -->
+            <div id="regFormView">
+                <div class="reg-modal-header">
+                    <div class="reg-logo"><img src="/ios/logo.png" alt="好运北彩"></div>
+                    <div class="reg-modal-title">注册领取福利</div>
+                    <div class="reg-modal-subtitle">注册即享新人专属礼包</div>
+                </div>
+
+                <div id="inviteTag" class="reg-invite-tag" style="display:none;">
+                    <i class="fa-solid fa-gift"></i> 好友邀请您加入，专属奖励等你拿
+                </div>
+
+                <form id="regForm" onsubmit="return false;">
+                    <div class="reg-field">
+                        <label>用户名</label>
+                        <div class="reg-input-wrap" id="wrapUsername">
+                            <i class="fa-solid fa-user"></i>
+                            <input type="text" id="regUsername" placeholder="4-20位字母、数字或下划线" maxlength="20" autocomplete="username">
+                        </div>
+                        <div class="reg-error-msg">用户名需4-20位，仅字母/数字/下划线</div>
+                    </div>
+                    <div class="reg-field">
+                        <label>手机号</label>
+                        <div class="reg-input-wrap" id="wrapMobile">
+                            <i class="fa-solid fa-mobile-screen"></i>
+                            <input type="tel" id="regMobile" placeholder="请输入手机号码" maxlength="11" autocomplete="tel">
+                        </div>
+                        <div class="reg-error-msg">请输入有效的手机号</div>
+                    </div>
+                    <div class="reg-field">
+                        <label>密码</label>
+                        <div class="reg-input-wrap" id="wrapPassword">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="regPassword" placeholder="6-30位，至少包含字母和数字" autocomplete="new-password">
+                        </div>
+                        <div class="reg-error-msg">密码至少6位</div>
+                    </div>
+                    <div class="reg-field">
+                        <label>确认密码</label>
+                        <div class="reg-input-wrap" id="wrapPassword2">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="regPassword2" placeholder="请再次输入密码" autocomplete="new-password">
+                        </div>
+                        <div class="reg-error-msg">两次密码不一致</div>
+                    </div>
+
+                    <input type="hidden" id="regInviteCode" value="">
+
+                    <button type="submit" class="reg-submit" id="btnRegSubmit">
+                        <span class="btn-label">立 即 注 册</span>
+                        <div class="spinner"></div>
+                    </button>
+                </form>
+
+                <div class="reg-agreement">
+                    注册即表示同意 <a href="javascript:;">用户协议</a> 与 <a href="javascript:;">隐私政策</a>
+                </div>
+                <div class="reg-login-link">
+                    已有账户？<a href="/index.php/index/lottery/login">立即登录</a>
+                </div>
+            </div>
+
+            <!-- 注册成功 -->
+            <div id="regSuccessView" class="reg-success-view">
+                <div class="reg-success-icon"><i class="fa-solid fa-check"></i></div>
+                <div class="reg-success-title">注册成功！</div>
+                <div class="reg-success-desc">欢迎加入好运北彩，即将为您跳转下载</div>
+                <div class="reg-success-countdown" id="regCountdown"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ===== 主内容 ===== -->
+    <div class="container">
+        <div class="glass-card">
+
+            <div class="logo-wrap fade-up d1">
+                <img src="/ios/logo.png" alt="好运北彩">
+            </div>
+
+            <h1 class="app-name fade-up d2">好运北彩</h1>
+            <p class="app-desc fade-up d2">高胜率 &middot; 快提现 &middot; 极致游戏体验</p>
+
+            <div class="features fade-up d3">
+                <div class="feature-tag"><i class="fa-solid fa-bolt"></i> 极速响应</div>
+                <div class="feature-tag"><i class="fa-solid fa-shield-halved"></i> 安全合规</div>
+                <div class="feature-tag"><i class="fa-solid fa-gem"></i> 秒级提现</div>
+            </div>
+
+            <div class="btn-wrap">
+                <a id="iosBtn" class="download-btn ios-btn fade-up d4" href="javascript:;" onclick="doDownload('ios')">
+                    <div class="btn-icon-wrap"><i class="fa-brands fa-apple"></i></div>
+                    <div class="btn-info">
+                        <div class="btn-title">苹果 iOS 免签安装</div>
+                        <div class="btn-sub">一键添加到桌面，无需越狱</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right btn-arrow"></i>
+                </a>
+                <a id="androidBtn" class="download-btn android-btn fade-up d5" href="javascript:;" onclick="doDownload('android')">
+                    <div class="btn-icon-wrap"><i class="fa-brands fa-android"></i></div>
+                    <div class="btn-info">
+                        <div class="btn-title">安卓 Android 下载</div>
+                        <div class="btn-sub">最新版 V1.0.0，极速稳定</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right btn-arrow"></i>
+                </a>
+            </div>
+
+            <div class="device-hint fade-up d5" id="deviceHint">
+                <i class="fa-solid fa-circle-info"></i> 系统自动识别设备类型
+            </div>
+
+            <div class="divider fade-up d6" id="qrDivider" style="display:none;">扫码下载</div>
+            <div class="qr-section fade-up d6" id="qrSection" style="display:none;">
+                <div class="qr-frame">
+                    <img id="qrCodeImg" src="" alt="扫码下载">
+                </div>
+                <p class="qr-hint">使用手机浏览器扫码<br>自动识别 安卓 / 苹果</p>
+            </div>
+
+            <div class="footer-info fade-up d6">
+                <div class="footer-stat">
+                    <div class="num">100W+</div>
+                    <div class="label">累计用户</div>
+                </div>
+                <div class="footer-stat">
+                    <div class="num">99.9%</div>
+                    <div class="label">系统稳定</div>
+                </div>
+                <div class="footer-stat">
+                    <div class="num">3s</div>
+                    <div class="label">极速到账</div>
+                </div>
+            </div>
+
+            <div class="trust-bar fade-up d7">
+                <div class="trust-item"><i class="fa-solid fa-circle-check"></i> SSL加密</div>
+                <div class="trust-item"><i class="fa-solid fa-circle-check"></i> 官方认证</div>
+                <div class="trust-item"><i class="fa-solid fa-circle-check"></i> 资金安全</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 光点粒子 -->
+    <script>
+    (function() {
+        var c = document.getElementById('sparkles');
+        for (var i = 0; i < 25; i++) {
+            var s = document.createElement('div');
+            s.className = 'sparkle';
+            s.style.left = Math.random() * 100 + '%';
+            s.style.top = (100 + Math.random() * 20) + '%';
+            s.style.animationDuration = (8 + Math.random() * 12) + 's';
+            s.style.animationDelay = Math.random() * 15 + 's';
+            s.style.width = s.style.height = (2 + Math.random() * 4) + 'px';
+            var colors = ['rgba(99,102,241,0.5)', 'rgba(245,166,35,0.5)', 'rgba(16,185,129,0.4)', 'rgba(236,72,153,0.4)'];
+            s.style.background = colors[Math.floor(Math.random() * colors.length)];
+            c.appendChild(s);
+        }
+    })();
+    </script>
+
+    <!-- 主逻辑 -->
+    <script>
+    (function() {
+        var ua = navigator.userAgent;
+        var isWechat = /MicroMessenger/i.test(ua);
+        var isQQ = /QQ\//i.test(ua);
+        var isAlipay = /AlipayClient/i.test(ua);
+        var isIOS = /(iPhone|iPad|iPod|iOS|Macintosh.*Safari)/i.test(ua) && 'ontouchend' in document;
+        var isAndroid = /Android/i.test(ua);
+        var isMobile = isIOS || isAndroid || /Mobi|Mobile/i.test(ua);
+
+        // 解析URL参数
+        var urlParams = new URLSearchParams(window.location.search);
+        var inviteCode = urlParams.get('invite') || '';
+        // 标记是否已注册完成（本次会话）
+        var registered = false;
+
+        // ===== Toast =====
+        function showToast(msg, type) {
+            var c = document.getElementById('toastContainer');
+            var t = document.createElement('div');
+            t.className = 'toast-item ' + (type || 'info');
+            t.textContent = msg;
+            c.appendChild(t);
+            setTimeout(function() {
+                t.style.opacity = '0';
+                t.style.transition = 'opacity 0.3s';
+                setTimeout(function() { t.remove(); }, 300);
+            }, 3000);
+        }
+
+        // ===== 初始化 =====
+        function init() {
+            var iosBtn = document.getElementById('iosBtn');
+            var androidBtn = document.getElementById('androidBtn');
+            var hint = document.getElementById('deviceHint');
+
+            if (isIOS) {
+                iosBtn.innerHTML += '<span class="rec-badge">\u63A8\u8350</span>';
+                hint.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#6366f1"></i> \u5DF2\u8BC6\u522B\uFF1A\u82F9\u679C iOS \u8BBE\u5907';
+            } else if (isAndroid) {
+                androidBtn.innerHTML += '<span class="rec-badge">\u63A8\u8350</span>';
+                hint.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#14b8a6"></i> \u5DF2\u8BC6\u522B\uFF1A\u5B89\u5353 Android \u8BBE\u5907';
+            }
+
+            if (!isMobile) {
+                hint.innerHTML = '<i class="fa-solid fa-desktop"></i> \u5F53\u524D\u4E3A\u7535\u8111\u8BBF\u95EE\uFF0C\u53EF\u76F4\u63A5\u70B9\u51FB\u4E0B\u8F7D\u6216\u7528\u624B\u673A\u626B\u7801';
+                document.getElementById('qrDivider').style.display = '';
+                document.getElementById('qrSection').style.display = '';
+                var currentUrl = encodeURIComponent(window.location.href);
+                document.getElementById('qrCodeImg').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + currentUrl;
+            }
+
+            if ((isWechat || isQQ || isAlipay) && isMobile) {
+                document.getElementById('wxOverlay').classList.add('show');
+            }
+
+            // 有邀请码 → 弹出注册弹窗
+            if (inviteCode) {
+                document.getElementById('regInviteCode').value = inviteCode;
+                document.getElementById('inviteTag').style.display = '';
+                // 延迟一点弹出，让用户先看到落地页
+                setTimeout(function() {
+                    document.getElementById('regOverlay').classList.add('show');
+                }, 800);
+            }
+        }
+
+        // ===== 下载 =====
+        window.doDownload = function(type) {
+            // 微信内拦截
+            if (isWechat || isQQ || isAlipay) {
+                document.getElementById('wxOverlay').classList.add('show');
+                return;
+            }
+
+            // 有邀请码但还没注册 → 弹注册
+            if (inviteCode && !registered) {
+                document.getElementById('regOverlay').classList.add('show');
+                showToast('\u8BF7\u5148\u6CE8\u518C\u8D26\u53F7\uFF0C\u5373\u53EF\u4E0B\u8F7D', 'error');
+                return;
+            }
+
+            if (type === 'ios') {
+                window.location.href = '/ios/install.php';
+            } else {
+                window.location.href = '/Android/download.php';
+            }
+        };
+
+        // ===== 注册表单逻辑 =====
+        var regForm = document.getElementById('regForm');
+        if (regForm) {
+            // 输入时清除错误
+            regForm.querySelectorAll('input').forEach(function(inp) {
+                inp.addEventListener('input', function() {
+                    var wrap = inp.closest('.reg-input-wrap');
+                    if (wrap) wrap.classList.remove('error');
+                });
+            });
+
+            regForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                var username = document.getElementById('regUsername').value.trim();
+                var mobile = document.getElementById('regMobile').value.trim();
+                var password = document.getElementById('regPassword').value;
+                var password2 = document.getElementById('regPassword2').value;
+                var invite = document.getElementById('regInviteCode').value.trim();
+                var valid = true;
+
+                // 验证用户名
+                if (!username || username.length < 4 || !/^[a-zA-Z0-9_]+$/.test(username)) {
+                    document.getElementById('wrapUsername').classList.add('error');
+                    valid = false;
+                }
+                // 验证手机号
+                if (!mobile || !/^1[3-9]\d{9}$/.test(mobile)) {
+                    document.getElementById('wrapMobile').classList.add('error');
+                    valid = false;
+                }
+                // 验证密码
+                if (!password || password.length < 6) {
+                    document.getElementById('wrapPassword').classList.add('error');
+                    valid = false;
+                }
+                // 验证确认密码
+                if (password !== password2) {
+                    document.getElementById('wrapPassword2').classList.add('error');
+                    valid = false;
+                }
+
+                if (!valid) return;
+
+                var btn = document.getElementById('btnRegSubmit');
+                btn.classList.add('loading');
+                btn.disabled = true;
+
+                var formData = new FormData();
+                formData.append('username', username);
+                formData.append('mobile', mobile);
+                formData.append('password', password);
+                formData.append('email', mobile + '@lottery.com');
+                if (invite) {
+                    formData.append('invite', invite);
+                }
+
+                fetch('/index.php/api/user/register', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+
+                    if (res.code === 1) {
+                        registered = true;
+                        // 显示成功视图
+                        document.getElementById('regFormView').style.display = 'none';
+                        var sv = document.getElementById('regSuccessView');
+                        sv.classList.add('show');
+
+                        // 倒计时跳转下载
+                        var sec = 3;
+                        var cd = document.getElementById('regCountdown');
+                        cd.textContent = sec + ' \u79D2\u540E\u81EA\u52A8\u5F00\u59CB\u4E0B\u8F7D...';
+                        var timer = setInterval(function() {
+                            sec--;
+                            if (sec > 0) {
+                                cd.textContent = sec + ' \u79D2\u540E\u81EA\u52A8\u5F00\u59CB\u4E0B\u8F7D...';
+                            } else {
+                                clearInterval(timer);
+                                document.getElementById('regOverlay').classList.remove('show');
+                                // 自动触发下载
+                                if (isIOS) {
+                                    window.location.href = '/ios/install.php';
+                                } else {
+                                    window.location.href = '/Android/download.php';
+                                }
+                            }
+                        }, 1000);
+                    } else {
+                        showToast(res.msg || '\u6CE8\u518C\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5', 'error');
+                    }
+                })
+                .catch(function() {
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                    showToast('\u7F51\u7EDC\u9519\u8BEF\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5', 'error');
+                });
+            });
+        }
+
+        window.onload = init;
+    })();
+    </script>
+</body>
+</html>

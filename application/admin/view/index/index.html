@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- 加载样式及META信息 -->
+        {include file="common/meta" /}
+    </head>
+    <body class="hold-transition {$Think.config.fastadmin.adminskin|default='skin-black-blue'} sidebar-mini {:$Think.cookie.sidebar_collapse?'sidebar-collapse':''} fixed {:$Think.config.fastadmin.multipletab?'multipletab':''} {:$Think.config.fastadmin.multiplenav?'multiplenav':''}" id="tabs">
+
+        <div class="wrapper">
+
+            <!-- 头部区域 -->
+            <header id="header" class="main-header">
+                {if preg_match('/\/admin\/|\/admin\.php|\/admin_d75KABNWt\.php/i', url())}
+                <div class="alert alert-danger-light text-center" style="margin-bottom:0;border:none;">
+                    {:__('Security tips')}
+                </div>
+                {/if}
+
+                {include file='common/header' /}
+            </header>
+
+            <!-- 左侧菜单栏 -->
+            <aside class="main-sidebar">
+                {include file='common/menu' /}
+            </aside>
+
+            <!-- 主体内容区域 -->
+            <div class="content-wrapper tab-content tab-addtabs">
+                {if $fixedmenu}
+                <div role="tabpanel" class="tab-pane {:$referermenu?'':'active'}" id="con_{$fixedmenu.id|htmlentities}">
+                    <iframe src="{$fixedmenu.url|htmlentities}{:stripos($fixedmenu.url, '?') !== false ? '&' : '?'}addtabs=1" width="100%" height="100%" frameborder="no" border="0" marginwidth="0" marginheight="0" scrolling-x="no" scrolling-y="auto" allowtransparency="yes"></iframe>
+                </div>
+                {/if}
+                {if $referermenu}
+                <div role="tabpanel" class="tab-pane active" id="con_{$referermenu.id|htmlentities}">
+                    <iframe src="{$referermenu.url|htmlentities}{:stripos($referermenu.url, '?') !== false ? '&' : '?'}addtabs=1" width="100%" height="100%" frameborder="no" border="0" marginwidth="0" marginheight="0" scrolling-x="no" scrolling-y="auto" allowtransparency="yes"></iframe>
+                </div>
+                {/if}
+            </div>
+
+            <!-- 底部链接,默认隐藏 -->
+            <footer class="main-footer hide">
+                <div class="pull-right hidden-xs">
+                </div>
+                <strong>Copyright &copy; 2017-{:date("Y")} <a href="__PUBLIC__">{$site.name|htmlentities}</a>.</strong> All rights reserved.
+            </footer>
+
+            <!-- 右侧控制栏 -->
+            <div class="control-sidebar-bg"></div>
+            {include file="common/control" /}
+        </div>
+
+        <style>
+        .global-kefu-btn {
+            position: fixed;
+            right: 30px;
+            bottom: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #18bc9c 0%, #128f76 100%);
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 4px 15px rgba(24, 188, 156, 0.4);
+            cursor: pointer;
+            z-index: 9999;
+            transition: transform 0.2s;
+        }
+        .global-kefu-btn:hover { transform: scale(1.1); }
+        .global-kefu-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #ff4d4f;
+            color: white;
+            font-size: 13px;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 12px;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border: 2px solid white;
+        }
+        </style>
+        
+        <div class="global-kefu-btn" onclick="openGlobalKefu()">
+            <i class="fa fa-comments"></i>
+            <span class="global-kefu-badge" id="kefuBadge">0</span>
+        </div>
+
+        <script>
+            var kefuLastUnread = 0;
+            // 新消息提示音 - 使用 Web Audio API 生成本地提示音
+            function playChime() {
+                try {
+                    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    var osc = ctx.createOscillator();
+                    var gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.frequency.value = 800;
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+                    osc.start(ctx.currentTime);
+                    osc.stop(ctx.currentTime + 0.5);
+                } catch(e) {}
+            }
+
+            function openGlobalKefu() {
+                if (typeof layer !== 'undefined') {
+                    // 取当前脚本文件名 (如 admin.php) 作为基础加上控制台路径
+                    var base = window.location.pathname;
+                    var match = base.match(/(\/.*\.php)/i);
+                    var entry = match ? match[1] : '/index.php'; // 兼容无 php 尾缀的情况
+                    
+                    var cUrl = entry + '/lottery/kefu';
+                    layer.open({
+                        type: 2,
+                        title: '<i class="fa fa-comments"></i> 客服工作台',
+                        shadeClose: true,
+                        shade: 0.3,
+                        maxmin: true,
+                        area: ['900px', '750px'],
+                        content: cUrl
+                    });
+                }
+            }
+
+            function pollGlobalKefu() {
+                if (typeof $ === 'undefined') return;
+                var base = window.location.pathname;
+                var match = base.match(/(\/.*\.php)/i);
+                var entry = match ? match[1] : '/index.php';
+                var aUrl = entry + '/lottery/kefu/global_status';
+
+                $.ajax({
+                    url: aUrl,
+                    type: "GET",
+                    success: function(res) {
+                        if(res && res.code == 1) {
+                            var unread = parseInt(res.data.unread || 0);
+                            if(unread > 0) {
+                                $('#kefuBadge').text(unread).show();
+                                if (unread > kefuLastUnread) {
+                                    // 仅当数量增长时才播放播放声音
+                                    playChime();
+                                }
+                            } else {
+                                $('#kefuBadge').hide();
+                            }
+                            kefuLastUnread = unread;
+                        }
+                    }
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                setInterval(pollGlobalKefu, 5000);
+                setTimeout(pollGlobalKefu, 1500);
+                // 充值/提现提醒轮询
+                setTimeout(pollPendingOrders, 2000);
+                setInterval(pollPendingOrders, 12000);
+            });
+
+            // ========== 充值/提现新订单提醒（全后台常驻）==========
+            var lastRId = 0, lastWId = 0, pendingFirstRun = true;
+
+            function speakOrder(text) {
+                if ('speechSynthesis' in window) {
+                    try {
+                        var u = new SpeechSynthesisUtterance(text);
+                        u.lang = 'zh-CN'; u.rate = 1; u.volume = 1;
+                        window.speechSynthesis.speak(u);
+                    } catch(e) {}
+                }
+            }
+
+            // 急促提示音（加大音量、三声循环）
+            function beepOrder() {
+                try {
+                    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (ctx.state === 'suspended') { ctx.resume(); }
+                    var t = ctx.currentTime;
+                    // 三声急促双音，音量接近满值
+                    var freqs = [880, 1100, 880, 1100, 880, 1100];
+                    freqs.forEach(function(freq, i) {
+                        var osc = ctx.createOscillator();
+                        var gain = ctx.createGain();
+                        osc.connect(gain); gain.connect(ctx.destination);
+                        osc.frequency.value = freq; osc.type = 'square';
+                        var st = t + i * 0.28;
+                        gain.gain.setValueAtTime(0.9, st);
+                        gain.gain.exponentialRampToValueAtTime(0.01, st + 0.25);
+                        osc.start(st); osc.stop(st + 0.25);
+                    });
+                } catch(e) {}
+            }
+
+            function showOrderAlert(type, detail) {
+                var icon = type === 'recharge' ? '💰' : '💸';
+                var title = type === 'recharge' ? '新充值申请' : '新提现申请';
+                var name = detail.nickname || detail.username || '--';
+                var amount = parseFloat(detail.amount || 0).toFixed(2);
+                var extra = type === 'withdraw' ? ' (' + (detail.withdraw_type || '') + ')' : '';
+
+                var toast = document.createElement('div');
+                toast.innerHTML = '<div style="position:fixed;top:20px;right:20px;z-index:999999;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:12px;padding:16px 24px;box-shadow:0 8px 30px rgba(0,0,0,0.3);max-width:350px;cursor:pointer;" onclick="this.parentElement.remove()">' +
+                    '<div style="font-size:20px;margin-bottom:6px;">' + icon + ' ' + title + '</div>' +
+                    '<div style="font-size:14px;opacity:0.9;">用户: ' + name + '</div>' +
+                    '<div style="font-size:22px;font-weight:700;margin-top:4px;">¥' + amount + extra + '</div>' +
+                    '<div style="font-size:11px;opacity:0.6;margin-top:6px;">点击关闭 | ' + new Date().toLocaleTimeString() + '</div>' +
+                    '</div>';
+                document.body.appendChild(toast);
+                setTimeout(function() { if (toast.parentElement) toast.remove(); }, 15000);
+
+                speakOrder(title + '，用户' + name + '，金额' + amount + '元');
+                beepOrder();
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification(title, { body: '用户: ' + name + '  金额: ¥' + amount + extra });
+                }
+            }
+
+            function pollPendingOrders() {
+                if (typeof $ === 'undefined') return;
+                var base = window.location.pathname;
+                var match = base.match(/(\/.*\.php)/i);
+                var entry = match ? match[1] : '/index.php';
+                $.ajax({
+                    url: entry + '/dashboard/pendingCheck',
+                    type: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    success: function(res) {
+                        if (!res || res.code !== 1) return;
+                        var d = res.data;
+                        if (pendingFirstRun) {
+                            lastRId = d.last_recharge_id || 0;
+                            lastWId = d.last_withdraw_id || 0;
+                            pendingFirstRun = false;
+                            return;
+                        }
+                        if (d.last_recharge_id > lastRId && d.latest_recharge) {
+                            showOrderAlert('recharge', d.latest_recharge);
+                            lastRId = d.last_recharge_id;
+                        }
+                        if (d.last_withdraw_id > lastWId && d.latest_withdraw) {
+                            showOrderAlert('withdraw', d.latest_withdraw);
+                            lastWId = d.last_withdraw_id;
+                        }
+                    }
+                });
+            }
+
+            // 请求桌面通知权限
+            if ('Notification' in window && Notification.permission === 'default') {
+                try { Notification.requestPermission(); } catch(e) {}
+            }
+        </script>
+
+        <!-- 加载JS脚本 -->
+        {include file="common/script" /}
+    </body>
+</html>

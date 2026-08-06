@@ -1,0 +1,280 @@
+<div class="panel panel-default panel-intro">
+    <div class="panel-heading"><h3 class="panel-title">洗码管理</h3></div>
+    <div class="panel-body">
+        <!-- Tab 切换 -->
+        <ul class="nav nav-tabs" style="margin-bottom:15px;">
+            <li class="active"><a href="javascript:;" onclick="switchTab('config')">洗码配置</a></li>
+            <li><a href="javascript:;" onclick="switchTab('record')">洗码记录</a></li>
+        </ul>
+
+        <!-- ======== 配置 Tab ======== -->
+        <div id="tabConfig">
+            <div style="margin-bottom:12px;">
+                <button class="btn btn-success btn-sm" onclick="openConfigForm()"><i class="fa fa-plus"></i> 添加配置</button>
+            </div>
+            <table class="table table-bordered table-hover" style="font-size:13px;">
+                <thead><tr style="background:#f5f5f5;">
+                    <th width="40">ID</th><th>名称</th><th>彩种</th><th>自身洗码比例</th><th>邀请人洗码比例</th><th>最低日投注</th><th>状态</th><th width="120">操作</th>
+                </tr></thead>
+                <tbody id="configBody"><tr><td colspan="8" style="text-align:center;color:#999;">加载中...</td></tr></tbody>
+            </table>
+
+            <!-- 配置表单 -->
+            <div id="configForm" style="display:none;background:#f9f9f9;border:1px solid #ddd;border-radius:8px;padding:20px;margin-top:10px;">
+                <h5 id="configFormTitle" style="margin-top:0;"><i class="fa fa-cog"></i> 添加洗码配置</h5>
+                <input type="hidden" id="cfgId" value="0">
+                <div class="row">
+                    <div class="col-sm-4 form-group">
+                        <label>配置名称</label>
+                        <input type="text" class="form-control" id="cfgName" placeholder="如：默认洗码">
+                    </div>
+                    <div class="col-sm-4 form-group">
+                        <label>自身洗码比例 (%)</label>
+                        <input type="number" class="form-control" id="cfgSelfRate" step="0.01" placeholder="0.80 表示 0.8%">
+                    </div>
+                    <div class="col-sm-4 form-group">
+                        <label>邀请人洗码比例 (%)</label>
+                        <input type="number" class="form-control" id="cfgParentRate" step="0.01" placeholder="0.30 表示 0.3%">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-4 form-group">
+                        <label>最低日投注额 (¥)</label>
+                        <input type="number" class="form-control" id="cfgMinBet" value="0">
+                    </div>
+                    <div class="col-sm-4 form-group">
+                        <label>适用彩种</label>
+                        <select class="form-control" id="cfgLotteryType">
+                            <option value="0">全部彩种</option>
+                            <option value="1">福彩3D</option>
+                            <option value="2">排列三</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-4 form-group">
+                        <label>状态</label>
+                        <select class="form-control" id="cfgStatus">
+                            <option value="1">启用</option>
+                            <option value="0">禁用</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="saveConfig()"><i class="fa fa-save"></i> 保存</button>
+                <button class="btn btn-default" onclick="document.getElementById('configForm').style.display='none'">取消</button>
+            </div>
+        </div>
+
+        <!-- ======== 记录 Tab ======== -->
+        <div id="tabRecord" style="display:none;">
+            <!-- 统计 -->
+            <div style="display:flex;gap:15px;margin-bottom:15px;">
+                <div style="flex:1;background:#e8f5e9;border-radius:8px;padding:12px 16px;">
+                    <div style="font-size:12px;color:#666;">总洗码金额</div>
+                    <div style="font-size:18px;font-weight:700;color:#2e7d32;" id="statTotalXima">¥0.00</div>
+                </div>
+                <div style="flex:1;background:#fff3e0;border-radius:8px;padding:12px 16px;">
+                    <div style="font-size:12px;color:#666;">已领取金额</div>
+                    <div style="font-size:18px;font-weight:700;color:#e65100;" id="statClaimedXima">¥0.00</div>
+                </div>
+                <div style="flex:1;background:#e3f2fd;border-radius:8px;padding:12px 16px;">
+                    <div style="font-size:12px;color:#666;">记录总数</div>
+                    <div style="font-size:18px;font-weight:700;color:#1565c0;" id="statRecordCount">0</div>
+                </div>
+            </div>
+            <!-- 筛选 -->
+            <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <select id="recType" class="form-control" style="width:130px;">
+                    <option value="">全部类型</option>
+                    <option value="self">自身洗码</option>
+                    <option value="parent">邀请人洗码</option>
+                </select>
+                <select id="recStatus" class="form-control" style="width:120px;">
+                    <option value="">全部状态</option>
+                    <option value="0">待领取</option>
+                    <option value="1">已领取</option>
+                </select>
+                <input type="text" id="recKeyword" class="form-control" placeholder="用户名/昵称" style="width:180px;">
+                <button class="btn btn-primary btn-sm" onclick="loadRecords()"><i class="fa fa-search"></i> 搜索</button>
+            </div>
+            <!-- 表格 -->
+            <table class="table table-bordered table-hover table-striped" style="font-size:13px;">
+                <thead><tr style="background:#f5f5f5;">
+                    <th width="40">ID</th><th>获得用户</th><th>类型</th><th>来源用户</th><th>投注订单</th><th>投注金额</th><th>洗码比例</th><th>洗码金额</th><th>状态</th><th>时间</th>
+                </tr></thead>
+                <tbody id="recordBody"><tr><td colspan="10" style="text-align:center;color:#999;">请点击搜索</td></tr></tbody>
+            </table>
+            <div id="recPagination" style="text-align:center;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+var currentTab = 'config';
+var recPage = 1;
+var ximaEntry = (function(){ var m = location.pathname.match(/^(\/[^\/]+\.php)/); return m ? m[1] : ''; })();
+var ximaBaseUrl = ximaEntry + '/lottery/xima/index';
+var ximaSaveUrl = ximaEntry + '/lottery/xima/saveConfig';
+var ximaDelUrl = ximaEntry + '/lottery/xima/delConfig';
+
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.nav-tabs li').forEach(function(li,i){ li.className = (i === (tab==='config'?0:1)) ? 'active' : ''; });
+    document.getElementById('tabConfig').style.display = tab==='config' ? '' : 'none';
+    document.getElementById('tabRecord').style.display = tab==='record' ? '' : 'none';
+    if (tab === 'config') loadConfigs();
+    else loadRecords();
+}
+
+// ---- 配置管理 ----
+function loadConfigs() {
+    var url = ximaBaseUrl + '?tab=config';
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function(){
+        try {
+            var res = JSON.parse(xhr.responseText);
+            if(res.code !== 1) return;
+            var list = res.data.list || [], html = '';
+            if(!list.length){ html = '<tr><td colspan="8" style="text-align:center;color:#999;">暂无配置</td></tr>'; }
+            else {
+                for(var i=0;i<list.length;i++){
+                    var c = list[i];
+                    html += '<tr>'+
+                        '<td>'+c.id+'</td>'+
+                        '<td>'+c.name+'</td>'+
+                        '<td><span class="label label-info">'+(c.lottery_name||'')+'</span></td>'+
+                        '<td><strong style="color:#2e7d32;">'+c.self_rate_pct+'</strong></td>'+
+                        '<td><strong style="color:#1565c0;">'+c.parent_rate_pct+'</strong></td>'+
+                        '<td>¥'+parseFloat(c.min_bet).toFixed(2)+'</td>'+
+                        '<td><span class="label '+(c.status==1?'label-success':'label-default')+'">'+(c.status==1?'启用':'禁用')+'</span></td>'+
+                        '<td>'+
+                            '<button class="btn btn-xs btn-primary" onclick="editConfig('+c.id+',\''+c.name+'\','+round4(c.self_rate)+','+round4(c.parent_rate)+','+c.min_bet+','+c.lottery_type+','+c.status+')"><i class="fa fa-edit"></i></button> '+
+                            '<button class="btn btn-xs btn-danger" onclick="delConfig('+c.id+')"><i class="fa fa-trash"></i></button>'+
+                        '</td></tr>';
+                }
+            }
+            document.getElementById('configBody').innerHTML = html;
+        } catch(e){ document.getElementById('configBody').innerHTML='<tr><td colspan="8" style="color:red;">'+e.message+'</td></tr>'; }
+    };
+    xhr.send();
+}
+
+function round4(v){ return parseFloat(v); }
+
+function openConfigForm() {
+    document.getElementById('cfgId').value = 0;
+    document.getElementById('cfgName').value = '';
+    document.getElementById('cfgSelfRate').value = '';
+    document.getElementById('cfgParentRate').value = '';
+    document.getElementById('cfgMinBet').value = 0;
+    document.getElementById('cfgLotteryType').value = 0;
+    document.getElementById('cfgStatus').value = 1;
+    document.getElementById('configFormTitle').textContent = '添加洗码配置';
+    document.getElementById('configForm').style.display = '';
+}
+
+function editConfig(id, name, selfRate, parentRate, minBet, lotteryType, status) {
+    document.getElementById('cfgId').value = id;
+    document.getElementById('cfgName').value = name;
+    document.getElementById('cfgSelfRate').value = selfRate;
+    document.getElementById('cfgParentRate').value = parentRate;
+    document.getElementById('cfgMinBet').value = minBet;
+    document.getElementById('cfgLotteryType').value = lotteryType;
+    document.getElementById('cfgStatus').value = status;
+    document.getElementById('configFormTitle').textContent = '编辑洗码配置 #'+id;
+    document.getElementById('configForm').style.display = '';
+}
+
+function saveConfig() {
+    var fd = new FormData();
+    fd.append('id', document.getElementById('cfgId').value);
+    fd.append('name', document.getElementById('cfgName').value);
+    fd.append('self_rate', document.getElementById('cfgSelfRate').value);
+    fd.append('parent_rate', document.getElementById('cfgParentRate').value);
+    fd.append('min_bet', document.getElementById('cfgMinBet').value);
+    fd.append('lottery_type', document.getElementById('cfgLotteryType').value);
+    fd.append('status', document.getElementById('cfgStatus').value);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', ximaSaveUrl, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function(){
+        try { var r=JSON.parse(xhr.responseText); alert(r.msg); if(r.code===1){document.getElementById('configForm').style.display='none';loadConfigs();} }
+        catch(e){ alert('失败'); }
+    };
+    xhr.send(fd);
+}
+
+function delConfig(id) {
+    if(!confirm('确认删除此配置？')) return;
+    var fd = new FormData(); fd.append('id', id);
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', ximaDelUrl, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function(){ loadConfigs(); };
+    xhr.send(fd);
+}
+
+// ---- 记录查看 ----
+function loadRecords(page) {
+    recPage = page || 1;
+    var type = document.getElementById('recType').value;
+    var status = document.getElementById('recStatus').value;
+    var keyword = document.getElementById('recKeyword').value;
+    var params = 'tab=record&page='+recPage+'&limit=20&type='+encodeURIComponent(type)+'&status='+encodeURIComponent(status)+'&keyword='+encodeURIComponent(keyword);
+    var url = ximaBaseUrl + '?' + params;
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function(){
+        try {
+            var res = JSON.parse(xhr.responseText);
+            if(res.code !== 1) return;
+            var d = res.data, list = d.list || [], html = '';
+            document.getElementById('statTotalXima').textContent = '¥'+(d.total_xima||0).toFixed(2);
+            document.getElementById('statClaimedXima').textContent = '¥'+(d.claimed_xima||0).toFixed(2);
+            document.getElementById('statRecordCount').textContent = d.total||0;
+
+            if(!list.length){ html='<tr><td colspan="10" style="text-align:center;color:#999;">暂无记录</td></tr>'; }
+            else {
+                for(var i=0;i<list.length;i++){
+                    var r = list[i];
+                    var sc = r.status==0?'label-warning':(r.status==1?'label-success':'label-default');
+                    var typeCls = r.type==='self'?'label-info':'label-primary';
+                    html += '<tr>'+
+                        '<td>'+r.id+'</td>'+
+                        '<td>'+(r.nickname||r.username||'UID:'+r.user_id)+'</td>'+
+                        '<td><span class="label '+typeCls+'">'+r.type_text+'</span></td>'+
+                        '<td>'+(r.source_name||'--')+'</td>'+
+                        '<td><small>'+r.bet_order_no+'</small></td>'+
+                        '<td>¥'+parseFloat(r.bet_amount).toFixed(2)+'</td>'+
+                        '<td>'+(r.xima_rate*100).toFixed(2)+'%</td>'+
+                        '<td><strong style="color:#f60;">¥'+parseFloat(r.xima_amount).toFixed(2)+'</strong></td>'+
+                        '<td><span class="label '+sc+'">'+r.status_text+'</span></td>'+
+                        '<td><small>'+r.create_date+'</small></td></tr>';
+                }
+            }
+            document.getElementById('recordBody').innerHTML = html;
+            // 分页
+            var pages = Math.ceil((d.total||0)/20), ph = '';
+            if(pages > 1) {
+                for(var p=1;p<=pages;p++) ph += '<button class="btn btn-sm '+(p===recPage?'btn-primary':'btn-default')+'" onclick="loadRecords('+p+')" style="margin:2px;">'+p+'</button>';
+                ph = '<div>共'+(d.total||0)+'条 '+ph+'</div>';
+            }
+            document.getElementById('recPagination').innerHTML = ph;
+        } catch(e){ document.getElementById('recordBody').innerHTML='<tr><td colspan="10" style="color:red;">'+e.message+'</td></tr>'; }
+    };
+    xhr.send();
+}
+
+window.switchTab = switchTab;
+window.loadConfigs = loadConfigs;
+window.loadRecords = loadRecords;
+window.openConfigForm = openConfigForm;
+window.editConfig = editConfig;
+window.saveConfig = saveConfig;
+window.delConfig = delConfig;
+
+loadConfigs();
+</script>

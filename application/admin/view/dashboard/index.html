@@ -1,0 +1,670 @@
+<style type="text/css">
+    /* 业务统计卡片 */
+    .biz-card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .biz-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+    .biz-card .biz-icon {
+        width: 50px; height: 50px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; color: #fff; float: left; margin-right: 12px;
+    }
+    .biz-card .biz-val { font-size: 22px; font-weight: 700; color: #333; line-height: 1.2; }
+    .biz-card .biz-label { font-size: 13px; color: #999; margin-top: 2px; }
+    .biz-card .biz-sub { font-size: 12px; color: #aaa; margin-top: 4px; clear: both; }
+    .bg-recharge { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .bg-bet { background: linear-gradient(135deg, #f093fb, #f5576c); }
+    .bg-win { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+    .bg-xima { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+    .bg-commission { background: linear-gradient(135deg, #fa709a, #fee140); }
+    .bg-withdraw { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+    .bg-rebate { background: linear-gradient(135deg, #ffecd2, #fcb69f); }
+    .bg-profit { background: linear-gradient(135deg, #11998e, #38ef7d); }
+    .profit-positive { color: #27C24C !important; }
+    .profit-negative { color: #F05050 !important; }
+
+    /* 待处理徽章 */
+    .pending-badge {
+        position: absolute; top: 10px; right: 10px;
+        background: #F05050; color: #fff; border-radius: 10px;
+        padding: 2px 8px; font-size: 11px; font-weight: 600;
+    }
+
+    /* 报表表格 */
+    .report-table { width: 100%; border-collapse: collapse; }
+    .report-table th { background: #f5f7fa; color: #666; font-weight: 600; padding: 10px 12px; font-size: 13px; text-align: right; border-bottom: 2px solid #eee; }
+    .report-table th:first-child { text-align: left; }
+    .report-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; text-align: right; color: #333; }
+    .report-table td:first-child { text-align: left; font-weight: 600; color: #555; }
+    .report-table tr:hover td { background: #fafbfc; }
+
+    /* 区块标题 */
+    .section-title {
+        font-size: 16px; font-weight: 700; color: #333;
+        margin: 20px 0 15px; padding-left: 10px;
+        border-left: 4px solid #667eea;
+    }
+
+    /* 原有样式保留 */
+    .sm-st { background: #fff; padding: 20px; border-radius: 3px; margin-bottom: 20px; }
+    .sm-st-icon { width: 60px; height: 60px; display: inline-block; line-height: 60px; text-align: center; font-size: 30px; background: #eee; border-radius: 5px; float: left; margin-right: 10px; color: #fff; }
+    .sm-st-info { padding-top: 2px; }
+    .sm-st-info span { display: block; font-size: 24px; font-weight: 600; }
+    .st-red { background-color: #F05050; }
+    .st-green { background-color: #27C24C; }
+    .st-violet { background-color: #7266ba; }
+    .st-blue { background-color: #23b7e5; }
+    .stats .stat-icon { color: #28bb9c; display: inline-block; font-size: 26px; text-align: center; vertical-align: middle; width: 50px; float: left; }
+    .stat { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block; }
+    .stat .value { font-size: 20px; line-height: 24px; font-weight: 500; }
+    .stat .name { margin: 5px 0; }
+    .stat-col { margin: 0 0 10px 0; }
+    .stat-col .progress { height: 2px; }
+    .stat-col .progress-bar { line-height: 2px; height: 2px; }
+    #statistics .panel { min-height: 150px; }
+    #statistics .panel h5 { font-size: 14px; }
+</style>
+
+<div class="panel panel-default panel-intro">
+    <div class="panel-heading">
+        {:build_heading(null, false)}
+        <ul class="nav nav-tabs">
+            <li class="active"><a href="#one" data-toggle="tab">📊 业务总览</a></li>
+            <li><a href="#two" data-toggle="tab">👤 用户统计</a></li>
+            <li><a href="#three" data-toggle="tab">🖥 系统信息</a></li>
+        </ul>
+    </div>
+    <div class="panel-body">
+        <div id="myTabContent" class="tab-content">
+
+            <!-- ========== TAB1: 业务总览 ========== -->
+            <div class="tab-pane fade active in" id="one">
+
+                <!-- 今日核心指标 -->
+                <div class="section-title">📅 今日数据概览</div>
+
+                <!-- 日期范围查询 -->
+                <div style="background:#fff;border-radius:8px;padding:16px 20px;margin-bottom:15px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                    <div style="font-size:13px;color:#999;margin-bottom:10px;"><i class="fa fa-info-circle"></i> 投注记录相关数据统计，可选择任意日期范围查询</div>
+                    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;">
+                        <span style="font-weight:600;color:#555;">选择日期</span>
+                        <input type="date" id="rangeStart" class="form-control" style="width:170px;display:inline-block;">
+                        <span style="color:#999;">-</span>
+                        <input type="date" id="rangeEnd" class="form-control" style="width:170px;display:inline-block;">
+                        <button class="btn btn-primary" id="btnRangeQuery" onclick="queryRangeStats()"><i class="fa fa-search"></i> 查询</button>
+                        <button class="btn btn-default" onclick="resetRangeQuery()"><i class="fa fa-refresh"></i> 重置</button>
+                        <span id="rangeLoading" style="display:none;color:#667eea;"><i class="fa fa-spinner fa-spin"></i> 查询中...</span>
+                    </div>
+                    <!-- 查询结果 -->
+                    <div id="rangeResult" style="display:none;margin-top:16px;padding-top:16px;border-top:1px dashed #e5e5e5;">
+                        <div style="font-size:14px;font-weight:700;color:#333;margin-bottom:12px;">
+                            <i class="fa fa-calendar-check-o" style="color:#667eea;"></i>
+                            <span id="rangeTitle">--</span> 数据统计
+                        </div>
+                        <div class="row" id="rangeCards"></div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="biz-card">
+                            {if $pendingRecharge > 0}<span class="pending-badge">{$pendingRecharge} 待审</span>{/if}
+                            <div class="biz-icon bg-recharge"><i class="fa fa-plus-circle"></i></div>
+                            <div class="biz-val">¥{$todayRecharge}</div>
+                            <div class="biz-label">今日充值</div>
+                            <div class="biz-sub">昨日: ¥{$yesterdayRecharge}</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="biz-card">
+                            <div class="biz-icon bg-bet"><i class="fa fa-gamepad"></i></div>
+                            <div class="biz-val">¥{$todayBet}</div>
+                            <div class="biz-label">今日投注</div>
+                            <div class="biz-sub">昨日: ¥{$yesterdayBet}</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="biz-card">
+                            <div class="biz-icon bg-win"><i class="fa fa-trophy"></i></div>
+                            <div class="biz-val">¥{$todayWin}</div>
+                            <div class="biz-label">今日中奖</div>
+                            <div class="biz-sub">昨日: ¥{$yesterdayWin}</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="biz-card">
+                            <div class="biz-icon bg-profit"><i class="fa fa-line-chart"></i></div>
+                            <div class="biz-val {if $todayProfit >= 0}profit-positive{else}profit-negative{/if}">
+                                {if $todayProfit >= 0}+{/if}¥{$todayProfit}
+                            </div>
+                            <div class="biz-label">今日盈亏</div>
+                            <div class="biz-sub">投注-中奖-反佣-返利-洗码</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="biz-card">
+                            <div class="biz-icon bg-commission"><i class="fa fa-share-alt"></i></div>
+                            <div class="biz-val">¥{$todayCommission}</div>
+                            <div class="biz-label">今日推荐反佣</div>
+                            <div class="biz-sub">下级投注2%返佣</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="biz-card">
+                            <div class="biz-icon bg-rebate"><i class="fa fa-gift"></i></div>
+                            <div class="biz-val" style="color:#e67e22;">¥{$todayRebate}</div>
+                            <div class="biz-label">今日流水返利</div>
+                            <div class="biz-sub">阶梯返利已领取</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="biz-card">
+                            <div class="biz-icon bg-xima"><i class="fa fa-recycle"></i></div>
+                            <div class="biz-val" style="color:#43e97b;">¥{$todayXimaSelf}</div>
+                            <div class="biz-label">今日自身洗码</div>
+                            <div class="biz-sub">每日生效（不论是否领取）</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="biz-card">
+                            {if $pendingWithdraw > 0}<span class="pending-badge">{$pendingWithdraw} 待审</span>{/if}
+                            <div class="biz-icon bg-withdraw"><i class="fa fa-minus-circle"></i></div>
+                            <div class="biz-val">¥{$todayWithdraw}</div>
+                            <div class="biz-label">今日提现</div>
+                            <div class="biz-sub">已打款金额</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7日趋势图 -->
+                <div class="section-title">📈 近7日趋势</div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div id="bizChart" style="height:350px;width:100%;background:#fff;border-radius:8px;padding:15px;box-shadow:0 2px 8px rgba(0,0,0,0.06);"></div>
+                    </div>
+                </div>
+
+                <!-- 明细报表 -->
+                <div class="section-title" style="margin-top:25px;">📋 数据明细报表</div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div style="background:#fff;border-radius:8px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);overflow-x:auto;">
+                            <table class="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>项目</th>
+                                        <th>今日</th>
+                                        <th>近7日</th>
+                                        <th>累计总额</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><i class="fa fa-plus-circle" style="color:#667eea;margin-right:6px;"></i>充值（已到账）</td>
+                                        <td>¥{$todayRecharge}</td>
+                                        <td>¥{$sevenRecharge}</td>
+                                        <td>¥{$totalRecharge}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fa fa-gamepad" style="color:#f5576c;margin-right:6px;"></i>投注总额</td>
+                                        <td>¥{$todayBet}</td>
+                                        <td>¥{$sevenBet}</td>
+                                        <td>¥{$totalBet}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fa fa-trophy" style="color:#4facfe;margin-right:6px;"></i>中奖总额</td>
+                                        <td>¥{$todayWin}</td>
+                                        <td>¥{$sevenWin}</td>
+                                        <td>¥{$totalWin}</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td><i class="fa fa-share-alt" style="color:#fa709a;margin-right:6px;"></i>推荐反佣</td>
+                                        <td>¥{$todayCommission}</td>
+                                        <td>¥{$sevenCommission}</td>
+                                        <td>¥{$totalCommission}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fa fa-gift" style="color:#e67e22;margin-right:6px;"></i>流水返利</td>
+                                        <td>¥{$todayRebate}</td>
+                                        <td>--</td>
+                                        <td>¥{$totalRebate}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fa fa-recycle" style="color:#43e97b;margin-right:6px;"></i>自身洗码</td>
+                                        <td>¥{$todayXimaSelf}</td>
+                                        <td>--</td>
+                                        <td>--</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fa fa-minus-circle" style="color:#a18cd1;margin-right:6px;"></i>提现（已打款）</td>
+                                        <td>¥{$todayWithdraw}</td>
+                                        <td>¥{$sevenWithdraw}</td>
+                                        <td>¥{$totalWithdraw}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== TAB2: 用户统计 ========== -->
+            <div class="tab-pane fade" id="two">
+                <div class="row">
+                    <div class="col-sm-3 col-xs-6">
+                        <div class="sm-st clearfix">
+                            <span class="sm-st-icon st-red"><i class="fa fa-users"></i></span>
+                            <div class="sm-st-info">
+                                <span>{$totaluser|htmlentities}</span>
+                                {:__('Total user')}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-3 col-xs-6">
+                        <div class="sm-st clearfix">
+                            <span class="sm-st-icon st-violet"><i class="fa fa-user-plus"></i></span>
+                            <div class="sm-st-info">
+                                <span>{$todayusersignup|htmlentities}</span>
+                                今日注册
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-3 col-xs-6">
+                        <div class="sm-st clearfix">
+                            <span class="sm-st-icon st-blue"><i class="fa fa-sign-in"></i></span>
+                            <div class="sm-st-info">
+                                <span>{$todayuserlogin|htmlentities}</span>
+                                今日登录
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-3 col-xs-6">
+                        <div class="sm-st clearfix">
+                            <span class="sm-st-icon st-green"><i class="fa fa-user"></i></span>
+                            <div class="sm-st-info">
+                                <span>{$totaladmin|htmlentities}</span>
+                                {:__('Total admin')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div id="echart" class="btn-refresh" style="height:300px;width:100%;"></div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card sameheight-item stats">
+                            <div class="card-block">
+                                <div class="row row-sm stats-container">
+                                    <div class="col-xs-6 stat-col">
+                                        <div class="stat-icon"><i class="fa fa-calendar"></i></div>
+                                        <div class="stat">
+                                            <div class="value">{$threednu|htmlentities}</div>
+                                            <div class="name">{:__('Three dnu')}</div>
+                                        </div>
+                                        <div class="progress"><div class="progress-bar progress-bar-success" style="width:20%"></div></div>
+                                    </div>
+                                    <div class="col-xs-6 stat-col">
+                                        <div class="stat-icon"><i class="fa fa-calendar-plus-o"></i></div>
+                                        <div class="stat">
+                                            <div class="value">{$sevendnu|htmlentities}</div>
+                                            <div class="name">{:__('Seven dnu')}</div>
+                                        </div>
+                                        <div class="progress"><div class="progress-bar progress-bar-success" style="width:20%"></div></div>
+                                    </div>
+                                    <div class="col-xs-6 stat-col">
+                                        <div class="stat-icon"><i class="fa fa-user-circle"></i></div>
+                                        <div class="stat">
+                                            <div class="value">{$sevendau|htmlentities}</div>
+                                            <div class="name">{:__('Seven dau')}</div>
+                                        </div>
+                                        <div class="progress"><div class="progress-bar progress-bar-success" style="width:20%"></div></div>
+                                    </div>
+                                    <div class="col-xs-6 stat-col">
+                                        <div class="stat-icon"><i class="fa fa-user-circle-o"></i></div>
+                                        <div class="stat">
+                                            <div class="value">{$thirtydau|htmlentities}</div>
+                                            <div class="name">{:__('Thirty dau')}</div>
+                                        </div>
+                                        <div class="progress"><div class="progress-bar progress-bar-success" style="width:20%"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== TAB3: 系统信息 ========== -->
+            <div class="tab-pane fade" id="three">
+                <div class="row" id="statistics">
+                    <div class="col-xs-6 col-md-3">
+                        <div class="panel bg-blue-gradient no-border">
+                            <div class="panel-body">
+                                <div class="panel-title">
+                                    <span class="label label-primary pull-right">{:__('Real time')}</span>
+                                    <h5>{:__('Working addon count')}</h5>
+                                </div>
+                                <div class="panel-content">
+                                    <h1 class="no-margins">{$totalworkingaddon|htmlentities}</h1>
+                                    <div class="font-bold"><i class="fa fa-magic"></i> <small>{:__('Working addon count tips')}</small></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-6 col-md-3">
+                        <div class="panel bg-teal-gradient no-border">
+                            <div class="panel-body">
+                                <div class="ibox-title">
+                                    <span class="label label-primary pull-right">{:__('Real time')}</span>
+                                    <h5>{:__('Database count')}</h5>
+                                </div>
+                                <div class="ibox-content">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h1 class="no-margins">{$dbtablenums|htmlentities}</h1>
+                                            <div class="font-bold"><i class="fa fa-database"></i> <small>{:__('Database table nums')}</small></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h1 class="no-margins">{$dbsize|format_bytes=###,'',0}</h1>
+                                            <div class="font-bold"><i class="fa fa-filter"></i> <small>{:__('Database size')}</small></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-6 col-md-3">
+                        <div class="panel bg-purple-gradient no-border">
+                            <div class="panel-body">
+                                <div class="ibox-title">
+                                    <span class="label label-primary pull-right">{:__('Real time')}</span>
+                                    <h5>{:__('Attachment count')}</h5>
+                                </div>
+                                <div class="ibox-content">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h1 class="no-margins">{$attachmentnums|htmlentities}</h1>
+                                            <div class="font-bold"><i class="fa fa-files-o"></i> <small>{:__('Attachment nums')}</small></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h1 class="no-margins">{$attachmentsize|format_bytes=###,'',0}</h1>
+                                            <div class="font-bold"><i class="fa fa-filter"></i> <small>{:__('Attachment size')}</small></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-6 col-md-3">
+                        <div class="panel bg-green-gradient no-border">
+                            <div class="panel-body">
+                                <div class="ibox-title">
+                                    <span class="label label-primary pull-right">{:__('Real time')}</span>
+                                    <h5>{:__('Picture count')}</h5>
+                                </div>
+                                <div class="ibox-content">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h1 class="no-margins">{$picturenums|htmlentities}</h1>
+                                            <div class="font-bold"><i class="fa fa-picture-o"></i> <small>{:__('Picture nums')}</small></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h1 class="no-margins">{$picturesize|format_bytes=###,'',0}</h1>
+                                            <div class="font-bold"><i class="fa fa-filter"></i> <small>{:__('Picture size')}</small></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+// 业务趋势图表
+require(['echarts', 'echarts-theme'], function(echarts) {
+    var bizDom = document.getElementById('bizChart');
+    if (!bizDom) return;
+    var bizChart = echarts.init(bizDom);
+    var cfg = Config || {};
+    bizChart.setOption({
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['充值', '投注', '中奖', '盈亏'], bottom: 0 },
+        grid: { left: '3%', right: '4%', bottom: '12%', top: '8%', containLabel: true },
+        xAxis: { type: 'category', data: cfg.trendDays || [], boundaryGap: false },
+        yAxis: { type: 'value' },
+        series: [
+            { name: '充值', type: 'line', smooth: true, data: cfg.trendRecharge || [], itemStyle: { color: '#667eea' }, areaStyle: { color: 'rgba(102,126,234,0.1)' } },
+            { name: '投注', type: 'line', smooth: true, data: cfg.trendBet || [], itemStyle: { color: '#f5576c' }, areaStyle: { color: 'rgba(245,87,108,0.1)' } },
+            { name: '中奖', type: 'line', smooth: true, data: cfg.trendWin || [], itemStyle: { color: '#4facfe' }, areaStyle: { color: 'rgba(79,172,254,0.1)' } },
+            { name: '盈亏', type: 'bar', data: cfg.trendProfit || [], itemStyle: { color: function(p) { return p.value >= 0 ? '#27C24C' : '#F05050'; } } }
+        ]
+    });
+    $(window).resize(function() { bizChart.resize(); });
+});
+
+// ========== 新订单提醒（充值/提现）==========
+(function() {
+    var entry = (function(){ var m = location.pathname.match(/^(\/[^\/]+\.php)/); return m ? m[1] : ''; })();
+    var checkUrl = entry + '/dashboard/pendingCheck';
+    var lastRId = 0, lastWId = 0, firstRun = true;
+
+    // 语音播报
+    function speak(text) {
+        if ('speechSynthesis' in window) {
+            var u = new SpeechSynthesisUtterance(text);
+            u.lang = 'zh-CN'; u.rate = 1; u.volume = 1;
+            window.speechSynthesis.speak(u);
+        }
+    }
+
+    // 提示音（备用，语音不支持时）
+    function beep() {
+        try {
+            var ctx = new (window.AudioContext || window.webkitAudioContext)();
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.frequency.value = 800; osc.type = 'sine';
+            gain.gain.value = 0.3;
+            osc.start(); osc.stop(ctx.currentTime + 0.3);
+            setTimeout(function() {
+                var osc2 = ctx.createOscillator();
+                osc2.connect(gain); osc2.frequency.value = 1000; osc2.type = 'sine';
+                osc2.start(); osc2.stop(ctx.currentTime + 0.3);
+            }, 350);
+        } catch(e) {}
+    }
+
+    // 桌面通知
+    function desktopNotify(title, body) {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(title, { body: body, icon: '/assets/img/logo.png' });
+        }
+    }
+
+    // 弹窗
+    function showAlert(type, detail) {
+        var icon = type === 'recharge' ? '💰' : '💸';
+        var title = type === 'recharge' ? '新充值申请' : '新提现申请';
+        var name = detail.nickname || detail.username || '--';
+        var amount = parseFloat(detail.amount).toFixed(2);
+        var extra = type === 'withdraw' ? ' (' + (detail.withdraw_type || '') + ')' : '';
+
+        // 页面内弹窗
+        var toast = document.createElement('div');
+        toast.innerHTML = '<div style="position:fixed;top:20px;right:20px;z-index:99999;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:12px;padding:16px 24px;box-shadow:0 8px 30px rgba(0,0,0,0.3);animation:slideIn 0.4s ease;max-width:350px;cursor:pointer;" onclick="this.parentElement.remove()">' +
+            '<div style="font-size:20px;margin-bottom:6px;">' + icon + ' ' + title + '</div>' +
+            '<div style="font-size:14px;opacity:0.9;">用户: ' + name + '</div>' +
+            '<div style="font-size:22px;font-weight:700;margin-top:4px;">¥' + amount + extra + '</div>' +
+            '<div style="font-size:11px;opacity:0.6;margin-top:6px;">点击关闭 | ' + new Date().toLocaleTimeString() + '</div>' +
+            '</div>';
+        document.body.appendChild(toast);
+        setTimeout(function() { if (toast.parentElement) toast.remove(); }, 15000);
+
+        // 语音播报
+        speak(title + '，用户' + name + '，金额' + amount + '元');
+        beep();
+
+        // 桌面通知
+        desktopNotify(title, '用户: ' + name + '  金额: ¥' + amount + extra);
+    }
+
+    // 轮询检查
+    function checkPending() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', checkUrl, true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.onload = function() {
+            try {
+                var res = JSON.parse(xhr.responseText);
+                if (res.code !== 1) return;
+                var d = res.data;
+
+                if (firstRun) {
+                    // 首次运行记录当前ID，不弹窗
+                    lastRId = d.last_recharge_id || 0;
+                    lastWId = d.last_withdraw_id || 0;
+                    firstRun = false;
+                    return;
+                }
+
+                // 检测新充值
+                if (d.last_recharge_id > lastRId && d.latest_recharge) {
+                    showAlert('recharge', d.latest_recharge);
+                    lastRId = d.last_recharge_id;
+                }
+
+                // 检测新提现
+                if (d.last_withdraw_id > lastWId && d.latest_withdraw) {
+                    showAlert('withdraw', d.latest_withdraw);
+                    lastWId = d.last_withdraw_id;
+                }
+            } catch(e) {}
+        };
+        xhr.send();
+    }
+
+    // 请求桌面通知权限
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+
+    // 注入动画
+    var style = document.createElement('style');
+    style.textContent = '@keyframes slideIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}';
+    document.head.appendChild(style);
+
+    // 每15秒检查一次
+    checkPending();
+    setInterval(checkPending, 15000);
+})();
+
+// ========== 日期范围查询统计 ==========
+(function() {
+    // 默认结束日期为昨日，开始日期为7天前
+    function fmtDate(d) {
+        var y = d.getFullYear(), m = ('0'+(d.getMonth()+1)).slice(-2), day = ('0'+d.getDate()).slice(-2);
+        return y + '-' + m + '-' + day;
+    }
+    var today = new Date();
+    var yesterday = new Date(today.getTime() - 86400000);
+    var weekAgo = new Date(today.getTime() - 86400000 * 7);
+    var es = document.getElementById('rangeEnd');
+    var ss = document.getElementById('rangeStart');
+    if (es) es.value = fmtDate(yesterday);
+    if (ss) ss.value = fmtDate(weekAgo);
+    // 结束日期最大值=昨日（统计截止到昨日）
+    if (es) es.max = fmtDate(yesterday);
+    if (ss) ss.max = fmtDate(yesterday);
+})();
+
+function queryRangeStats() {
+    var start = document.getElementById('rangeStart').value;
+    var end = document.getElementById('rangeEnd').value;
+    if (!start || !end) { alert('请选择开始和结束日期'); return; }
+    if (start > end) { alert('开始日期不能晚于结束日期'); return; }
+
+    var entry = (function(){ var m = location.pathname.match(/^(\/[^\/]+\.php)/); return m ? m[1] : ''; })();
+    var url = entry + '/dashboard/rangeStats?start_date=' + encodeURIComponent(start) + '&end_date=' + encodeURIComponent(end);
+
+    document.getElementById('rangeLoading').style.display = '';
+    document.getElementById('btnRangeQuery').disabled = true;
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function() {
+        document.getElementById('rangeLoading').style.display = 'none';
+        document.getElementById('btnRangeQuery').disabled = false;
+        try {
+            var res = JSON.parse(xhr.responseText);
+            if (res.code !== 1) { alert(res.msg || '查询失败'); return; }
+            renderRangeStats(res.data);
+        } catch(e) { alert('查询失败，请重试'); }
+    };
+    xhr.onerror = function() {
+        document.getElementById('rangeLoading').style.display = 'none';
+        document.getElementById('btnRangeQuery').disabled = false;
+        alert('网络错误');
+    };
+    xhr.send();
+}
+
+function renderRangeStats(d) {
+    document.getElementById('rangeTitle').textContent = d.start_date + ' 至 ' + d.end_date;
+    var profitCls = d.profit >= 0 ? 'profit-positive' : 'profit-negative';
+    var profitTxt = (d.profit >= 0 ? '+' : '') + '¥' + d.profit;
+    var cards = [
+        { label: '充值（已到账）', val: '¥' + d.recharge, bg: 'bg-recharge', icon: 'fa-plus-circle' },
+        { label: '投注总额', val: '¥' + d.bet, bg: 'bg-bet', icon: 'fa-gamepad' },
+        { label: '中奖总额', val: '¥' + d.win, bg: 'bg-win', icon: 'fa-trophy' },
+        { label: '平台盈亏', val: profitTxt, bg: 'bg-profit', icon: 'fa-line-chart', cls: profitCls },
+        { label: '推荐反佣', val: '¥' + d.commission, bg: 'bg-commission', icon: 'fa-share-alt' },
+        { label: '流水返利', val: '¥' + d.rebate, bg: 'bg-rebate', icon: 'fa-gift' },
+        { label: '自身洗码', val: '¥' + (d.xima_self || 0), bg: 'bg-xima', icon: 'fa-recycle' },
+        { label: '提现（已打款）', val: '¥' + d.withdraw, bg: 'bg-withdraw', icon: 'fa-minus-circle' },
+        { label: '投注笔数', val: d.bet_count + ' 笔', bg: 'bg-xima', icon: 'fa-list-ol' },
+        { label: '投注人数', val: d.bet_users + ' 人', bg: 'bg-xima', icon: 'fa-users' }
+    ];
+    var html = '';
+    cards.forEach(function(c) {
+        html += '<div class="col-lg-3 col-sm-6">' +
+            '<div class="biz-card">' +
+            '<div class="biz-icon ' + c.bg + '"><i class="fa ' + c.icon + '"></i></div>' +
+            '<div class="biz-val ' + (c.cls || '') + '">' + c.val + '</div>' +
+            '<div class="biz-label">' + c.label + '</div>' +
+            '</div></div>';
+    });
+    document.getElementById('rangeCards').innerHTML = html;
+    document.getElementById('rangeResult').style.display = '';
+}
+
+function resetRangeQuery() {
+    document.getElementById('rangeResult').style.display = 'none';
+    var today = new Date();
+    var yesterday = new Date(today.getTime() - 86400000);
+    var weekAgo = new Date(today.getTime() - 86400000 * 7);
+    function fmtDate(d) {
+        return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2);
+    }
+    document.getElementById('rangeEnd').value = fmtDate(yesterday);
+    document.getElementById('rangeStart').value = fmtDate(weekAgo);
+}
+</script>

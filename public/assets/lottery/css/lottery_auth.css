@@ -1,0 +1,441 @@
+/**
+ * ============================================
+ * 彩票投注系统 - 登录/注册 高端视觉
+ * Design: Dark Gradient + Gold + Glassmorphism
+ * ============================================
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ===== 变量 ===== */
+:root {
+    --auth-bg-1: #0a0e27;
+    --auth-bg-2: #1a1145;
+    --auth-bg-3: #0d1b3e;
+    --gold: #f0c040;
+    --gold-light: #ffd700;
+    --gold-dark: #c4982a;
+    --gold-glow: rgba(240, 192, 64, 0.3);
+    --glass-bg: rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-bg-strong: rgba(255, 255, 255, 0.1);
+    --text-white: #ffffff;
+    --text-light: rgba(255, 255, 255, 0.8);
+    --text-dim: rgba(255, 255, 255, 0.5);
+    --input-bg: rgba(255, 255, 255, 0.08);
+    --input-border: rgba(255, 255, 255, 0.15);
+    --input-focus: rgba(240, 192, 64, 0.4);
+    --danger: #ff4d6a;
+    --success: #00d68f;
+}
+
+/* ===== 全局重置 ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+    font-family: 'Inter', -apple-system, 'PingFang SC', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+/* ============================================
+   背景动画
+   ============================================ */
+.auth-page {
+    min-height: 100vh; width: 100%;
+    background: linear-gradient(135deg, var(--auth-bg-1) 0%, var(--auth-bg-2) 50%, var(--auth-bg-3) 100%);
+    position: relative; overflow: hidden;
+    display: flex;
+}
+
+/* 浮动粒子 */
+.auth-particles {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+}
+.particle {
+    position: absolute; border-radius: 50%;
+    animation: particleFloat linear infinite;
+    opacity: 0;
+}
+.particle:nth-child(1)  { width: 4px; height: 4px; background: var(--gold); left: 10%; animation-duration: 12s; animation-delay: 0s; }
+.particle:nth-child(2)  { width: 6px; height: 6px; background: rgba(255,255,255,0.3); left: 20%; animation-duration: 15s; animation-delay: 2s; }
+.particle:nth-child(3)  { width: 3px; height: 3px; background: var(--gold-light); left: 35%; animation-duration: 10s; animation-delay: 4s; }
+.particle:nth-child(4)  { width: 5px; height: 5px; background: rgba(100,150,255,0.4); left: 50%; animation-duration: 18s; animation-delay: 1s; }
+.particle:nth-child(5)  { width: 4px; height: 4px; background: var(--gold); left: 65%; animation-duration: 14s; animation-delay: 3s; }
+.particle:nth-child(6)  { width: 7px; height: 7px; background: rgba(255,255,255,0.2); left: 75%; animation-duration: 16s; animation-delay: 5s; }
+.particle:nth-child(7)  { width: 3px; height: 3px; background: rgba(200,150,255,0.3); left: 85%; animation-duration: 11s; animation-delay: 2s; }
+.particle:nth-child(8)  { width: 5px; height: 5px; background: var(--gold); left: 45%; animation-duration: 20s; animation-delay: 6s; }
+.particle:nth-child(9)  { width: 4px; height: 4px; background: rgba(100,200,255,0.3); left: 55%; animation-duration: 13s; animation-delay: 0s; }
+.particle:nth-child(10) { width: 6px; height: 6px; background: rgba(255,255,255,0.15); left: 90%; animation-duration: 17s; animation-delay: 4s; }
+
+@keyframes particleFloat {
+    0% { transform: translateY(100vh) scale(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+}
+
+/* 光晕装饰 */
+.auth-glow {
+    position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0;
+}
+.auth-glow-1 {
+    width: 400px; height: 400px; background: rgba(240, 192, 64, 0.08);
+    top: -100px; right: -100px;
+}
+.auth-glow-2 {
+    width: 300px; height: 300px; background: rgba(100, 100, 255, 0.06);
+    bottom: -80px; left: -80px;
+}
+.auth-glow-3 {
+    width: 200px; height: 200px; background: rgba(200, 100, 255, 0.05);
+    top: 40%; left: 30%;
+}
+
+/* ============================================
+   PC端 - 左右分栏布局
+   ============================================ */
+.auth-left {
+    flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
+    padding: 60px; position: relative; z-index: 1;
+}
+.auth-right {
+    width: 520px; display: flex; align-items: center; justify-content: center;
+    padding: 40px; position: relative; z-index: 1;
+}
+
+/* ===== 左侧品牌展示 ===== */
+.auth-brand { text-align: center; animation: brandFadeIn 1s ease; }
+.auth-brand-logo {
+    width: 80px; height: 80px; border-radius: 20px; margin: 0 auto 24px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; font-weight: 900; color: var(--auth-bg-1);
+    box-shadow: 0 8px 32px var(--gold-glow);
+    animation: logoGlow 3s ease-in-out infinite;
+}
+@keyframes logoGlow {
+    0%, 100% { box-shadow: 0 8px 32px var(--gold-glow); }
+    50% { box-shadow: 0 8px 48px rgba(240, 192, 64, 0.5); }
+}
+.auth-brand-name {
+    font-size: 42px; font-weight: 900; color: var(--text-white);
+    letter-spacing: 4px; margin-bottom: 8px;
+    background: linear-gradient(135deg, #fff 0%, var(--gold) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.auth-brand-tagline {
+    font-size: 16px; color: var(--text-dim); letter-spacing: 8px;
+    text-transform: uppercase; font-weight: 300;
+}
+.auth-brand-features {
+    display: flex; gap: 40px; margin-top: 60px;
+}
+.auth-feature {
+    text-align: center; animation: featureSlideUp 0.8s ease both;
+}
+.auth-feature:nth-child(1) { animation-delay: 0.2s; }
+.auth-feature:nth-child(2) { animation-delay: 0.4s; }
+.auth-feature:nth-child(3) { animation-delay: 0.6s; }
+.auth-feature-icon {
+    width: 52px; height: 52px; border-radius: 14px; margin: 0 auto 10px;
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: var(--gold);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+.auth-feature-title { font-size: 13px; color: var(--text-light); font-weight: 600; }
+.auth-feature-desc { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+@keyframes brandFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes featureSlideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ============================================
+   毛玻璃卡片 (表单区域)
+   ============================================ */
+.auth-card {
+    width: 100%; max-width: 420px;
+    background: var(--glass-bg-strong);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 40px 36px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+    animation: cardSlideIn 0.6s ease;
+}
+@keyframes cardSlideIn { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+.auth-card-header { text-align: center; margin-bottom: 32px; }
+.auth-card-title {
+    font-size: 26px; font-weight: 800; color: var(--text-white);
+    margin-bottom: 8px;
+}
+.auth-card-subtitle { font-size: 13px; color: var(--text-dim); }
+
+/* ===== 表单 ===== */
+.auth-form { display: flex; flex-direction: column; gap: 18px; }
+.auth-field { position: relative; }
+.auth-field-label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--text-light); margin-bottom: 8px; text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.auth-field-input-wrap {
+    position: relative; display: flex; align-items: center;
+    background: var(--input-bg); border: 1px solid var(--input-border);
+    border-radius: 12px; transition: all 0.3s;
+}
+.auth-field-input-wrap:focus-within {
+    border-color: var(--gold); background: rgba(240, 192, 64, 0.05);
+    box-shadow: 0 0 0 3px var(--input-focus);
+}
+.auth-field-icon {
+    position: absolute; left: 14px; font-size: 16px; color: var(--text-dim);
+    pointer-events: none; transition: color 0.3s;
+}
+.auth-field-input-wrap:focus-within .auth-field-icon { color: var(--gold); }
+.auth-field-input {
+    width: 100%; padding: 14px 14px 14px 44px; background: transparent;
+    border: none; outline: none; font-size: 14px; color: var(--text-white);
+    font-family: inherit;
+}
+.auth-field-input::placeholder { color: var(--text-dim); }
+.auth-field-toggle {
+    position: absolute; right: 14px; cursor: pointer; font-size: 16px;
+    color: var(--text-dim); background: none; border: none; padding: 4px;
+}
+.auth-field-toggle:hover { color: var(--text-light); }
+
+/* 验证码 */
+.auth-captcha-row { display: flex; gap: 10px; }
+.auth-captcha-row .auth-field-input-wrap { flex: 1; }
+.auth-captcha-btn {
+    padding: 0 20px; border-radius: 12px; border: 1px solid var(--gold);
+    background: transparent; color: var(--gold); font-size: 13px; font-weight: 600;
+    cursor: pointer; white-space: nowrap; transition: all 0.3s;
+}
+.auth-captcha-btn:hover { background: rgba(240, 192, 64, 0.1); }
+.auth-captcha-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* 错误提示 */
+.auth-field-error {
+    font-size: 11px; color: var(--danger); margin-top: 6px;
+    display: none; animation: errorShake 0.3s ease;
+}
+.auth-field.error .auth-field-error { display: block; }
+.auth-field.error .auth-field-input-wrap { border-color: var(--danger); }
+@keyframes errorShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+/* ===== 选项行 ===== */
+.auth-options {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; margin-top: -4px;
+}
+.auth-remember {
+    display: flex; align-items: center; gap: 8px; color: var(--text-dim); cursor: pointer;
+}
+.auth-remember input[type="checkbox"] {
+    width: 16px; height: 16px; border-radius: 4px;
+    accent-color: var(--gold); cursor: pointer;
+}
+.auth-forgot { color: var(--gold); font-weight: 500; text-decoration: none; transition: opacity 0.2s; }
+.auth-forgot:hover { opacity: 0.8; }
+
+/* ===== 主按钮 ===== */
+.auth-btn {
+    width: 100%; padding: 16px; border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    transition: all 0.3s; position: relative; overflow: hidden;
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-top: 8px;
+}
+.auth-btn-primary {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: var(--auth-bg-1);
+    box-shadow: 0 4px 20px var(--gold-glow);
+}
+.auth-btn-primary:hover {
+    box-shadow: 0 8px 32px rgba(240, 192, 64, 0.5);
+    transform: translateY(-2px);
+}
+.auth-btn-primary:active { transform: translateY(0); }
+.auth-btn-primary::after {
+    content: ''; position: absolute; top: -50%; left: -60%;
+    width: 200%; height: 200%; background: linear-gradient(transparent, rgba(255,255,255,0.15), transparent);
+    transform: rotate(30deg); transition: left 0.6s;
+}
+.auth-btn-primary:hover::after { left: 100%; }
+
+.auth-btn:disabled {
+    opacity: 0.5; cursor: not-allowed; transform: none !important;
+    box-shadow: none !important;
+}
+.auth-btn-loading .auth-btn-text { visibility: hidden; }
+.auth-btn-loading::before {
+    content: ''; position: absolute; top: 50%; left: 50%;
+    width: 20px; height: 20px; margin: -10px 0 0 -10px;
+    border: 2px solid rgba(0,0,0,0.2); border-top-color: var(--auth-bg-1);
+    border-radius: 50%; animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== 分隔线 ===== */
+.auth-divider {
+    display: flex; align-items: center; gap: 16px;
+    margin: 20px 0; font-size: 12px; color: var(--text-dim);
+}
+.auth-divider::before, .auth-divider::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
+}
+
+/* ===== 社交登录 ===== */
+.auth-social { display: flex; gap: 12px; justify-content: center; }
+.auth-social-btn {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: var(--text-light); cursor: pointer;
+    transition: all 0.3s; backdrop-filter: blur(12px);
+}
+.auth-social-btn:hover {
+    background: var(--glass-bg-strong); transform: translateY(-2px);
+    border-color: var(--gold); color: var(--gold);
+}
+
+/* ===== 底部链接 ===== */
+.auth-footer {
+    text-align: center; margin-top: 24px;
+    font-size: 13px; color: var(--text-dim);
+}
+.auth-footer a {
+    color: var(--gold); font-weight: 600; text-decoration: none;
+    transition: opacity 0.2s;
+}
+.auth-footer a:hover { opacity: 0.8; }
+
+/* ===== 协议 ===== */
+.auth-agreement {
+    font-size: 11px; color: var(--text-dim); text-align: center;
+    margin-top: 16px; line-height: 1.6;
+}
+.auth-agreement a { color: var(--gold); text-decoration: none; }
+
+/* ===== Toast ===== */
+.auth-toast {
+    position: fixed; top: 20px; right: 20px; z-index: 9999;
+    display: flex; flex-direction: column; gap: 8px;
+}
+.toast-item {
+    padding: 12px 20px; border-radius: 12px;
+    background: rgba(20, 20, 40, 0.9); backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border); color: var(--text-white);
+    font-size: 13px; display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    animation: toastIn 0.4s ease;
+}
+.toast-item.success { border-left: 3px solid var(--success); }
+.toast-item.error { border-left: 3px solid var(--danger); }
+@keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ============================================
+   手机端适配
+   ============================================ */
+@media screen and (max-width: 768px) {
+    .auth-page { flex-direction: column; }
+    .auth-left { display: none; }
+    .auth-right { width: 100%; min-height: 100vh; padding: 0; align-items: flex-start; }
+
+    .auth-card {
+        width: 100%; max-width: 100%; border-radius: 0;
+        min-height: 100vh; padding: 0; background: transparent;
+        border: none; box-shadow: none; backdrop-filter: none;
+        display: flex; flex-direction: column;
+    }
+
+    /* 手机端顶部品牌区 */
+    .m-auth-header {
+        display: flex; flex-direction: column; align-items: center;
+        padding: 50px 24px 30px; position: relative;
+    }
+    .m-auth-logo {
+        width: 60px; height: 60px; border-radius: 16px;
+        background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+        display: flex; align-items: center; justify-content: center;
+        font-size: 26px; font-weight: 900; color: var(--auth-bg-1);
+        box-shadow: 0 6px 24px var(--gold-glow); margin-bottom: 16px;
+        animation: logoGlow 3s ease-in-out infinite;
+    }
+    .m-auth-brand-name {
+        font-size: 28px; font-weight: 900; color: var(--text-white);
+        letter-spacing: 3px; margin-bottom: 6px;
+        background: linear-gradient(135deg, #fff 0%, var(--gold) 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .m-auth-brand-tag {
+        font-size: 12px; color: var(--text-dim); letter-spacing: 4px;
+    }
+
+    /* 手机端表单区域 */
+    .m-auth-form-area {
+        flex: 1; background: rgba(15, 15, 40, 0.7);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px 24px 0 0; padding: 32px 24px 40px;
+        border-top: 1px solid var(--glass-border);
+    }
+
+    .auth-card-header { margin-bottom: 24px; }
+    .auth-card-title { font-size: 22px; }
+    .auth-form { gap: 14px; }
+    .auth-field-input { padding: 13px 13px 13px 42px; font-size: 15px; }
+    .auth-btn { padding: 15px; font-size: 15px; }
+    .auth-social-btn { width: 44px; height: 44px; font-size: 18px; }
+    .auth-brand-features { display: none; }
+
+    /* PC 专属隐藏 */
+    .pc-only { display: none !important; }
+}
+
+@media screen and (min-width: 769px) {
+    .m-auth-header { display: none; }
+    .m-auth-form-area { display: contents; }
+    .m-only { display: none !important; }
+}
+
+/* ===== 密码强度 ===== */
+.password-strength {
+    display: flex; gap: 4px; margin-top: 8px;
+}
+.strength-bar {
+    flex: 1; height: 3px; border-radius: 2px;
+    background: rgba(255,255,255,0.1); transition: background 0.3s;
+}
+.strength-bar.active.weak { background: var(--danger); }
+.strength-bar.active.medium { background: var(--gold); }
+.strength-bar.active.strong { background: var(--success); }
+.strength-text { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+/* ===== 注册步骤指示器 ===== */
+.auth-steps {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; margin-bottom: 28px;
+}
+.auth-step {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    color: var(--text-dim); transition: all 0.3s;
+}
+.auth-step.active {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: var(--auth-bg-1); border-color: var(--gold);
+    box-shadow: 0 0 16px var(--gold-glow);
+}
+.auth-step.done { background: var(--success); border-color: var(--success); color: white; }
+.auth-step-line {
+    width: 40px; height: 2px;
+    background: var(--glass-border); transition: background 0.3s;
+}
+.auth-step-line.active { background: var(--gold); }

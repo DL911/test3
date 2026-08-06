@@ -1,0 +1,261 @@
+<div class="panel panel-default panel-intro">
+    <div class="panel-heading">
+        <div class="panel-lead"><em>平台收款码配置</em>上传微信、支付宝收款码或配置USDT钱包地址，用于接收用户充值</div>
+        <ul class="nav nav-tabs"><li class="active"><a href="#t-all" data-toggle="tab">列表</a></li></ul>
+    </div>
+    <div class="panel-body">
+        <div style="margin-bottom:15px;">
+            <a href="javascript:;" class="btn btn-success" onclick="pcOpen()"><i class="fa fa-plus"></i> 添加收款通道</a>
+        </div>
+        <table class="table table-striped table-bordered">
+            <thead><tr><th>ID</th><th>类型</th><th>通道名称</th><th>收款码</th><th>账号/地址</th><th>限额</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="tableBody"><tr><td colspan="9" style="text-align:center;color:#999;">加载中...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 编辑弹窗 -->
+<style>
+#editModal .modal-dialog { margin: 30px auto; }
+#editModal .modal-body { max-height: calc(100vh - 200px); overflow-y: auto; }
+</style>
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header"><h4 class="modal-title" id="modalTitle">添加收款通道</h4></div>
+            <form id="editForm">
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="editId">
+                    <div class="row">
+                        <div class="col-sm-6"><div class="form-group"><label>支付类型</label>
+                            <select class="form-control" name="pay_type" id="editPayType">
+                                <option value="wechat">微信支付</option><option value="alipay">支付宝</option>
+                                <option value="usdt">USDT</option><option value="bank">银行卡</option>
+                            </select></div></div>
+                        <div class="col-sm-6"><div class="form-group"><label>通道名称</label>
+                            <input type="text" class="form-control" name="title" id="editTitle" placeholder="如: 微信收款1号"></div></div>
+                    </div>
+                    <div class="form-group">
+                        <label>收款码图片</label>
+                        <div id="previewWrap" style="margin-bottom:8px;display:none;"><img id="previewImg" src="" style="max-width:200px;border-radius:8px;border:1px solid #ddd;"></div>
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="qr_image" id="editQrImage" placeholder="图片路径">
+                            <span class="input-group-btn"><button type="button" class="btn btn-primary" onclick="document.getElementById('qrFile').click()"><i class="fa fa-upload"></i> 上传</button></span>
+                        </div>
+                        <input type="file" id="qrFile" accept="image/*" style="display:none;" onchange="pcUpload(this)">
+                    </div>
+                    <div class="form-group"><label>账号/钱包地址</label><input type="text" class="form-control" name="account" id="editAccount" placeholder="TRC20地址/银行卡号"></div>
+                    <div class="row">
+                        <div class="col-sm-4"><div class="form-group"><label>最低金额</label><input type="number" class="form-control" name="min_amount" id="editMin" value="10"></div></div>
+                        <div class="col-sm-4"><div class="form-group"><label>最高金额</label><input type="number" class="form-control" name="max_amount" id="editMax" value="50000"></div></div>
+                        <div class="col-sm-4"><div class="form-group"><label>排序</label><input type="number" class="form-control" name="sort" id="editSort" value="0"></div></div>
+                    </div>
+                    <div class="form-group"><label>状态</label><select class="form-control" name="status" id="editStatus"><option value="1">启用</option><option value="0">停用</option></select></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" onclick="pcCloseModal()">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="pcSave()"><i class="fa fa-save"></i> 保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+var _typeMap = {wechat:'微信支付', alipay:'支付宝', usdt:'USDT', bank:'银行卡'};
+var _typeCls = {wechat:'success', alipay:'primary', usdt:'warning', bank:'info'};
+
+function pcLoadList(){
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', location.href, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function(){
+        try {
+            var res = JSON.parse(xhr.responseText);
+            var list = res.rows || [];
+            var html = '';
+            if(!list.length){
+                html = '<tr><td colspan="9" style="text-align:center;color:#999;">暂无数据，请点击"添加收款通道"</td></tr>';
+            } else {
+                for(var i=0;i<list.length;i++){
+                    var r = list[i];
+                    var imgHtml = r.qr_image ? '<a href="'+r.qr_image+'" target="_blank"><img src="'+r.qr_image+'" style="max-height:50px;border-radius:4px;"></a>' : '<span class="text-muted">无</span>';
+                    html += '<tr>'+
+                        '<td>'+r.id+'</td>'+
+                        '<td><span class="label label-'+(_typeCls[r.pay_type]||'default')+'">'+(_typeMap[r.pay_type]||r.pay_type)+'</span></td>'+
+                        '<td>'+(r.title||'-')+'</td>'+
+                        '<td>'+imgHtml+'</td>'+
+                        '<td>'+(r.account||'-')+'</td>'+
+                        '<td>'+parseFloat(r.min_amount)+' ~ '+parseFloat(r.max_amount)+'</td>'+
+                        '<td>'+r.sort+'</td>'+
+                        '<td><span class="label '+(r.status==1?'label-success':'label-danger')+'">'+(r.status==1?'启用':'停用')+'</span></td>'+
+                        '<td><a href="javascript:;" class="btn btn-xs btn-info" onclick="pcEdit('+r.id+')">编辑</a> '+
+                        '<a href="javascript:;" class="btn btn-xs btn-danger" onclick="pcDel('+r.id+')">删除</a></td>'+
+                        '</tr>';
+                }
+            }
+            document.getElementById('tableBody').innerHTML = html;
+        } catch(e){
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" style="color:red;">加载失败: '+e.message+'</td></tr>';
+        }
+    };
+    xhr.send();
+}
+
+var _allRows = [];
+function pcEdit(id){
+    for(var i=0;i<_allRows.length;i++){
+        if(_allRows[i].id==id) return pcOpenEdit(_allRows[i]);
+    }
+}
+
+// 重新加载时缓存数据
+function pcLoadList2(){
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', location.href, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function(){
+        try {
+            var res = JSON.parse(xhr.responseText);
+            _allRows = res.rows || [];
+            var list = _allRows;
+            var html = '';
+            if(!list.length){
+                html = '<tr><td colspan="9" style="text-align:center;color:#999;">暂无数据</td></tr>';
+            } else {
+                for(var i=0;i<list.length;i++){
+                    var r = list[i];
+                    var imgHtml = r.qr_image ? '<a href="'+r.qr_image+'" target="_blank"><img src="'+r.qr_image+'" style="max-height:50px;border-radius:4px;"></a>' : '<span class="text-muted">无</span>';
+                    html += '<tr>'+
+                        '<td>'+r.id+'</td>'+
+                        '<td><span class="label label-'+(_typeCls[r.pay_type]||'default')+'">'+(_typeMap[r.pay_type]||r.pay_type)+'</span></td>'+
+                        '<td>'+(r.title||'-')+'</td>'+
+                        '<td>'+imgHtml+'</td>'+
+                        '<td>'+(r.account||'-')+'</td>'+
+                        '<td>'+parseFloat(r.min_amount)+' ~ '+parseFloat(r.max_amount)+'</td>'+
+                        '<td>'+r.sort+'</td>'+
+                        '<td><span class="label '+(r.status==1?'label-success':'label-danger')+'">'+(r.status==1?'启用':'停用')+'</span></td>'+
+                        '<td><a href="javascript:;" class="btn btn-xs btn-info" onclick="pcEdit('+r.id+')">编辑</a> '+
+                        '<a href="javascript:;" class="btn btn-xs btn-danger" onclick="pcDel('+r.id+')">删除</a></td>'+
+                        '</tr>';
+                }
+            }
+            document.getElementById('tableBody').innerHTML = html;
+        } catch(e){
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" style="color:red;">错误: '+e.message+'</td></tr>';
+        }
+    };
+    xhr.send();
+}
+
+function pcShowModal(){ document.getElementById('editModal').style.display='block'; document.getElementById('editModal').className='modal fade in'; document.body.style.overflow='hidden'; }
+function pcCloseModal(){ document.getElementById('editModal').style.display='none'; document.getElementById('editModal').className='modal fade'; document.body.style.overflow=''; }
+
+function pcOpen(){
+    document.getElementById('modalTitle').textContent='添加收款通道';
+    document.getElementById('editId').value='';
+    document.getElementById('editPayType').value='wechat';
+    document.getElementById('editTitle').value='';
+    document.getElementById('editQrImage').value='';
+    document.getElementById('editAccount').value='';
+    document.getElementById('editMin').value='10';
+    document.getElementById('editMax').value='50000';
+    document.getElementById('editSort').value='0';
+    document.getElementById('editStatus').value='1';
+    document.getElementById('previewWrap').style.display='none';
+    pcShowModal();
+}
+
+function pcOpenEdit(row){
+    document.getElementById('modalTitle').textContent='编辑收款通道';
+    document.getElementById('editId').value=row.id;
+    document.getElementById('editPayType').value=row.pay_type||'wechat';
+    document.getElementById('editTitle').value=row.title||'';
+    document.getElementById('editQrImage').value=row.qr_image||'';
+    document.getElementById('editAccount').value=row.account||'';
+    document.getElementById('editMin').value=row.min_amount||10;
+    document.getElementById('editMax').value=row.max_amount||50000;
+    document.getElementById('editSort').value=row.sort||0;
+    document.getElementById('editStatus').value=row.status;
+    if(row.qr_image){
+        document.getElementById('previewImg').src=row.qr_image;
+        document.getElementById('previewWrap').style.display='';
+    } else {
+        document.getElementById('previewWrap').style.display='none';
+    }
+    pcShowModal();
+}
+
+function pcSave(){
+    var form = document.getElementById('editForm');
+    var fd = new FormData(form);
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', window.location.pathname.replace(/\/index$/i, '/edit'), true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function(){
+        try {
+            var res = JSON.parse(xhr.responseText);
+            if(res.code === 1){ alert(res.msg); pcCloseModal(); pcLoadList2(); }
+            else { alert(res.msg || '保存失败'); }
+        } catch(e){ alert('保存失败: ' + e.message); }
+    };
+    xhr.send(fd);
+}
+
+function pcDel(id){
+    var doDel = function() {
+        var fd = new FormData();
+        fd.append('ids', id);
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', window.location.pathname.replace(/\/index$/i, '/del'), true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.onload = function(){
+            try {
+                var res = JSON.parse(xhr.responseText);
+                if(res.code === 1){ alert(res.msg); pcLoadList2(); }
+                else { alert(res.msg || '删除失败'); }
+            } catch(e){ alert('删除失败'); }
+        };
+        xhr.send(fd);
+    };
+
+    if(typeof layer !== 'undefined' && layer.confirm) {
+        layer.confirm('确认删除此收款通道？', function(index){ layer.close(index); doDel(); });
+    } else {
+        if(confirm('确认删除此收款通道？')) doDel();
+    }
+}
+
+function pcUpload(input){
+    if(!input.files||!input.files[0]) return;
+    var fd = new FormData();
+    fd.append('file', input.files[0]);
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', window.location.pathname.replace(/\/lottery\/payment_config\/index$/i, '/ajax/upload'), true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function(){
+        try {
+            var res = JSON.parse(xhr.responseText);
+            if(res.code===1 && res.data && res.data.url){
+                document.getElementById('editQrImage').value = res.data.url;
+                document.getElementById('previewImg').src = res.data.url;
+                document.getElementById('previewWrap').style.display='';
+                alert('上传成功');
+            } else { alert(res.msg||'上传失败'); }
+        } catch(e){ alert('上传失败'); }
+    };
+    xhr.send(fd);
+    input.value='';
+}
+
+window.pcLoadList = pcLoadList;
+window.pcLoadList2 = pcLoadList2;
+window.pcShowModal = pcShowModal;
+window.pcCloseModal = pcCloseModal;
+window.pcOpen = pcOpen;
+window.pcOpenEdit = pcOpenEdit;
+window.pcSave = pcSave;
+window.pcDel = pcDel;
+window.pcUpload = pcUpload;
+pcLoadList2();
+</script>

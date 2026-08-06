@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中心钱包 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/lottery.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; }
+
+        /* ===== 容器 ===== */
+        .wallet-wrapper { max-width:920px; margin:0 auto; min-height:100vh; background:#fff; box-shadow:0 0 30px rgba(0,0,0,0.08); position:relative; }
+
+        /* ===== 顶部深蓝导航 ===== */
+        .wallet-header { background:#1a1f36; display:flex; align-items:center; padding:0 24px; height:56px; position:sticky; top:0; z-index:100; }
+        .wallet-header .wallet-title { color:#fff; font-size:15px; font-weight:600; display:flex; align-items:center; gap:8px; min-width:200px; }
+        .wallet-header .wallet-title .bal { color:#f8d62b; font-size:18px; font-weight:700; }
+        .wallet-header .wallet-title .bal-icon { cursor:pointer; color:#888; font-size:14px; }
+        .wallet-header .header-tabs { display:flex; flex:1; justify-content:center; gap:0; }
+        .wallet-header .header-tab { padding:16px 40px; font-size:16px; font-weight:700; color:rgba(255,255,255,0.5); cursor:pointer; position:relative; transition:all 0.2s; }
+        .wallet-header .header-tab.active { color:#fff; }
+        .wallet-header .header-tab.active::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:40px; height:3px; background:#fff; border-radius:2px; }
+        .wallet-header .header-close { color:#fff; font-size:22px; cursor:pointer; padding:8px; opacity:0.7; transition:opacity 0.2s; }
+        .wallet-header .header-close:hover { opacity:1; }
+
+        /* ===== 主内容区 ===== */
+        .wallet-body { padding:24px 32px 40px; }
+        .tab-content { display:none; }
+        .tab-content.active { display:block; }
+
+        /* ===== 通用标题 ===== */
+        .section-title { font-size:16px; font-weight:700; color:#1a1f36; margin:24px 0 12px; display:flex; align-items:center; gap:8px; }
+        .section-title:first-child { margin-top:0; }
+        .section-title .badge { background:linear-gradient(135deg,#e8344e,#f0516b); color:#fff; font-size:11px; padding:2px 8px; border-radius:4px; font-weight:600; }
+        .section-title .link { margin-left:auto; font-size:13px; color:#0d6efd; font-weight:400; cursor:pointer; text-decoration:none; }
+        .section-title .link i { font-size:12px; }
+
+        /* ===== 提示安全栏 ===== */
+        .notice-bar { display:flex; align-items:center; gap:8px; padding:10px 16px; background:#f8f9fa; border-radius:8px; margin-bottom:20px; font-size:13px; color:#666; }
+        .notice-bar .icon { width:22px; height:22px; border-radius:50%; background:#0d6efd; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; flex-shrink:0; }
+        .notice-bar a { color:#0d6efd; text-decoration:none; font-weight:600; }
+        .notice-bar .more { margin-left:auto; color:#999; cursor:pointer; font-size:12px; }
+
+        /* ===== 普通/大额 ===== */
+        .mode-switch { display:flex; align-items:center; gap:16px; margin-bottom:16px; }
+        .mode-radio { display:flex; align-items:center; gap:4px; cursor:pointer; font-size:14px; color:#333; }
+        .mode-radio input[type="radio"] { accent-color:#0d6efd; width:16px; height:16px; }
+
+        /* ===== 支付方式网格 ===== */
+        .pay-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:8px; }
+        .pay-item { border:2px solid #e8e8e8; border-radius:10px; padding:16px 8px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative; background:#fff; }
+        .pay-item:hover { border-color:#ccc; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+        .pay-item.active { border-color:#0d6efd; background:#f5f8ff; }
+        .pay-item.active::after { content:'✓'; position:absolute; bottom:6px; right:8px; color:#0d6efd; font-size:14px; font-weight:700; }
+        .pay-item .pay-icon { width:48px; height:48px; margin:0 auto 8px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; }
+        .pay-item .pay-icon.tether { background:#e8f5e9; color:#26a17b; }
+        .pay-item .pay-icon.alipay { background:#e3f2fd; color:#1677ff; }
+        .pay-item .pay-icon.alipay-scan { background:#e8f5e9; color:#1677ff; }
+        .pay-item .pay-icon.wechat { background:#e8f5e9; color:#07c160; }
+        .pay-item .pay-icon.cloud { background:#fff3e0; color:#ff6d00; }
+        .pay-item .pay-icon.union { background:#f3e5f5; color:#5c6bc0; }
+        .pay-item .pay-icon.dcep { background:#fce4ec; color:#e53935; }
+        .pay-item .pay-icon.ebpay { background:#e8f5e9; color:#2e7d32; }
+        .pay-item .pay-icon.kefu { background:#e3f2fd; color:#0d6efd; }
+        .pay-item .pay-name { font-size:12px; color:#333; font-weight:500; }
+        .pay-item .pay-tag { position:absolute; top:-1px; left:-1px; background:#4caf50; color:#fff; font-size:10px; padding:1px 6px; border-radius:8px 0 8px 0; }
+
+        /* ===== 协议选择 ===== */
+        .protocol-area { margin-bottom:8px; }
+        .protocol-tabs { display:flex; gap:8px; margin:8px 0; }
+        .protocol-tab { padding:8px 20px; border-radius:20px; border:1px solid #e0e0e0; font-size:13px; font-weight:600; color:#666; cursor:pointer; transition:all 0.2s; }
+        .protocol-tab.active { background:#1a1f36; color:#fff; border-color:#1a1f36; }
+        .protocol-hint { font-size:12px; color:#999; margin-top:4px; }
+
+        /* ===== 快捷金额 ===== */
+        .quick-amounts { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+        .quick-amt { padding:8px 0; width:calc(12.5% - 7px); text-align:center; border:1px solid #e0e0e0; border-radius:6px; font-size:14px; font-weight:500; color:#333; cursor:pointer; transition:all 0.15s; background:#fff; }
+        .quick-amt:hover { border-color:#999; }
+        .quick-amt.active { border-color:#0d6efd; color:#0d6efd; background:#f5f8ff; }
+
+        /* ===== 金额输入 ===== */
+        .amount-input-box { display:flex; align-items:center; border:1px solid #e0e0e0; border-radius:10px; padding:0 16px; margin-bottom:8px; background:#fff; transition:border-color 0.2s; }
+        .amount-input-box:focus-within { border-color:#0d6efd; }
+        .amount-input-box .prefix { font-size:24px; font-weight:700; color:#333; margin-right:12px; }
+        .amount-input-box input { flex:1; border:none; outline:none; padding:16px 0; font-size:16px; color:#333; background:transparent; }
+        .amount-input-box input::placeholder { color:#ccc; }
+        .amount-input-box .suffix { font-size:13px; color:#999; white-space:nowrap; }
+
+        .amount-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+
+        /* ===== 提示信息 ===== */
+        .info-block { background:#fffbe6; border-radius:8px; padding:14px 16px; margin-bottom:20px; font-size:12px; line-height:1.8; color:#666; }
+        .info-block i { color:#faad14; margin-right:4px; }
+        .info-block .highlight { color:#e8344e; font-weight:600; }
+        .info-block .blue { color:#0d6efd; font-weight:600; }
+
+        /* ===== 提交按钮 ===== */
+        .submit-btn { width:100%; padding:14px; border:none; border-radius:25px; font-size:16px; font-weight:700; cursor:pointer; transition:all 0.2s; background:linear-gradient(135deg,#3a3f5c,#1a1f36); color:#fff; margin-bottom:16px; }
+        .submit-btn:hover { box-shadow:0 6px 20px rgba(26,31,54,0.3); transform:translateY(-1px); }
+        .submit-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+        .footer-links { text-align:center; font-size:13px; color:#999; }
+        .footer-links a { color:#0d6efd; text-decoration:none; font-weight:500; }
+        .footer-links .sep { margin:0 10px; color:#ddd; }
+
+        /* ===== 提现 - 银行卡选择 ===== */
+        .bank-card-box { border:1px solid #e0e0e0; border-radius:10px; padding:14px 16px; display:flex; align-items:center; gap:12px; cursor:pointer; margin-bottom:8px; transition:all 0.2s; }
+        .bank-card-box:hover { border-color:#0d6efd; }
+        .bank-icon { width:40px; height:40px; border-radius:8px; background:#e3f2fd; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#1565c0; }
+        .bank-info { flex:1; }
+        .bank-name { font-size:14px; font-weight:600; color:#333; }
+        .bank-num { font-size:12px; color:#999; }
+        .bank-arrow { color:#ccc; font-size:14px; }
+
+        /* ===== 提现 - 提现时间 ===== */
+        .time-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:8px; }
+        .time-item { border:1px solid #e0e0e0; border-radius:10px; padding:12px 8px; text-align:center; cursor:pointer; transition:all 0.2s; }
+        .time-item:hover { border-color:#999; }
+        .time-item.active { border-color:#0d6efd; color:#0d6efd; }
+        .time-item .time-label { font-size:13px; font-weight:500; color:#333; }
+        .time-item.active .time-label { color:#0d6efd; }
+        .time-item .time-bonus { font-size:11px; color:#e8344e; font-weight:600; margin-top:2px; }
+
+        /* ===== 提现 - 提现方式 ===== */
+        .wd-type-item { display:flex; align-items:flex-start; gap:8px; margin-bottom:12px; }
+        .wd-type-item input[type="radio"] { margin-top:4px; accent-color:#0d6efd; }
+        .wd-type-label { font-size:14px; font-weight:600; color:#333; }
+        .wd-type-desc { font-size:12px; color:#999; line-height:1.6; margin-top:2px; }
+
+        .wd-daily-info { display:flex; align-items:center; gap:6px; font-size:12px; color:#999; margin-top:8px; padding:8px 0; }
+        .wd-daily-info i { color:#faad14; }
+        .wd-daily-info .red { color:#e8344e; font-weight:700; }
+
+        /* ===== 提现到Tab ===== */
+        .wd-to-tabs { display:flex; gap:10px; margin-bottom:20px; }
+        .wd-to-tab { padding:10px 24px; border-radius:25px; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; border:1px solid #e0e0e0; color:#666; background:#fff; position:relative; }
+        .wd-to-tab.active { background:#1a1f36; color:#fff; border-color:#1a1f36; }
+        .wd-to-tab .tag { position:absolute; top:-8px; right:-8px; background:linear-gradient(135deg,#e8344e,#f0516b); color:#fff; font-size:9px; padding:1px 6px; border-radius:8px; }
+
+        /* ===== 上传区域 ===== */
+        .upload-area { border:2px dashed #ccc; border-radius:12px; padding:24px; text-align:center; cursor:pointer; color:#999; transition:all 0.2s; margin-bottom:16px; }
+        .upload-area:hover { border-color:#0d6efd; color:#0d6efd; }
+    </style>
+</head>
+<body>
+    {include file="lottery/pc_header" /}
+
+    <div class="wallet-wrapper" style="margin-top:60px;">
+        <!-- ===== 顶部导航 ===== -->
+        <div class="wallet-header">
+            <div class="wallet-title">
+                中心钱包 &nbsp;<span class="bal" id="headerBal">¥0</span> <i class="fa-solid fa-arrows-rotate bal-icon" onclick="refreshBalance()"></i>
+            </div>
+            <div class="header-tabs">
+                <div class="header-tab active" data-tab="recharge" onclick="switchMainTab('recharge')">充值</div>
+                <div class="header-tab" data-tab="withdraw" onclick="switchMainTab('withdraw')">提现</div>
+            </div>
+            <div class="header-close" onclick="window.location.href='/index.php/index/lottery/user'"><i class="fa-solid fa-xmark"></i></div>
+        </div>
+
+        <div class="wallet-body">
+            <!-- =============== 充值Tab =============== -->
+            <div class="tab-content active" id="tabRecharge">
+                <!-- 安全提示 -->
+                <div class="notice-bar">
+                    <div class="icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <span>BB<a href="#">不会致电您</a>，索要<a href="#">验证码</a>、处理<a href="#">充提</a>，谨防诈骗</span>
+                    <span class="more">更多 <i class="fa-solid fa-chevron-down"></i></span>
+                </div>
+
+                <!-- 支付方式 -->
+                <div class="section-title">支付方式：</div>
+                <div class="pay-grid" id="payGrid" style="grid-template-columns:repeat(3,1fr);">
+                    <div class="pay-item" data-pay="wechat" onclick="selectPay(this)">
+                        <div class="pay-icon wechat"><i class="fa-brands fa-weixin"></i></div>
+                        <div class="pay-name">微信</div>
+                    </div>
+                    <div class="pay-item" data-pay="alipay" onclick="selectPay(this)">
+                        <div class="pay-icon alipay"><i class="fa-brands fa-alipay"></i></div>
+                        <div class="pay-name">支付宝</div>
+                    </div>
+                    <div class="pay-item active" data-pay="usdt" onclick="selectPay(this)">
+                        <div class="pay-tag">推荐</div>
+                        <div class="pay-icon tether"><i class="fa-solid fa-t"></i></div>
+                        <div class="pay-name">USDT</div>
+                    </div>
+                </div>
+
+                <!-- 收款码展示区（微信/支付宝时显示） -->
+                <div id="qrSection" style="display:none;margin-bottom:20px;">
+                    <div style="background:#f8fafe;border:1px solid #e8f0fe;border-radius:12px;padding:20px;text-align:center;">
+                        <div style="font-size:13px;color:#666;margin-bottom:12px;">请使用对应APP扫码或转账至以下账户</div>
+                        <div id="pcQrDisplay" style="width:200px;height:200px;margin:0 auto 12px;background:#fff;border-radius:8px;border:1px solid #eee;display:flex;align-items:center;justify-content:center;overflow:hidden;">加载中...</div>
+                        <div id="pcQrAccount" style="font-size:14px;color:#333;font-weight:600;margin-bottom:6px;word-break:break-all;"></div>
+                        <div id="pcQrRemark" style="font-size:12px;color:#999;"></div>
+                    </div>
+                </div>
+
+                <!-- 钱包协议选择已取消 -->
+
+                <!-- 快捷金额 -->
+                <div class="section-title">充值快捷金额：</div>
+                <div class="quick-amounts" id="rechargeAmounts">
+                    <div class="quick-amt" onclick="selectQuickAmt(this,109)">109</div>
+                    <div class="quick-amt" onclick="selectQuickAmt(this,508)">508</div>
+                    <div class="quick-amt" onclick="selectQuickAmt(this,1006)">1006</div>
+                    <div class="quick-amt" onclick="selectQuickAmt(this,5000)">5000</div>
+                    <div class="quick-amt" onclick="selectQuickAmt(this,10000)">10000</div>
+                    <div class="quick-amt" onclick="selectQuickAmt(this,20000)">20000</div>
+                    <div class="quick-amt" onclick="selectQuickAmt(this,30000)">30000</div>
+                    <div class="quick-amt" onclick="selectQuickAmt(this,50000)">50000</div>
+                </div>
+
+                <!-- 金额输入 -->
+                <div class="amount-input-box">
+                    <span class="prefix">¥</span>
+                    <input type="number" id="rechargeInput" placeholder="请输入充值金额" oninput="updateUSDT()">
+                    <span class="suffix">限额100～50000</span>
+                </div>
+                <!-- USDT 充值：后台配置的收款地址已在上方收款码区域展示 -->
+                <div class="amount-row" id="rateRow" style="margin-top:8px;">
+                    <div style="font-size:14px;font-weight:700;color:#333;">≈ <span id="usdtAmount">0.0000</span> USDT</div>
+                    <div style="font-size:13px;color:#999;">实时汇率: 1 USDT ≈ <span id="exchangeRate" style="color:#0d6efd;font-weight:600;">--</span> CNY <i class="fa-solid fa-arrows-rotate" style="font-size:11px;cursor:pointer;" onclick="fetchRate()" title="刷新汇率"></i> <span id="rateTime" style="font-size:11px;color:#bbb;"></span> <span id="rateSource" style="font-size:11px;color:#aaa;"></span></div>
+                </div>
+
+
+                <!-- 提示 -->
+                <div class="info-block">
+                    <p><i class="fa-solid fa-circle-info"></i> 官方推荐：最优充提方案，享福利，赚汇差</p>
+                    <p>&nbsp;&nbsp; 充值首选"<strong class="highlight">USDT充值</strong>"远高市场汇率，无风险快速到账</p>
+                    <p>&nbsp;&nbsp; 如有任何疑问请咨询24小时在线客服</p>
+                </div>
+
+                <!-- 上传凭证 -->
+                <div class="section-title">转账凭证（可选）：</div>
+                <div class="upload-area" onclick="document.getElementById('proofFile').click()">
+                    <i class="fa-solid fa-cloud-arrow-up" style="font-size:28px; margin-bottom:8px;"></i>
+                    <div id="uploadText">点击上传转账截图</div>
+                </div>
+                <input type="file" id="proofFile" accept="image/*" style="display:none;" onchange="previewProof(this)">
+
+                <button class="submit-btn" onclick="submitRecharge()">充值</button>
+                <div class="footer-links">
+                    <a href="#">充值教程</a> <span class="sep">|</span> <a href="/index.php/index/lottery/kefu">联系客服</a>
+                </div>
+            </div>
+
+            <!-- =============== 提现Tab =============== -->
+            <div class="tab-content" id="tabWithdraw">
+                <!-- 提现方式 -->
+                <div class="section-title">提现方式：</div>
+                <div class="pay-grid" id="wdPayGrid" style="grid-template-columns:repeat(3,1fr);">
+                    <div class="pay-item active" data-pay="wechat" onclick="selectWdPay(this)">
+                        <div class="pay-icon wechat"><i class="fa-brands fa-weixin"></i></div>
+                        <div class="pay-name">微信</div>
+                    </div>
+                    <div class="pay-item" data-pay="alipay" onclick="selectWdPay(this)">
+                        <div class="pay-icon alipay"><i class="fa-brands fa-alipay"></i></div>
+                        <div class="pay-name">支付宝</div>
+                    </div>
+                    <div class="pay-item" data-pay="usdt" onclick="selectWdPay(this)">
+                        <div class="pay-icon tether"><i class="fa-solid fa-t"></i></div>
+                        <div class="pay-name">USDT</div>
+                    </div>
+                </div>
+
+                <!-- 余额 -->
+                <div style="display:flex;justify-content:space-between;align-items:center;background:#f0f4ff;border-radius:10px;padding:14px 18px;margin:16px 0;">
+                    <div style="font-size:13px;color:#888;">可用余额</div>
+                    <div style="font-size:20px;font-weight:700;color:#0d6efd;" id="wdBalance">¥0.00</div>
+                </div>
+
+                <!-- 收款账户 -->
+                <div class="section-title">收款账户：</div>
+                <div class="amount-input-box" style="margin-bottom:16px;">
+                    <span class="prefix" style="font-size:14px;"><i class="fa-solid fa-user" style="color:#999;"></i></span>
+                    <input type="text" id="wdAccountName" placeholder="请输入收款人姓名">
+                </div>
+                <div class="amount-input-box" id="wdAccountBox" style="margin-bottom:16px;">
+                    <span class="prefix" style="font-size:14px;"><i class="fa-solid fa-wallet" style="color:#999;"></i></span>
+                    <input type="text" id="wdAccountNo" placeholder="请输入微信号/支付宝账号/USDT地址">
+                </div>
+
+                <!-- 快捷金额 -->
+                <div class="section-title">提现金额：</div>
+                <div class="quick-amounts" id="wdAmounts">
+                    <div class="quick-amt" onclick="selectQuickWd(this,100)">100</div>
+                    <div class="quick-amt" onclick="selectQuickWd(this,200)">200</div>
+                    <div class="quick-amt" onclick="selectQuickWd(this,500)">500</div>
+                    <div class="quick-amt" onclick="selectQuickWd(this,1000)">1000</div>
+                    <div class="quick-amt" onclick="selectQuickWd(this,2000)">2000</div>
+                    <div class="quick-amt" onclick="selectQuickWd(this,5000)">5000</div>
+                    <div class="quick-amt" onclick="selectQuickWd(this,10000)">10000</div>
+                    <div class="quick-amt" onclick="selectQuickWd(this,0)">其他金额</div>
+                </div>
+                <div class="amount-input-box" id="wdCustomBox" style="margin-bottom:16px;">
+                    <span class="prefix">¥</span>
+                    <input type="number" id="wdAmountInput" placeholder="请输入提现金额" oninput="onWdInput()">
+                    <span class="suffix">限额100～50000</span>
+                </div>
+
+                <!-- USDT 提现汇率提示（仅 USDT 提现时显示）-->
+                <div id="wdUsdtBox" style="display:none;margin-top:12px;padding:12px 16px;background:#fff8e1;border:1px solid #ffe0a3;border-radius:10px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;font-weight:700;color:#b8860b;">
+                        <span style="font-size:13px;">预计到账</span>
+                        <span style="font-size:18px;">≈ <span id="wdUsdtAmount">0.0000</span> USDT</span>
+                    </div>
+                    <div style="font-size:12px;color:#bb9a55;margin-top:6px;line-height:1.6;">
+                        提现汇率：1 USDT ≈ <span id="wdUsdtRate" style="font-weight:600;">--</span> CNY
+                        <span id="wdRateSrc" style="color:#cbb573;"></span><br>
+                        <span style="color:#d9821a;">注：提现汇率在实时汇率基础上上浮 0.07</span>
+                    </div>
+                </div>
+
+                <!-- 收款码上传 -->
+                <div class="section-title">收款码截图（微信/支付宝需上传）：</div>
+                <div class="upload-area" onclick="document.getElementById('qrFile').click()">
+                    <i class="fa-solid fa-qrcode" style="font-size:28px; margin-bottom:8px;"></i>
+                    <div id="qrUploadText">点击上传收款二维码</div>
+                </div>
+                <input type="file" id="qrFile" accept="image/*" style="display:none;" onchange="previewQR(this)">
+
+                <!-- 提示 -->
+                <div class="info-block" style="margin-top:16px;">
+                    <p><i class="fa-solid fa-circle-info"></i> 提现将冻结对应余额，审核通过后打款</p>
+                    <p>&nbsp;&nbsp; 审核时间：通常1-24小时</p>
+                    <p>&nbsp;&nbsp; 拒绝后余额自动退回</p>
+                    <p>&nbsp;&nbsp; 如有任何疑问请咨询24小时在线客服</p>
+                </div>
+
+                <button class="submit-btn" onclick="submitWithdraw()">立即提现</button>
+                <div class="footer-links">
+                    <a href="#">提现教程</a> <span class="sep">|</span> <a href="/index.php/index/lottery/kefu">联系客服</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/lottery/js/auth.js"></script>
+    <script>
+    var selectedPay = 'usdt', selectedProtocol = 'TRC20', rechargeAmount = 0, wdAmount = 0;
+    var wdPayType = 'wechat', exchangeRate = 0, withdrawRate = 0;
+    var WITHDRAW_DIFF = 0.07; // 提现汇率上浮幅度
+    var payConfigs = []; // 后台支付配置
+
+    /* ===== 加载后台支付配置 ===== */
+    function loadPayConfig() {
+        fetch('/index.php/api/payment/getPaymentConfig', {headers:{'token': LotteryAuth.getToken()}})
+        .then(function(r){return r.json();})
+        .then(function(res){
+            if(res.code===1 && res.data) { payConfigs = res.data; showPayInfo(); }
+        }).catch(function(){});
+    }
+    function showPayInfo() {
+        var section = document.getElementById('qrSection');
+        var cfg = payConfigs.find(function(c){ return c.pay_type === selectedPay; });
+        if (!cfg || (!cfg.qr_image && !cfg.account)) {
+            section.style.display = 'none';
+            return;
+        }
+        section.style.display = '';
+        var qd = document.getElementById('pcQrDisplay');
+        if (cfg.qr_image) {
+            qd.innerHTML = '<img src="'+cfg.qr_image+'" style="width:100%;height:100%;object-fit:contain;">';
+        } else {
+            qd.innerHTML = '<div style="text-align:center;color:#ccc;"><i class="fa-solid fa-qrcode" style="font-size:40px;"></i><br><span style="font-size:12px;">后台未上传</span></div>';
+        }
+        var accountLabel = selectedPay === 'usdt' ? 'USDT地址: ' : '收款账号: ';
+        document.getElementById('pcQrAccount').innerHTML = cfg.account ? accountLabel + cfg.account : '';
+        document.getElementById('pcQrRemark').textContent = cfg.remark || '';
+    }
+
+    /* ===== 顶部Tab切换 ===== */
+    function switchMainTab(tab) {
+        document.querySelectorAll('.header-tab').forEach(function(el){ el.classList.toggle('active', el.dataset.tab === tab); });
+        document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.toggle('active', el.id === 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1)); });
+    }
+
+    /* ===== 充值 ===== */
+    function selectPay(el) {
+        document.querySelectorAll('#payGrid .pay-item').forEach(function(e){ e.classList.remove('active'); });
+        el.classList.add('active');
+        selectedPay = el.dataset.pay;
+        // 实时汇率始终显示（含 USDT）
+        var rateRow = document.getElementById('rateRow');
+        if (rateRow) rateRow.style.display = '';
+        // 显示/隐藏收款码区域
+        showPayInfo();
+        updateUSDT();
+    }
+
+    function selectProtocol(el, proto) {
+        document.querySelectorAll('.protocol-tab').forEach(function(e){ e.classList.remove('active'); });
+        el.classList.add('active');
+        selectedProtocol = proto;
+    }
+
+    function selectQuickAmt(el, amt) {
+        document.querySelectorAll('#rechargeAmounts .quick-amt').forEach(function(e){ e.classList.remove('active'); });
+        el.classList.add('active');
+        rechargeAmount = amt;
+        document.getElementById('rechargeInput').value = amt;
+        updateUSDT();
+    }
+
+    function updateUSDT() {
+        var v = parseFloat(document.getElementById('rechargeInput').value) || 0;
+        rechargeAmount = v;
+        if (exchangeRate > 0) {
+            document.getElementById('usdtAmount').textContent = (v / exchangeRate).toFixed(4);
+        }
+    }
+
+    // 实时获取USDT/CNY汇率（优先后端代理，备用前端直连）
+    function setRate(rate, src, wdRate) {
+        exchangeRate = parseFloat(rate);
+        // 提现汇率：优先用后端下发值，否则充值汇率+0.07
+        withdrawRate = (wdRate && parseFloat(wdRate) > 0) ? parseFloat(wdRate) : (exchangeRate + WITHDRAW_DIFF);
+        var el = document.getElementById('exchangeRate');
+        if (el) el.textContent = exchangeRate.toFixed(2);
+        var t = document.getElementById('rateTime');
+        if (t) t.textContent = '(' + new Date().toLocaleTimeString().slice(0,5) + ')';
+        var s = document.getElementById('rateSource');
+        if (s) s.textContent = src ? '来源: ' + src : '';
+        // 同步提现区汇率显示
+        var wr = document.getElementById('wdUsdtRate');
+        if (wr) wr.textContent = withdrawRate.toFixed(2);
+        var wsrc = document.getElementById('wdRateSrc');
+        if (wsrc) wsrc.textContent = src ? '（' + src + '）' : '';
+        updateUSDT();
+        updateWdUsdt();
+    }
+    function fetchRate() {
+        var el = document.getElementById('exchangeRate'); if(el) el.textContent = '加载中...';
+        // 优先：本站后端代理（服务器拉取OKX+缓存，最稳定）
+        fetch('/index.php/api/lottery/getUsdtRate')
+        .then(function(r){return r.json();}).then(function(d){
+            if(d && d.code === 1 && d.data && d.data.rate > 0) { setRate(d.data.rate, d.data.source || '欧意', d.data.withdraw_rate); }
+            else { tryOkxDirect(); }
+        }).catch(function(){ tryOkxDirect(); });
+    }
+    function tryOkxDirect() {
+        // 备用1：前端直连 OKX 官方汇率接口
+        fetch('https://www.okx.com/api/v5/market/exchange-rate')
+        .then(function(r){return r.json();}).then(function(d){
+            if(d && d.data && d.data[0] && d.data[0].usdCny > 0) { setRate(d.data[0].usdCny, 'OKX(欧意)'); }
+            else { tryCoinGecko(); }
+        }).catch(function(){ tryCoinGecko(); });
+    }
+    function tryCoinGecko() {
+        // 备用2：前端直连 CoinGecko USDT→CNY
+        fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=cny')
+        .then(function(r){return r.json();}).then(function(d){
+            if(d && d.tether && d.tether.cny) { setRate(d.tether.cny, 'CoinGecko'); }
+            else { tryExchangeRate(); }
+        }).catch(function(){ tryExchangeRate(); });
+    }
+    function tryExchangeRate() {
+        // 备用3：Coinbase 汇率（USDT→CNY）
+        fetch('https://api.coinbase.com/v2/exchange-rates?currency=USDT')
+        .then(function(r){return r.json();}).then(function(d){
+            if(d && d.data && d.data.rates && d.data.rates.CNY) { setRate(d.data.rates.CNY, 'Coinbase'); }
+            else { setRate(7.20, '默认'); }
+        }).catch(function(){ setRate(7.20, '默认'); });
+    }
+    fetchRate();
+    // 每60秒自动刷新一次实时汇率
+    setInterval(fetchRate, 60000);
+
+    function previewProof(input) {
+        if(input.files && input.files[0]) {
+            var r = new FileReader();
+            r.onload = function(e){ document.getElementById('uploadText').innerHTML = '<img src="'+e.target.result+'" style="max-width:160px;border-radius:8px;"><div style="margin-top:6px;">重新选择</div>'; };
+            r.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function submitRecharge() {
+        var amount = rechargeAmount || parseFloat(document.getElementById('rechargeInput').value);
+        if (!amount || amount <= 0) { alert('请输入充值金额'); return; }
+        if (!LotteryAuth.isLoggedIn()) { alert('请先登录'); window.location.href = '/index.php/index/lottery/login'; return; }
+
+        var fd = new FormData();
+        fd.append('amount', amount);
+        fd.append('pay_type', selectedPay);
+        var pf = document.getElementById('proofFile');
+        if (pf.files && pf.files[0]) fd.append('pay_proof', pf.files[0]);
+
+        var btn = event.target; btn.disabled = true; btn.textContent = '提交中...';
+        fetch('/index.php/api/payment/recharge', {
+            method: 'POST', headers: { 'token': LotteryAuth.getToken() }, body: fd
+        }).then(function(r){ return r.json(); }).then(function(res){
+            btn.disabled = false; btn.textContent = '充值';
+            if (res.code === 1) { alert('充值申请已提交！订单号: ' + res.data.order_no); refreshBalance(); }
+            else { alert(res.msg || '提交失败'); }
+        }).catch(function(){ btn.disabled = false; btn.textContent = '充值'; alert('网络错误'); });
+    }
+
+    /* ===== 提现 ===== */
+    function selectWdPay(el) {
+        document.querySelectorAll('#wdPayGrid .pay-item').forEach(function(e){ e.classList.remove('active'); });
+        el.classList.add('active');
+        wdPayType = el.dataset.pay;
+        // 更新placeholder
+        var placeholders = { wechat:'请输入微信号', alipay:'请输入支付宝账号', usdt:'请输入USDT地址(TRC20)' };
+        document.getElementById('wdAccountNo').placeholder = placeholders[wdPayType] || '请输入收款账号';
+        // USDT 提现才显示汇率折算框
+        var box = document.getElementById('wdUsdtBox');
+        if (box) box.style.display = (wdPayType === 'usdt') ? '' : 'none';
+        updateWdUsdt();
+    }
+
+    // 提现金额 USDT 折算（按提现汇率 = 充值汇率+0.07）
+    function updateWdUsdt() {
+        if (wdPayType !== 'usdt') return;
+        var amt = parseFloat(document.getElementById('wdAmountInput').value) || 0;
+        var usdt = withdrawRate > 0 ? (amt / withdrawRate) : 0;
+        var el = document.getElementById('wdUsdtAmount');
+        if (el) el.textContent = usdt.toFixed(4);
+    }
+
+    function selectQuickWd(el, amt) {
+        document.querySelectorAll('#wdAmounts .quick-amt').forEach(function(e){ e.classList.remove('active'); });
+        el.classList.add('active');
+        var input = document.getElementById('wdAmountInput');
+        if (amt === 0) {
+            // “其他金额”：清空输入框并聚焦，让用户手填
+            wdAmount = 0;
+            input.value = '';
+            input.focus();
+        } else {
+            // 点快捷金额：直接把数值填进输入框
+            wdAmount = amt;
+            input.value = amt;
+        }
+        updateWdUsdt();
+    }
+
+    // 手动输入金额时，取消快捷按钮高亮，以输入框值为准
+    function onWdInput() {
+        wdAmount = 0;
+        document.querySelectorAll('#wdAmounts .quick-amt').forEach(function(e){ e.classList.remove('active'); });
+        updateWdUsdt();
+    }
+
+    function previewQR(input) {
+        if(input.files && input.files[0]) {
+            var r = new FileReader();
+            r.onload = function(e){ document.getElementById('qrUploadText').innerHTML = '<img src="'+e.target.result+'" style="max-width:140px;border-radius:8px;"><div style="margin-top:6px;">重新选择</div>'; };
+            r.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function submitWithdraw() {
+        var amount = parseFloat(document.getElementById('wdAmountInput').value) || 0;
+        if (!amount || amount <= 0) { alert('请输入提现金额'); return; }
+        var accountName = document.getElementById('wdAccountName').value.trim();
+        if (!accountName) { alert('请输入收款人姓名'); return; }
+        var accountNo = document.getElementById('wdAccountNo').value.trim();
+        if (!accountNo) { alert('请输入收款账号'); return; }
+        if (!LotteryAuth.isLoggedIn()) { alert('请先登录'); return; }
+
+        var fd = new FormData();
+        fd.append('amount', amount);
+        fd.append('withdraw_type', wdPayType);
+        fd.append('account_name', accountName);
+        fd.append('account_no', accountNo);
+        if (wdPayType === 'usdt') fd.append('usdt_address', accountNo);
+        var qf = document.getElementById('qrFile');
+        if (qf.files && qf.files[0]) fd.append('qr_image', qf.files[0]);
+
+        var btn = event.target; btn.disabled = true; btn.textContent = '提交中...';
+        fetch('/index.php/api/payment/withdraw', {
+            method: 'POST', headers: { 'token': LotteryAuth.getToken() }, body: fd
+        }).then(function(r){ return r.json(); }).then(function(res){
+            btn.disabled = false; btn.textContent = '立即提现';
+            if (res.code === 1) { alert('提现申请已提交！'); refreshBalance(); }
+            else { alert(res.msg || '提交失败'); }
+        }).catch(function(){ btn.disabled = false; btn.textContent = '立即提现'; alert('网络错误'); });
+    }
+
+    /* ===== 通用 ===== */
+    function refreshBalance() {
+        if (!LotteryAuth.isLoggedIn()) return;
+        LotteryAuth.fetchUserInfo(function(u) {
+            if (u) {
+                var bal = (parseFloat(u.money) || 0);
+                document.getElementById('headerBal').textContent = '¥' + bal.toFixed(0);
+                var wdBal = document.getElementById('wdBalance');
+                if (wdBal) wdBal.textContent = '¥' + bal.toFixed(2);
+            }
+        });
+    }
+
+    /* ===== 检查URL参数自动切Tab ===== */
+    document.addEventListener('DOMContentLoaded', function() {
+        LotteryAuth.initHeader && LotteryAuth.initHeader();
+        refreshBalance();
+        loadPayConfig();
+        if (location.search.indexOf('tab=withdraw') > -1 || location.pathname.indexOf('withdraw') > -1) {
+            switchMainTab('withdraw');
+        }
+    });
+    </script>
+</body>
+</html>

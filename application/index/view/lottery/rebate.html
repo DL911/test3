@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>返水领取 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/mobile_light.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .rb-header { background: linear-gradient(135deg, #f5a623 0%, #e67e22 100%); padding: 30px 20px 50px; text-align: center; color: #fff; }
+        .rb-header h2 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+        .rb-header p { font-size: 13px; opacity: 0.9; }
+
+        .rb-stats { display: flex; gap: 10px; margin: -30px 16px 16px; position: relative; z-index: 2; }
+        .rb-stat { flex: 1; background: #fff; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+        .rb-stat .val { font-size: 20px; font-weight: 800; color: #e67e22; }
+        .rb-stat .lbl { font-size: 12px; color: #999; margin-top: 4px; }
+
+        .rb-claim-box { margin: 0 16px 16px; background: #fff; border-radius: 12px; padding: 24px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .rb-label { font-size: 13px; color: #999; text-align: center; }
+        .rb-amount { font-size: 36px; font-weight: 800; color: #e67e22; text-align: center; margin: 8px 0; }
+        .rb-rate { font-size: 13px; color: #999; text-align: center; margin-bottom: 16px; }
+        .rb-btn { display: block; width: 100%; padding: 14px; border: none; border-radius: 30px; background: linear-gradient(135deg, #f5a623, #e67e22); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(229,126,34,0.3); transition: all 0.2s; }
+        .rb-btn:active { transform: scale(0.96); }
+        .rb-btn:disabled { background: #ccc; box-shadow: none; }
+        .rb-btn.claimed { background: #e8f5e9; color: #2e7d32; box-shadow: none; cursor: default; }
+
+        .rb-info { margin: 0 16px 12px; background: #fff8ed; border-radius: 10px; padding: 14px 16px; font-size: 13px; }
+        .rb-info .row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+        .rb-info .row:last-child { margin-bottom: 0; }
+        .rb-info .label { color: #999; }
+        .rb-info .value { font-weight: 700; color: #333; }
+
+        .rb-section { margin: 16px; }
+        .rb-section-title { font-size: 15px; font-weight: 700; color: #333; margin-bottom: 12px; padding-left: 8px; border-left: 3px solid #e67e22; }
+
+        /* 阶梯表格 */
+        .tier-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+        .tier-table th { background: #fff8ed; padding: 10px 12px; font-size: 12px; color: #999; font-weight: 600; text-align: center; }
+        .tier-table td { padding: 10px 12px; text-align: center; font-size: 13px; color: #333; border-top: 1px solid #f5f5f5; }
+        .tier-table .rate { color: #e67e22; font-weight: 700; }
+
+        /* 记录 */
+        .rb-record { background: #fff; border-radius: 10px; margin-bottom: 8px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; }
+        .rb-record .left .date { font-size: 14px; font-weight: 600; color: #333; }
+        .rb-record .left .meta { font-size: 12px; color: #999; margin-top: 3px; }
+        .rb-record .amount { font-size: 16px; font-weight: 700; color: #e67e22; }
+
+        .rb-empty { text-align: center; padding: 40px 20px; color: #ccc; font-size: 14px; }
+    </style>
+</head>
+<body class="light-mobile">
+
+    <div class="lm-topbar" style="background: linear-gradient(135deg, #f5a623 0%, #e67e22 100%);">
+        <a href="javascript:history.back();" class="back"><i class="fa-solid fa-chevron-left"></i></a>
+        <h2>返水领取</h2>
+    </div>
+
+    <div class="rb-header">
+        <h2><i class="fa-solid fa-gift"></i> 流水返水</h2>
+        <p>每日投注产生返水，次日可领取</p>
+    </div>
+
+    <!-- 概况 -->
+    <div class="rb-stats">
+        <div class="rb-stat">
+            <div class="val" id="todayBet">0.00</div>
+            <div class="lbl">今日流水</div>
+        </div>
+        <div class="rb-stat">
+            <div class="val" style="color:#4facfe;" id="todayRate">0%</div>
+            <div class="lbl">当前比例</div>
+        </div>
+        <div class="rb-stat">
+            <div class="val" style="color:#27C24C;" id="totalClaimed">0.00</div>
+            <div class="lbl">累计已领</div>
+        </div>
+    </div>
+
+    <!-- 昨日返水领取 -->
+    <div class="rb-claim-box" id="claimBox">
+        <div class="rb-label">昨日可领返水</div>
+        <div class="rb-amount" id="rebateAmount">¥0.00</div>
+        <div class="rb-rate" id="rebateDetail">昨日流水: ¥0 × 0%</div>
+        <button class="rb-btn" id="claimBtn" disabled onclick="claimRebate()">暂无可领</button>
+    </div>
+
+    <!-- 今日/昨日流水信息 -->
+    <div class="rb-info" id="infoBox">
+        <div class="row"><span class="label">今日投注流水</span><span class="value" id="infoToday">¥0.00</span></div>
+        <div class="row"><span class="label">昨日投注流水</span><span class="value" id="infoYesterday">¥0.00</span></div>
+        <div class="row"><span class="label">今日返水比例</span><span class="value" style="color:#e67e22;" id="infoRate">0%</span></div>
+    </div>
+
+
+
+    <!-- 领取记录 -->
+    <div class="rb-section">
+        <div class="rb-section-title">领取记录</div>
+        <div id="historyList"></div>
+        <div id="loadMore" class="rb-empty" style="display:none;cursor:pointer;color:#e67e22;" onclick="loadHistory()">加载更多</div>
+    </div>
+
+    <div style="height:40px;"></div>
+
+    <script src="/assets/lottery/js/auth.js"></script>
+    <script>
+    var hPage = 1, hHasMore = true;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!LotteryAuth.isLoggedIn()) {
+            window.location.href = '/index.php/index/lottery/login';
+            return;
+        }
+        loadSummary();
+        loadHistory();
+    });
+
+    function loadSummary() {
+        LotteryAuth.request('/index.php/api/rebate/summary', {method: 'GET'})
+            .then(function(res) {
+                if (res.code !== 1) return;
+                var d = res.data;
+
+                document.getElementById('todayBet').textContent = parseFloat(d.today_bet || 0).toFixed(2);
+                document.getElementById('todayRate').textContent = (parseFloat(d.today_rate || 0) * 100).toFixed(2) + '%';
+                document.getElementById('totalClaimed').textContent = parseFloat(d.total_claimed || 0).toFixed(2);
+
+                document.getElementById('infoToday').textContent = '¥' + parseFloat(d.today_bet || 0).toFixed(2);
+                document.getElementById('infoYesterday').textContent = '¥' + parseFloat(d.yesterday_bet || 0).toFixed(2);
+                document.getElementById('infoRate').textContent = (parseFloat(d.today_rate || 0) * 100).toFixed(2) + '%';
+
+                var rebate = parseFloat(d.yesterday_rebate || 0);
+                document.getElementById('rebateAmount').textContent = '¥' + rebate.toFixed(2);
+                document.getElementById('rebateDetail').textContent = '昨日流水: ¥' + parseFloat(d.yesterday_bet || 0).toFixed(2) + ' × ' + (parseFloat(d.yesterday_rate || 0) * 100).toFixed(2) + '%';
+
+                var btn = document.getElementById('claimBtn');
+                if (d.can_claim && rebate > 0) {
+                    btn.disabled = false;
+                    btn.textContent = '立即领取 ¥' + rebate.toFixed(2);
+                    btn.className = 'rb-btn';
+                } else if (d.already_claimed) {
+                    btn.disabled = true;
+                    btn.textContent = '✓ 昨日返水已领取';
+                    btn.className = 'rb-btn claimed';
+                } else {
+                    btn.disabled = true;
+                    btn.textContent = '昨日无可领返水';
+                }
+
+
+            });
+    }
+
+    function claimRebate() {
+        var btn = document.getElementById('claimBtn');
+        btn.disabled = true;
+        btn.textContent = '领取中...';
+
+        LotteryAuth.request('/index.php/api/rebate/claim', {method: 'POST'})
+            .then(function(res) {
+                if (res.code === 1) {
+                    alert(res.msg || '领取成功！');
+                    loadSummary();
+                    hPage = 1; hHasMore = true;
+                    document.getElementById('historyList').innerHTML = '';
+                    loadHistory();
+                } else {
+                    alert(res.msg || '领取失败');
+                    btn.disabled = false;
+                    btn.textContent = '立即领取';
+                }
+            });
+    }
+
+    function loadHistory() {
+        if (!hHasMore) return;
+        LotteryAuth.request('/index.php/api/rebate/history?page=' + hPage + '&limit=20', {method: 'GET'})
+            .then(function(res) {
+                if (res.code !== 1) return;
+                var list = res.data.list || [], total = res.data.total || 0;
+                var html = '';
+
+                if (list.length === 0 && hPage === 1) {
+                    html = '<div class="rb-empty"><i class="fa-solid fa-inbox" style="font-size:32px;display:block;margin-bottom:8px;"></i>暂无领取记录</div>';
+                    document.getElementById('loadMore').style.display = 'none';
+                } else {
+                    list.forEach(function(r) {
+                        html += '<div class="rb-record">' +
+                            '<div class="left">' +
+                            '<div class="date">' + (r.period || r.period_start || '') + '</div>' +
+                            '<div class="meta">流水: ¥' + parseFloat(r.bet_amount || 0).toFixed(2) + ' × ' + (parseFloat(r.rebate_rate || 0) * 100).toFixed(2) + '%</div>' +
+                            '<div class="meta">' + (r.claim_date || '') + '</div>' +
+                            '</div>' +
+                            '<div class="amount">+¥' + parseFloat(r.rebate_amount || 0).toFixed(2) + '</div>' +
+                            '</div>';
+                    });
+                    var loaded = (hPage - 1) * 20 + list.length;
+                    if (loaded < total) {
+                        hPage++;
+                        document.getElementById('loadMore').style.display = 'block';
+                    } else {
+                        document.getElementById('loadMore').style.display = 'none';
+                        hHasMore = false;
+                    }
+                }
+                document.getElementById('historyList').innerHTML += html;
+            });
+    }
+    </script>
+</body>
+</html>

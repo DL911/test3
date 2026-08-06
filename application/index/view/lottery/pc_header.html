@@ -1,0 +1,31 @@
+﻿<!-- PC端公共头部导航 -->
+<header class="lottery-header">
+    <div class="header-logo" style="cursor:pointer;" onclick="window.location.href='/index/lottery/index'">
+        <div class="logo-icon" style="background:transparent;padding:0;"><img src="/thumb.php?src=/c788ffd04d7bbafa657bd2dcf4c6ecc4.png&w=200&q=80" style="width:100%;height:100%;object-fit:contain;border-radius:12px;"></div>
+        <div>
+            <span class="logo-text">好运北彩</span>
+            <span class="logo-sub">HYBC Lottery</span>
+        </div>
+    </div>
+    <nav class="header-nav">
+        <a href="/index/lottery/index"><i class="fa-solid fa-dice"></i> 彩票</a>
+        <a href="/index.php/index/lottery/trend#trend"><i class="fa-solid fa-chart-line"></i> 完整走势</a>
+        <a href="/index.php/index/lottery/trend#pattern"><i class="fa-solid fa-table-cells"></i> 路子图</a>
+        <a href="/index.php/index/lottery/trend#check"><i class="fa-solid fa-trophy"></i> 对奖信息</a>
+        <a href="/index.php/index/lottery/trend#streak"><i class="fa-solid fa-fire-flame-curved"></i> 长龙排行</a>
+        <a href="/index.php/index/lottery/trend#records"><i class="fa-solid fa-clock-rotate-left"></i> 开奖记录</a>
+    </nav>
+    <div class="header-right">
+        <div id="authBtnWrap">
+            <a href="/index.php/index/lottery/login" class="btn-bet-now" style="padding:6px 18px;font-size:13px;"><i class="fa-solid fa-right-to-bracket"></i> 登录</a>
+            <a href="/index.php/index/lottery/register" class="btn-bet-now" style="padding:6px 18px;font-size:13px;background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;">注册</a>
+        </div>
+        <div id="userInfoWrap" style="display:none;">
+            <div class="header-balance"><i class="fa-solid fa-wallet"></i> 余额: <span class="amount" id="headerBalance">¥ 0.00</span></div>
+            <div class="header-user" onclick="window.location.href='/index.php/index/lottery/user'" style="cursor:pointer;">
+                <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
+                <span id="headerUserName">用户</span>
+            </div>
+        </div>
+    </div>
+</header>

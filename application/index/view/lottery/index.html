@@ -1,0 +1,321 @@
+﻿<!-- 彩票大厅 - 福彩3D & 排列三 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="福彩3D、排列三在线投注平台 - 多种玩法，实时开奖">
+    <title>彩票大厅 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/lottery.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="lottery-page">
+
+    <!-- ========== TOP HEADER ========== -->
+    <header class="lottery-header" id="mainHeader">
+        <div class="header-logo" style="cursor:pointer;" onclick="window.location.href='/index/lottery/index'">
+            <div class="logo-icon" style="background:transparent;padding:0;"><img src="/thumb.php?src=/c788ffd04d7bbafa657bd2dcf4c6ecc4.png&w=200&q=80" style="width:100%;height:100%;object-fit:contain;border-radius:12px;"></div>
+            <div>
+                <span class="logo-text">好运北彩</span>
+                <span class="logo-sub">HYBC Lottery</span>
+            </div>
+        </div>
+
+        <nav class="header-nav">
+            <a href="/index/lottery/index" class="active" id="navLottery"><i class="fa-solid fa-dice"></i> 彩票</a>
+            <a href="/index.php/index/lottery/trend#trend" id="navTrend"><i class="fa-solid fa-chart-line"></i> 完整走势</a>
+            <a href="/index.php/index/lottery/trend#pattern" id="navRoute"><i class="fa-solid fa-table-cells"></i> 路子图</a>
+            <a href="/index.php/index/lottery/trend#check" id="navResult"><i class="fa-solid fa-trophy"></i> 对奖信息</a>
+            <a href="/index.php/index/lottery/trend#streak" id="navDragon"><i class="fa-solid fa-fire-flame-curved"></i> 长龙排行</a>
+            <a href="/index.php/index/lottery/trend#records" id="navRecords"><i class="fa-solid fa-clock-rotate-left"></i> 开奖记录</a>
+        </nav>
+
+        <div class="header-right">
+            <!-- 未登录 -->
+            <div id="authBtnWrap">
+                <a href="/index.php/index/lottery/login" class="btn-bet-now" style="padding:6px 18px;font-size:13px;"><i class="fa-solid fa-right-to-bracket"></i> 登录</a>
+                <a href="/index.php/index/lottery/register" class="btn-bet-now" style="padding:6px 18px;font-size:13px;background:transparent;border:1px solid rgba(255,255,255,0.3);color:#fff;">注册</a>
+            </div>
+            <!-- 已登录 -->
+            <div id="userInfoWrap" style="display:none;">
+                <div class="header-balance">
+                    <i class="fa-solid fa-wallet"></i>
+                    余额: <span class="amount" id="userBalance">¥ 0.00</span>
+                </div>
+                <div class="header-user" id="headerUser" style="cursor:pointer;position:relative;" onclick="window.location.href='/index.php/index/lottery/user'">
+                    <div class="user-avatar" id="userAvatar"><i class="fa-solid fa-user"></i></div>
+                    <span id="userName">用户</span>
+                    <i class="fa-solid fa-chevron-down" style="font-size:10px;margin-left:4px;opacity:0.6;"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========== MAIN LAYOUT ========== -->
+    <div class="lottery-layout">
+        <!-- LEFT SIDEBAR -->
+        <aside class="lottery-sidebar" id="leftSidebar">
+            <div class="sidebar-group-title">彩种列表</div>
+            <div class="sidebar-item active" data-cat="fc3d">
+                <span class="item-icon"><i class="fa-solid fa-cube"></i></span>
+                <span>福彩3D</span>
+                <span class="hot-badge">热</span>
+            </div>
+            <div class="sidebar-item" data-cat="pl3">
+                <span class="item-icon"><i class="fa-solid fa-list-ol"></i></span>
+                <span>排列三</span>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="lottery-main" id="mainContent">
+            <!-- 彩种分类Tab -->
+            <div class="lottery-type-tabs" id="typeTabBar">
+                <div class="type-tab active" data-type="all">
+                    <span class="tab-icon"><i class="fa-solid fa-fire"></i></span>
+                    <span>全部彩种</span>
+                </div>
+                <div class="type-tab" data-type="3d">
+                    <span class="tab-icon"><i class="fa-solid fa-cube"></i></span>
+                    <span>福彩3D</span>
+                </div>
+                <div class="type-tab" data-type="pl3">
+                    <span class="tab-icon"><i class="fa-solid fa-list-ol"></i></span>
+                    <span>排列三</span>
+                </div>
+            </div>
+
+            <!-- ===== 彩票卡片列表 ===== -->
+            <div id="lotteryCards">
+
+                <!-- 福彩3D (高亮) -->
+                <div class="lottery-card highlight" id="card-fc3d" data-lottery="fc3d">
+                    <div class="card-header">
+                        <div class="card-info">
+                            <div class="card-icon fc3d">福</div>
+                            <div>
+                                <div class="card-title">福彩3D</div>
+                                <div class="card-period">第<span class="js-period fc3d-period">2026102</span>期</div>
+                            </div>
+                            <div class="card-numbers" id="fc3d-numbers">
+                                <span class="number-ball purple">4</span>
+                                <span class="number-ball cyan">2</span>
+                                <span class="number-ball pink">0</span>
+                            </div>
+                        </div>
+                        <div class="card-timer">
+                            <div class="timer-period">
+                                距 <strong class="js-next-period fc3d-next">26103</strong> 期
+                            </div>
+                            <div class="timer-countdown js-countdown fc3d-countdown" data-draw-time="21:15:00">计算中...</div>
+                            <a href="/index/lottery/bet?type=fc3d" class="btn-bet-now" id="betFc3d">
+                                <i class="fa-solid fa-pen-to-square"></i> 立即投注
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-stats">
+                        <table class="stats-table">
+                            <tr>
+                                <th>百位</th><th>十位</th><th>个位</th><th>总和</th><th>大小</th><th>单双</th>
+                            </tr>
+                            <tr>
+                                <td>4</td><td>2</td><td>0</td>
+                                <td>6</td>
+                                <td class="blue">小</td>
+                                <td class="red">双</td>
+                            </tr>
+                        </table>
+
+                    </div>
+                </div>
+
+                <!-- 排列三 -->
+                <div class="lottery-card" id="card-pl3" data-lottery="pl3">
+                    <div class="card-header">
+                        <div class="card-info">
+                            <div class="card-icon pl3">排</div>
+                            <div>
+                                <div class="card-title">排列三</div>
+                                <div class="card-period">第<span class="js-period pl3-period">2026102</span>期</div>
+                            </div>
+                            <div class="card-numbers" id="pl3-numbers">
+                                <span class="number-ball blue">4</span>
+                                <span class="number-ball green">9</span>
+                                <span class="number-ball orange">0</span>
+                            </div>
+                        </div>
+                        <div class="card-timer">
+                            <div class="timer-period">
+                                距 <strong class="js-next-period pl3-next">26103</strong> 期
+                            </div>
+                            <div class="timer-countdown js-countdown pl3-countdown" data-draw-time="21:25:00">计算中...</div>
+                            <a href="/index/lottery/bet?type=pl3" class="btn-bet-now" id="betPl3">
+                                <i class="fa-solid fa-pen-to-square"></i> 立即投注
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-stats">
+                        <table class="stats-table">
+                            <tr>
+                                <th>百位</th><th>十位</th><th>个位</th><th>总和</th><th>大小</th><th>单双</th>
+                            </tr>
+                            <tr>
+                                <td>4</td><td>9</td><td>0</td>
+                                <td>13</td>
+                                <td class="blue">小</td>
+                                <td class="red">单</td>
+                            </tr>
+                        </table>
+
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- RIGHT SIDEBAR -->
+        <aside class="lottery-right" id="rightSidebar">
+            <!-- 热门投注 -->
+            <div class="right-panel" id="hotBetsPanel">
+                <div class="right-panel-title">
+                    <i class="fa-solid fa-fire" style="color: #ff4d4f;"></i> 热门投注
+                </div>
+                <div class="hot-bet-item">
+                    <div class="hot-bet-left">
+                        <div class="hot-bet-dot" style="background:#722ed1;"></div>
+                        <span class="hot-bet-name">福彩3D</span>
+                    </div>
+                    <span class="hot-bet-type">百位大小</span>
+                    <span class="hot-bet-time">22:31:20</span>
+                </div>
+                <div class="hot-bet-item">
+                    <div class="hot-bet-left">
+                        <div class="hot-bet-dot" style="background:#f5576c;"></div>
+                        <span class="hot-bet-name">排列三</span>
+                    </div>
+                    <span class="hot-bet-type">直选复式</span>
+                    <span class="hot-bet-time">22:41:20</span>
+                </div>
+                <div class="hot-bet-item">
+                    <div class="hot-bet-left">
+                        <div class="hot-bet-dot" style="background:#722ed1;"></div>
+                        <span class="hot-bet-name">福彩3D</span>
+                    </div>
+                    <span class="hot-bet-type">组选六</span>
+                    <span class="hot-bet-time">22:31:20</span>
+                </div>
+                <div class="hot-bet-item">
+                    <div class="hot-bet-left">
+                        <div class="hot-bet-dot" style="background:#f5576c;"></div>
+                        <span class="hot-bet-name">排列三</span>
+                    </div>
+                    <span class="hot-bet-type">总和大小</span>
+                    <span class="hot-bet-time">22:41:20</span>
+                </div>
+            </div>
+
+            <!-- 专家推荐 -->
+            <div class="right-panel" id="expertPanel">
+                <div class="right-panel-title">
+                    <i class="fa-solid fa-user-graduate" style="color: var(--primary);"></i> 专家推荐
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; font-size:12px; color:var(--text-muted);">
+                    <span>当前第<strong style="color:var(--text-primary);">2026103</strong>期</span>
+                    <span>限止投注 <strong style="color:var(--danger);">22:31:20</strong></span>
+                </div>
+                <div class="expert-item">
+                    <div class="expert-avatar" style="background:linear-gradient(135deg,#667eea,#764ba2);">一</div>
+                    <div class="expert-info"><div class="expert-name">专家一</div></div>
+                    <div class="expert-count">杀号推荐: <strong>2</strong></div>
+                </div>
+                <div class="expert-item">
+                    <div class="expert-avatar" style="background:linear-gradient(135deg,#f093fb,#f5576c);">二</div>
+                    <div class="expert-info"><div class="expert-name">专家二</div></div>
+                    <div class="expert-count">杀号推荐: <strong>8</strong></div>
+                </div>
+                <div class="expert-item">
+                    <div class="expert-avatar" style="background:linear-gradient(135deg,#4facfe,#00f2fe);">三</div>
+                    <div class="expert-info"><div class="expert-name">专家三</div></div>
+                    <div class="expert-count">杀号推荐: <strong>16</strong></div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <footer class="lottery-footer">Copyright &copy; 2018-2026 好运北彩 版权所有</footer>
+    <div class="lottery-toast" id="toastContainer"></div>
+
+    <script src="/assets/lottery/js/auth.js"></script>
+    <script src="/assets/lottery/js/lottery.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            LotteryApp.initCountdowns();
+            LotteryApp.initSidebarNav();
+            LotteryApp.initTypeTabNav();
+            loadLatestDrawsPC();
+        });
+
+        function loadLatestDrawsPC() {
+            fetch('/index.php/api/lottery/getLatestDraw?type=fc3d')
+                .then(function(r){ return r.json(); })
+                .then(function(res){
+                    if(res.code===1 && res.data && res.data.latest) updatePCCard('fc3d', res.data);
+                }).catch(function(){});
+            fetch('/index.php/api/lottery/getLatestDraw?type=pl3')
+                .then(function(r){ return r.json(); })
+                .then(function(res){
+                    if(res.code===1 && res.data && res.data.latest) updatePCCard('pl3', res.data);
+                }).catch(function(){});
+        }
+
+        function updatePCCard(type, data) {
+            var latest = data.latest;
+            var nums = latest.numbers_arr || latest.numbers.split(',');
+            var sum = 0;
+            for(var i=0;i<nums.length;i++) sum += parseInt(nums[i]);
+            var daxiao = sum >= 14 ? '大' : '小';
+            var danshuang = sum % 2 === 1 ? '单' : '双';
+
+            // 期号
+            var periodEls = document.querySelectorAll('.' + type + '-period, .js-period.' + type + '-period');
+            periodEls.forEach(function(el){ el.textContent = latest.period; });
+
+            // 号码球
+            var numbersEl = document.getElementById(type + '-numbers');
+            if(numbersEl) {
+                var colors = type==='fc3d' ? ['purple','cyan','pink'] : ['blue','green','orange'];
+                var html = '';
+                for(var j=0;j<nums.length;j++) {
+                    html += '<span class="number-ball ' + colors[j%3] + '">' + nums[j] + '</span>';
+                }
+                numbersEl.innerHTML = html;
+            }
+
+            // 统计表
+            var card = document.getElementById('card-' + type);
+            if(card) {
+                var trs = card.querySelectorAll('.stats-table tr');
+                if(trs.length >= 2) {
+                    var cells = trs[1].querySelectorAll('td');
+                    if(cells.length >= 6) {
+                        cells[0].textContent = nums[0];
+                        cells[1].textContent = nums[1];
+                        cells[2].textContent = nums[2];
+                        cells[3].textContent = sum;
+                        cells[4].textContent = daxiao;
+                        cells[4].className = daxiao==='大' ? 'red' : 'blue';
+                        cells[5].textContent = danshuang;
+                        cells[5].className = danshuang==='单' ? 'red' : 'blue';
+                    }
+                }
+            }
+
+            // 下一期期号
+            if(data.next) {
+                var nextEls = document.querySelectorAll('.' + type + '-next');
+                nextEls.forEach(function(el){ el.textContent = data.next.period; });
+            }
+        }
+    </script>
+</body>
+</html>

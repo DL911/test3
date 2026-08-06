@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>投注记录 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/lottery_m.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .rec-tabs { display:flex; padding:10px 12px 0; gap:0; background:#fff; border-bottom:1px solid #f0f0f0; position:sticky; top:0; z-index:10; }
+        .rec-tab { flex:1; text-align:center; padding:10px 0; font-size:13px; color:#999; font-weight:600; border-bottom:2px solid transparent; cursor:pointer; }
+        .rec-tab.active { color:#1890ff; border-bottom-color:#1890ff; }
+        .rec-list { padding:12px; }
+        .rec-card {
+            background:#fff; border-radius:12px; padding:14px; margin-bottom:10px;
+            box-shadow:0 1px 4px rgba(0,0,0,0.04); position:relative; overflow:hidden;
+        }
+        .rec-card-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+        .rec-type { display:flex; align-items:center; gap:8px; }
+        .rec-type-icon { width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:#fff; overflow:hidden; }
+        .rec-type-icon.fc3d { background:linear-gradient(135deg,#ff6b6b,#ee5a24); }
+        .rec-type-icon.pl3 { background:linear-gradient(135deg,#1890ff,#096dd9); }
+        .rec-type-name { font-size:14px; font-weight:700; color:#333; }
+        .rec-period { font-size:11px; color:#aaa; }
+        .rec-status { font-size:12px; font-weight:700; padding:3px 10px; border-radius:12px; }
+        .rec-status.win { background:#e6ffed; color:#10b981; }
+        .rec-status.lose { background:#fef2f2; color:#ef4444; }
+        .rec-status.pending { background:#fff7e6; color:#f59e0b; }
+        .rec-card-body { display:flex; justify-content:space-between; align-items:flex-end; }
+        .rec-info { flex:1; }
+        .rec-play { font-size:12px; color:#888; margin-bottom:4px; }
+        .rec-content { font-size:13px; color:#555; font-weight:600; }
+        .rec-amount-wrap { text-align:right; }
+        .rec-bet-amount { font-size:11px; color:#aaa; margin-bottom:2px; }
+        .rec-win-amount { font-size:16px; font-weight:800; }
+        .rec-win-amount.green { color:#10b981; }
+        .rec-win-amount.red { color:#ef4444; }
+        .rec-win-amount.gray { color:#999; }
+        .rec-time { font-size:10px; color:#ccc; margin-top:8px; }
+        .rec-draw-nums { display:flex; gap:6px; margin-top:8px; align-items:center; }
+        .rec-draw-num {
+            width:28px; height:28px; border-radius:50%;
+            display:inline-flex; align-items:center; justify-content:center;
+            font-size:13px; font-weight:800; color:#fff;
+            font-family: 'Arial Black', sans-serif;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2), inset 0 -2px 4px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.3);
+        }
+        .rec-draw-num.ball-0 { background: radial-gradient(circle at 35% 35%, #ff7675, #d63031); }
+        .rec-draw-num.ball-1 { background: radial-gradient(circle at 35% 35%, #74b9ff, #0984e3); }
+        .rec-draw-num.ball-2 { background: radial-gradient(circle at 35% 35%, #55efc4, #00b894); }
+        .rec-draw-label { font-size:10px; color:#bbb; margin-left:2px; }
+        .rec-content { font-size:13px; color:#555; font-weight:600; display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+        .bet-ball {
+            width:26px; height:26px; border-radius:50%;
+            display:inline-flex; align-items:center; justify-content:center;
+            font-size:12px; font-weight:800; color:#fff;
+            background: radial-gradient(circle at 35% 35%, #74b9ff, #0984e3);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.18), inset 0 -2px 3px rgba(0,0,0,0.12), inset 0 2px 3px rgba(255,255,255,0.25);
+        }
+        .bet-tag {
+            display:inline-flex; align-items:center; padding:2px 10px; border-radius:12px;
+            font-size:11px; font-weight:700; background:#f0f4ff; color:#3366cc;
+        }
+        .bet-tag.red { background:#fff0f0; color:#e74c3c; }
+        .bet-tag.blue { background:#f0f4ff; color:#2980b9; }
+        .rec-empty { text-align:center; padding:60px 0; color:#ccc; }
+        .rec-empty i { font-size:40px; margin-bottom:12px; display:block; }
+        .rec-load-more { text-align:center; padding:16px; color:#1890ff; font-size:13px; cursor:pointer; }
+        .rec-summary { display:flex; padding:12px; gap:8px; }
+        .rec-sum-item { flex:1; background:#fff; border-radius:10px; padding:12px; text-align:center; }
+        .rec-sum-val { font-size:18px; font-weight:800; margin-bottom:2px; }
+        .rec-sum-label { font-size:10px; color:#aaa; }
+        .rec-status.cancel { background:#f3f4f6; color:#9ca3af; }
+        .rec-actions { display:flex; justify-content:flex-end; margin-top:8px; gap:8px; }
+        .rec-btn { padding:5px 14px; border-radius:16px; font-size:11px; font-weight:600; border:none; cursor:pointer; }
+        .rec-btn-cancel { background:#fff1f2; color:#ef4444; border:1px solid #fecaca; }
+        .rec-btn-cancel:active { background:#fecaca; }
+        .rec-btn-detail { background:#eff6ff; color:#3b82f6; border:1px solid #bfdbfe; }
+        .rec-card.cancelled { opacity:0.6; }
+    </style>
+</head>
+<body class="m-lottery" style="background:#f5f5f5;">
+
+    <!-- 顶部栏 -->
+    <header class="m-header">
+        <div class="m-header-left">
+            <div class="m-logo" style="background:transparent;padding:0;"><img src="/thumb.php?src=/c788ffd04d7bbafa657bd2dcf4c6ecc4.png&w=200&q=80" style="width:100%;height:100%;object-fit:contain;border-radius:12px;"></div>
+            <span class="m-title">投注记录</span>
+        </div>
+    </header>
+
+    <!-- 筛选Tab -->
+    <div class="rec-tabs">
+        <div class="rec-tab active" data-type="">全部</div>
+        <div class="rec-tab" data-type="fc3d">福彩3D</div>
+        <div class="rec-tab" data-type="pl3">排列三</div>
+    </div>
+
+    <!-- 统计概览 -->
+    <div class="rec-summary">
+        <div class="rec-sum-item">
+            <div class="rec-sum-val" style="color:#1890ff;" id="sumTotal">0</div>
+            <div class="rec-sum-label">总投注</div>
+        </div>
+        <div class="rec-sum-item">
+            <div class="rec-sum-val" style="color:#10b981;" id="sumWin">¥0</div>
+            <div class="rec-sum-label">总中奖</div>
+        </div>
+        <div class="rec-sum-item">
+            <div class="rec-sum-val" style="color:#ef4444;" id="sumAmount">¥0</div>
+            <div class="rec-sum-label">总投注额</div>
+        </div>
+    </div>
+
+    <!-- 筛选栏 -->
+    <div style="padding:0 16px;margin-bottom:10px;">
+        <div style="display:flex;gap:8px;overflow-x:auto;padding:6px 0;-webkit-overflow-scrolling:touch;">
+            <div class="m-filter-btn active" data-time="" onclick="setMobileTime(this)">全部</div>
+            <div class="m-filter-btn" data-time="today" onclick="setMobileTime(this)">今天</div>
+            <div class="m-filter-btn" data-time="yesterday" onclick="setMobileTime(this)">昨天</div>
+            <div class="m-filter-btn" data-time="7days" onclick="setMobileTime(this)">近7天</div>
+        </div>
+        <div style="display:flex;gap:8px;overflow-x:auto;padding:4px 0;">
+            <div class="m-status-btn active" data-status="" onclick="setMobileStatus(this)">全部状态</div>
+            <div class="m-status-btn" data-status="0" onclick="setMobileStatus(this)">待开奖</div>
+            <div class="m-status-btn" data-status="1" onclick="setMobileStatus(this)">已中奖</div>
+            <div class="m-status-btn" data-status="2" onclick="setMobileStatus(this)">未中奖</div>
+        </div>
+    </div>
+    <style>
+    .m-filter-btn,.m-status-btn{padding:5px 14px;border-radius:16px;font-size:12px;color:#666;background:#f0f0f0;white-space:nowrap;cursor:pointer;transition:all .2s;border:1px solid transparent;flex-shrink:0;}
+    .m-filter-btn.active,.m-status-btn.active{background:#e6f4ff;color:#1890ff;border-color:#1890ff;font-weight:600;}
+    </style>
+
+    <!-- 记录列表 -->
+    <div class="rec-list" id="recList">
+        <div class="rec-empty"><i class="fa-solid fa-receipt"></i>暂无投注记录</div>
+    </div>
+    <div class="rec-load-more" id="loadMore" style="display:none;" onclick="loadMore()">加载更多...</div>
+
+    <!-- 底部导航 -->
+    <nav class="m-bottom-nav">
+        <a href="/index.php/index/lottery/index" class="m-nav-item">
+            <i class="fa-solid fa-dice"></i>
+            <span>彩票</span>
+        </a>
+        <a href="/index.php/index/lottery/trend#trend" class="m-nav-item">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>走势</span>
+        </a>
+        <a href="/index.php/index/lottery/records" class="m-nav-item active">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>记录</span>
+        </a>
+        <a href="/index.php/index/lottery/user" class="m-nav-item">
+            <i class="fa-solid fa-user"></i>
+            <span>我的</span>
+        </a>
+    </nav>
+
+    <script src="/assets/lottery/js/auth.js"></script>
+    <script>
+    var curType = '', curPage = 1, hasMore = true, allRecords = [];
+    var typeNames = {'1':'福彩3D','2':'排列三'};
+    var typeClass = {'1':'fc3d','2':'pl3'};
+    var playNames = {
+        // play_sub 位置映射
+        'baiwei':'百位','shiwei':'十位','gewei':'个位',
+        'baishi':'百十','baige':'百个','shige':'十个','zonghe':'总和','longhu':'龙虎',
+        // 双面盘
+        'kuaijie':'快捷','shuangmian':'双面','yizi_dingwei':'一字定位','erzi_dingwei':'二字定位',
+        'sanzi_dingwei':'三字定位',
+        'yizi_zuhe':'一字组合','erzi_zuhe':'二字组合','sanzi_zuhe':'三字组合',
+        'zusan':'组三','zuliu':'组六','hezhi':'和值','kuadu':'跨度',
+        'erzi_heshu':'二字和数','erzi_heshu_baishi':'二字和数·百十','erzi_heshu_baige':'二字和数·百个','erzi_heshu_shige':'二字和数·十个',
+        'longhu':'龙虎','xingtai':'形态',
+        // 标准盘 - 三星
+        'sx_zx_fushi':'三星直选复式','sx_zx_danshi':'三星直选单式','sx_zx_hezhi':'三星直选和值','sx_zx_kuadu':'三星直选跨度',
+        'sx_zx3_fushi':'三星组三复式','sx_zx3_danshi':'三星组三单式','sx_zx6_fushi':'三星组六复式','sx_zx6_danshi':'三星组六单式',
+        'sx_hunhe':'三星混合组选','sx_zx_hezhi2':'三星组选和值','sx_zx_baodan':'三星组选包胆',
+        'sx_tx_fushi':'三星通选复式','sx_tx_danshi':'三星通选单式','sx_hzweishu':'三星和值尾数',
+        'sx_yimabuding':'三星一码不定胆','sx_ermabuding':'三星二码不定胆',
+        // 标准盘 - 前二/后二
+        'qe_zx_fushi':'前二直选复式','qe_zx_danshi':'前二直选单式','qe_zx_hezhi':'前二直选和值','qe_zx_kuadu':'前二直选跨度',
+        'qe_zuxuan_fushi':'前二组选复式','qe_zuxuan_danshi':'前二组选单式','qe_zuxuan_hezhi':'前二组选和值','qe_zuxuan_baodan':'前二组选包胆',
+        'he_zx_fushi':'后二直选复式','he_zx_danshi':'后二直选单式','he_zx_hezhi':'后二直选和值','he_zx_kuadu':'后二直选跨度',
+        'he_zuxuan_fushi':'后二组选复式','he_zuxuan_danshi':'后二组选单式','he_zuxuan_hezhi':'后二组选和值','he_zuxuan_baodan':'后二组选包胆',
+        // 定位胆/不定胆/大小单双
+        'dingweidan':'定位胆','dxds':'大小单双',
+        'dxds_q2':'大小单双前二','dxds_q3':'大小单双前三','dxds_h2':'大小单双后二','dxds_h3':'大小单双后三',
+        'dxds_wx_hz':'大小单双五星和值','dxds_sx_hz':'大小单双三星和值',
+        // 前三/中三/后三
+        'q3_zx_fushi':'前三直选复式','q3_zx_danshi':'前三直选单式','q3_zx_zuhe':'前三直选组合','q3_zx_hezhi':'前三直选和值','q3_zx_kuadu':'前三直选跨度',
+        'q3_zx3_fushi':'前三组三复式','q3_zx3_danshi':'前三组三单式','q3_zx6_fushi':'前三组六复式','q3_zx6_danshi':'前三组六单式',
+        'q3_hunhe':'前三混合组选','q3_zx_hezhi2':'前三组选和值','q3_zx_baodan':'前三组选包胆',
+        'q3_tx_fushi':'前三通选复式','q3_tx_danshi':'前三通选单式','q3_hzweishu':'前三和值尾数',
+        'q3_yimabuding':'前三一码不定胆','q3_ermabuding':'前三二码不定胆',
+        'z3_zx_fushi':'中三直选复式','z3_zx_danshi':'中三直选单式','z3_zx_zuhe':'中三直选组合','z3_zx_hezhi':'中三直选和值','z3_zx_kuadu':'中三直选跨度',
+        'z3_zx3_fushi':'中三组三复式','z3_zx3_danshi':'中三组三单式','z3_zx6_fushi':'中三组六复式','z3_zx6_danshi':'中三组六单式',
+        'z3_hunhe':'中三混合组选','z3_zx_hezhi2':'中三组选和值','z3_zx_baodan':'中三组选包胆',
+        'z3_tx_fushi':'中三通选复式','z3_tx_danshi':'中三通选单式','z3_hzweishu':'中三和值尾数',
+        'z3_yimabuding':'中三一码不定胆','z3_ermabuding':'中三二码不定胆',
+        'h3_zx_fushi':'后三直选复式','h3_zx_danshi':'后三直选单式','h3_zx_zuhe':'后三直选组合','h3_zx_hezhi':'后三直选和值','h3_zx_kuadu':'后三直选跨度',
+        'h3_zx3_fushi':'后三组三复式','h3_zx3_danshi':'后三组三单式','h3_zx6_fushi':'后三组六复式','h3_zx6_danshi':'后三组六单式',
+        'h3_hunhe':'后三混合组选','h3_zx_hezhi2':'后三组选和值','h3_zx_baodan':'后三组选包胆',
+        'h3_tx_fushi':'后三通选复式','h3_tx_danshi':'后三通选单式','h3_hzweishu':'后三和值尾数',
+        'h3_yimabuding':'后三一码不定胆','h3_ermabuding':'后三二码不定胆',
+        // 四星/五星
+        'q4_zx_fushi':'前四直选复式','q4_zx_danshi':'前四直选单式','q4_zx_zuhe':'前四直选组合',
+        'q4_zx24':'前四组选24','q4_zx12':'前四组选12','q4_zx6':'前四组选6','q4_zx4':'前四组选4',
+        'h4_zx_fushi':'后四直选复式','h4_zx_danshi':'后四直选单式','h4_zx_zuhe':'后四直选组合',
+        'h4_zx24':'后四组选24','h4_zx12':'后四组选12','h4_zx6':'后四组选6','h4_zx4':'后四组选4',
+        'q4_yimabuding':'前四一码不定胆','q4_ermabuding':'前四二码不定胆','q4_sanmabuding':'前四三码不定胆',
+        'h4_yimabuding':'后四一码不定胆','h4_ermabuding':'后四二码不定胆','h4_sanmabuding':'后四三码不定胆',
+        'wx_zx_fushi':'五星直选复式','wx_zx_danshi':'五星直选单式','wx_zx_zuhe':'五星直选组合',
+        'wx_zx120':'五星组选120','wx_zx60':'五星组选60','wx_zx30':'五星组选30','wx_zx20':'五星组选20','wx_zx10':'五星组选10','wx_zx5':'五星组选5',
+        'wx_yimabuding':'五星一码不定胆','wx_ermabuding':'五星二码不定胆','wx_sanmabuding':'五星三码不定胆',
+        // 任选
+        'rx2_zx_fushi':'任选二直选复式','rx2_zx_danshi':'任选二直选单式','rx2_zx_hezhi':'任选二直选和值',
+        'rx2_zuxuan_fushi':'任选二组选复式','rx2_zuxuan_danshi':'任选二组选单式','rx2_zuxuan_hezhi':'任选二组选和值','rx2_zuxuan_baodan':'任选二组选包胆',
+        'rx3_zx_fushi':'任选三直选复式','rx3_zx_danshi':'任选三直选单式','rx3_zx_hezhi':'任选三直选和值',
+        'rx3_zx3_fushi':'任选三组三复式','rx3_zx6_fushi':'任选三组六复式','rx3_hunhe':'任选三混合组选','rx3_zx_hezhi2':'任选三组选和值',
+        'rx4_zx_fushi':'任选四直选复式','rx4_zx_danshi':'任选四直选单式',
+        'rx4_zx24':'任选四组选24','rx4_zx12':'任选四组选12','rx4_zx6':'任选四组选6','rx4_zx4':'任选四组选4',
+        // 趣味
+        'yffs':'一帆风顺','hscs':'好事成双','sxbx':'三星报喜','sjfc':'四季发财',
+        'suoha':'梭哈','zhajinhua':'炸金花','niuniu':'牛牛',
+        // 子导航
+        'baiwei':'百位','shiwei':'十位','gewei':'个位','zonghe':'总和',
+        'baishi':'百十','baige':'百个','shige':'十个',
+        'qiansan':'前三','zhongsan':'中三','housan':'后三',
+        'standard':'标准','quick':'快选'
+    };
+
+    // 位置名
+    var posLabels = {'0':'百','1':'十','2':'个','3':'千','4':'万','bai':'百','shi':'十','ge':'个'};
+
+    // Tab 切换
+    document.querySelectorAll('.rec-tab').forEach(function(tab){
+        tab.addEventListener('click', function(){
+            document.querySelectorAll('.rec-tab').forEach(function(t){t.classList.remove('active');});
+            this.classList.add('active');
+            curType = this.dataset.type;
+            curPage = 1; hasMore = true;
+            loadRecords(true);
+        });
+    });
+
+    var curFilterTime = '';
+    var curFilterStatus = '';
+
+    function setMobileTime(el) {
+        document.querySelectorAll('.m-filter-btn').forEach(function(b){b.classList.remove('active');});
+        el.classList.add('active');
+        curFilterTime = el.dataset.time;
+        curPage = 1; hasMore = true;
+        loadRecords(true);
+    }
+    function setMobileStatus(el) {
+        document.querySelectorAll('.m-status-btn').forEach(function(b){b.classList.remove('active');});
+        el.classList.add('active');
+        curFilterStatus = el.dataset.status;
+        curPage = 1; hasMore = true;
+        loadRecords(true);
+    }
+
+    function loadRecords(reset) {
+        if(!LotteryAuth.isLoggedIn()) {
+            document.getElementById('recList').innerHTML = '<div class="rec-empty"><i class="fa-solid fa-lock"></i>请先登录查看记录</div>';
+            return;
+        }
+        var url = '/index.php/api/lottery/getBetHistory?page='+curPage+'&limit=20';
+        if(curType) url += '&type='+curType;
+        if(curFilterTime) url += '&time='+curFilterTime;
+        if(curFilterStatus !== '') url += '&status='+curFilterStatus;
+
+        LotteryAuth.request(url, {method:'GET'}).then(function(res){
+            if(res.code !== 1) return;
+            var data = res.data;
+            var list = data.list || [];
+
+            if(reset) {
+                allRecords = list;
+                updateSummary(data.total, list, data);
+            } else {
+                allRecords = allRecords.concat(list);
+            }
+
+            hasMore = allRecords.length < data.total;
+            document.getElementById('loadMore').style.display = hasMore ? '' : 'none';
+            renderList(reset ? list : allRecords, reset);
+        });
+    }
+
+    function updateSummary(total, list, data) {
+        document.getElementById('sumTotal').textContent = total;
+        // 使用后端返回的全量统计
+        var winAmount = (data && data.win_amount !== undefined) ? data.win_amount : 0;
+        var totalAmount = (data && data.sum_amount !== undefined) ? data.sum_amount : 0;
+        document.getElementById('sumWin').textContent = '¥' + parseFloat(winAmount).toFixed(2);
+        document.getElementById('sumAmount').textContent = '¥' + parseFloat(totalAmount).toFixed(0);
+    }
+
+    function formatBetContent(bets, playType, playSub) {
+        var contentHtml = '';
+        var keyLabels = {'da':'大','xiao':'小','dan':'单','shuang':'双','zhi':'质','he':'合','long':'龙','hu':'虎','hh':'和',
+            'baozi':'豹子','shunzi':'顺子','duizi':'对子','banshun':'半顺','zaliu':'杂六',
+            // 总和 大小单双质合
+            'zonghe_heda':'总和大','zonghe_hexiao':'总和小','zonghe_hedan':'总和单','zonghe_heshuang':'总和双','zonghe_hezhi':'总和质','zonghe_hehe':'总和合',
+            // 百/十/个 大小单双质合
+            'bai_da':'百大','bai_xiao':'百小','bai_dan':'百单','bai_shuang':'百双','bai_zhi':'百质','bai_he':'百合',
+            'shi_da':'十大','shi_xiao':'十小','shi_dan':'十单','shi_shuang':'十双','shi_zhi':'十质','shi_he':'十合',
+            'ge_da':'个大','ge_xiao':'个小','ge_dan':'个单','ge_shuang':'个双','ge_zhi':'个质','ge_he':'个合',
+            // 两位和值 大小单双质合
+            'baishi_heda':'百十大','baishi_hexiao':'百十小','baishi_hedan':'百十单','baishi_heshuang':'百十双','baishi_hezhi':'百十质','baishi_hehe':'百十合',
+            'baige_heda':'百个大','baige_hexiao':'百个小','baige_hedan':'百个单','baige_heshuang':'百个双','baige_hezhi':'百个质','baige_hehe':'百个合',
+            'shige_heda':'十个大','shige_hexiao':'十个小','shige_hedan':'十个单','shige_heshuang':'十个双','shige_hezhi':'十个质','shige_hehe':'十个合',
+            // 总和 和数尾 大小单双质合
+            'zonghe_heweida':'总和尾大','zonghe_heweixiao':'总和尾小','zonghe_heweidan':'总和尾单','zonghe_heweishuang':'总和尾双','zonghe_heweizhi':'总和尾质','zonghe_heweihe':'总和尾合',
+            // 两位 和数尾 大小单双质合
+            'baishi_heweida':'百十尾大','baishi_heweixiao':'百十尾小','baishi_heweidan':'百十尾单','baishi_heweishuang':'百十尾双','baishi_heweizhi':'百十尾质','baishi_heweihe':'百十尾合',
+            'baige_heweida':'百个尾大','baige_heweixiao':'百个尾小','baige_heweidan':'百个尾单','baige_heweishuang':'百个尾双','baige_heweizhi':'百个尾质','baige_heweihe':'百个尾合',
+            'shige_heweida':'十个尾大','shige_heweixiao':'十个尾小','shige_heweidan':'十个尾单','shige_heweishuang':'十个尾双','shige_heweizhi':'十个尾质','shige_heweihe':'十个尾合'
+        };
+        var redTags = {'da':1,'dan':1,'long':1,'baozi':1,
+            'zonghe_heda':1,'zonghe_hedan':1,'bai_da':1,'bai_dan':1,'shi_da':1,'shi_dan':1,'ge_da':1,'ge_dan':1,
+            'baishi_heda':1,'baishi_hedan':1,'baige_heda':1,'baige_hedan':1,'shige_heda':1,'shige_hedan':1,
+            'zonghe_heweida':1,'zonghe_heweidan':1,'baishi_heweida':1,'baishi_heweidan':1,'baige_heweida':1,'baige_heweidan':1,'shige_heweida':1,'shige_heweidan':1};
+
+        // 提取号码：从key或num字段获取可读数字
+        function extractNum(b) {
+            // num字段存在（包括0）
+            if (b.num !== undefined && b.num !== null && b.num !== '') return String(b.num);
+            var k = b.key || '';
+            // p0_5 格式 → 5
+            if (/^p\d+_/.test(k)) return k.split('_')[1];
+            // bai_5 格式 → 5
+            if (/^(bai|shi|ge)_\d+$/.test(k)) return k.split('_')[1];
+            return k;
+        }
+
+        // 按位分组（用于定位类、复式类）
+        // 一字定位: bai_N/shi_N/ge_N 无pos字段，按前缀分组
+        if (playType === 'yizi_dingwei') {
+            var posGroups = {bai:[], shi:[], ge:[]};
+            var posNames2 = {bai:'百', shi:'十', ge:'个'};
+            bets.forEach(function(b) {
+                var k = b.key || '';
+                var m = k.match(/^(bai|shi|ge)_(\d+)$/);
+                if (m) posGroups[m[1]].push(m[2]);
+            });
+            ['bai','shi','ge'].forEach(function(prefix) {
+                if (posGroups[prefix].length > 0) {
+                    contentHtml += '<span class="bet-tag" style="background:#e8e8e8;color:#666;font-size:10px;margin-right:2px;">' + posNames2[prefix] + '</span>';
+                    posGroups[prefix].forEach(function(num) {
+                        contentHtml += '<span class="bet-ball">' + num + '</span>';
+                    });
+                }
+            });
+            return contentHtml;
+        }
+
+        var grouped = {};
+        var hasPos = false;
+        bets.forEach(function(b) {
+            if (b.pos !== undefined && b.pos !== null && b.pos !== '') {
+                hasPos = true;
+                var p = String(b.pos);
+                if (!grouped[p]) grouped[p] = [];
+                grouped[p].push(b);
+            }
+        });
+
+        // 包胆类：pos字段无意义，跳过位置标签直接显示号码
+        var noPosLabel = ['he_zuxuan_baodan','qe_zuxuan_baodan','sx_budingdan'];
+        if (hasPos && noPosLabel.indexOf(playType) !== -1) {
+            bets.forEach(function(b) {
+                var num = extractNum(b);
+                contentHtml += '<span class="bet-ball">' + num + '</span>';
+            });
+            return contentHtml;
+        }
+
+        // 定位类玩法：按位分组显示（所有有pos字段的玩法都走这里）
+        if (hasPos) {
+            // 二字定位：根据play_sub确定两个位置名
+            var ctxPosLabels = posLabels;
+            if (playType === 'erzi_dingwei' && playSub) {
+                var erziMap = {'baishi':{'0':'百','1':'十'},'baige':{'0':'百','1':'个'},'shige':{'0':'十','1':'个'}};
+                if (erziMap[playSub]) ctxPosLabels = erziMap[playSub];
+            }
+            // 后二直选/组选：pos0=十位, pos1=个位
+            if (playType.indexOf('he_zx') === 0 || playType.indexOf('he_zuxuan') === 0) {
+                ctxPosLabels = {'0':'十','1':'个'};
+            }
+            // 前二直选/组选：pos0=百位, pos1=十位 (和默认一致，显式声明以保险)
+            if (playType.indexOf('qe_zx') === 0 || playType.indexOf('qe_zuxuan') === 0) {
+                ctxPosLabels = {'0':'百','1':'十'};
+            }
+            var posOrder = Object.keys(grouped).sort();
+            posOrder.forEach(function(p) {
+                var label = ctxPosLabels[p] || posLabels[p] || ('位'+p);
+                contentHtml += '<span class="bet-tag" style="background:#e8e8e8;color:#666;font-size:10px;margin-right:2px;">'+label+'</span>';
+                grouped[p].forEach(function(b) {
+                    var num = extractNum(b);
+                    if (keyLabels[num]) {
+                        contentHtml += '<span class="bet-tag '+(redTags[num]?'red':'blue')+'">'+keyLabels[num]+'</span>';
+                    } else {
+                        contentHtml += '<span class="bet-ball">'+num+'</span>';
+                    }
+                });
+            });
+            return contentHtml;
+        }
+
+        // 快捷多选位置：如果item有sub字段，按位置分组展示
+        var hasSub = bets.some(function(b){ return !!b.sub; });
+        if (hasSub && playType === 'kuaijie') {
+            var subLabels = {baiwei:'百',shiwei:'十',gewei:'个',bai:'百',shi:'十',ge:'个'};
+            var subGroups = {};
+            bets.forEach(function(b) {
+                var s = b.sub || 'other';
+                if (!subGroups[s]) subGroups[s] = [];
+                subGroups[s].push(b);
+            });
+            Object.keys(subGroups).forEach(function(s) {
+                var label = subLabels[s] || s;
+                contentHtml += '<span class="bet-tag" style="background:#e8e8e8;color:#666;font-size:10px;margin-right:2px;">'+label+'</span>';
+                subGroups[s].forEach(function(b) {
+                    var k = b.key || '';
+                    var displayK = k.replace(/^num_/, '');
+                    if (keyLabels[displayK]) {
+                        contentHtml += '<span class="bet-tag '+(redTags[displayK]?'red':'blue')+'">'+keyLabels[displayK]+'</span>';
+                    } else if (keyLabels[k]) {
+                        contentHtml += '<span class="bet-tag '+(redTags[k]?'red':'blue')+'">'+keyLabels[k]+'</span>';
+                    } else {
+                        contentHtml += '<span class="bet-ball">'+displayK+'</span>';
+                    }
+                });
+            });
+            return contentHtml;
+        }
+
+        // 非定位类
+        var items = bets.slice(0, 15);
+        items.forEach(function(b){
+            var k = b.label || b.key || b.number || b.value || '';
+            // hzws_5 格式 → 和尾5 (三字和数尾数，必须在 hz_ 之前判断)
+            if (k.indexOf('hzws_') === 0) {
+                contentHtml += '<span class="bet-tag">和尾' + k.replace('hzws_','') + '</span>';
+            }
+            // hz_5 格式 → 和值5
+            else if (k.indexOf('hz_') === 0) {
+                contentHtml += '<span class="bet-tag">和' + k.replace('hz_','') + '</span>';
+            }
+            // kd_5 格式 → 跨度5
+            else if (k.indexOf('kd_') === 0) {
+                contentHtml += '<span class="bet-tag">跨' + k.replace('kd_','') + '</span>';
+            }
+            // ehzws_5 格式 → 和数尾5 (必须在 ehz_ 之前判断)
+            else if (k.indexOf('ehzws_') === 0) {
+                contentHtml += '<span class="bet-tag">和尾' + k.replace('ehzws_','') + '</span>';
+            }
+            // ehz_5 / ehz_0-4 格式 → 和5 / 和0-4
+            else if (k.indexOf('ehz_') === 0) {
+                contentHtml += '<span class="bet-tag">和' + k.replace('ehz_','') + '</span>';
+            }
+            // p0_5 格式 → 5
+            else if (/^p\d+_/.test(k)) {
+                contentHtml += '<span class="bet-ball">' + k.split('_')[1] + '</span>';
+            }
+            // num_5 格式 → 5
+            else if (k.indexOf('num_') === 0) {
+                contentHtml += '<span class="bet-ball">' + k.replace('num_','') + '</span>';
+            }
+            // yz_5 格式 → 5 (一字组合)
+            else if (/^yz_\d$/.test(k)) {
+                contentHtml += '<span class="bet-ball">' + k.replace('yz_','') + '</span>';
+            }
+            // ez_05 格式 → 05 (二字组合)
+            else if (/^ez_\d+$/.test(k)) {
+                contentHtml += '<span class="bet-ball">' + k.replace('ez_','') + '</span>';
+            }
+            // sz_012 格式 → 012 (三字组合)
+            else if (/^sz_\d+$/.test(k)) {
+                contentHtml += '<span class="bet-ball">' + k.replace('sz_','') + '</span>';
+            }
+            // bai_5 / shi_3 / ge_7 格式 → 百5 / 十3 / 个7
+            else if (/^(bai|shi|ge)_\d+$/.test(k)) {
+                var posMap = {bai:'百',shi:'十',ge:'个'};
+                var parts = k.split('_');
+                contentHtml += '<span class="bet-ball">' + (posMap[parts[0]]||'') + parts[1] + '</span>';
+            }
+            // 大小单双等标签
+            else if (keyLabels[k]) {
+                contentHtml += '<span class="bet-tag '+(redTags[k]?'red':'blue')+'">' + keyLabels[k] + '</span>';
+            }
+            // 纯数字
+            else if (/^\d+$/.test(k)) {
+                contentHtml += '<span class="bet-ball">' + k + '</span>';
+            }
+            // 带金额的行式
+            else if (b.amount) {
+                var displayK = keyLabels[k] || k;
+                contentHtml += '<span class="bet-tag">' + displayK + ' ¥' + b.amount + '</span>';
+            }
+            // 其他
+            else {
+                contentHtml += '<span class="bet-tag">' + (keyLabels[k] || k) + '</span>';
+            }
+        });
+        if (bets.length > 15) contentHtml += '<span class="bet-tag">+' + (bets.length-15) + '</span>';
+        return contentHtml;
+    }
+
+    function renderList(list, reset) {
+        var container = document.getElementById('recList');
+        if(reset) container.innerHTML = '';
+        if(!list.length) {
+            container.innerHTML = '<div class="rec-empty"><i class="fa-solid fa-receipt"></i>暂无投注记录</div>';
+            return;
+        }
+
+        var html = '';
+        list.forEach(function(r){
+            var typeName = typeNames[r.lottery_type] || '未知';
+            var typeCls = typeClass[r.lottery_type] || 'fc3d';
+            var playName = playNames[r.play_type] || r.play_type;
+            var subName = playNames[r.play_sub] || r.play_sub || '';
+            // play_sub 白名单：只有真正按位区分的玩法才显示位置标签
+            // 其他玩法的 play_sub='baiwei' 是前端面板默认值，不应显示
+            var showSubPlays = ['erzi_dingwei','erzi_heshu','dingweidan','kuaijie'];
+            if (showSubPlays.indexOf(r.play_type) === -1) subName = '';
+
+            var statusText = '', statusCls = '';
+            if(r.status == 0) { statusText = '待开奖'; statusCls = 'pending'; }
+            else if(r.status == 1) { statusText = '已中奖'; statusCls = 'win'; }
+            else if(r.status == 2) { statusText = '未中奖'; statusCls = 'lose'; }
+            else if(r.status == 3) { statusText = '已撤单'; statusCls = 'cancel'; }
+            else { statusText = '已结算'; statusCls = 'lose'; }
+
+            var winAmount = parseFloat(r.win_amount) || 0;
+            var amountCls = r.status == 1 ? 'green' : (r.status == 0 ? 'gray' : (r.status == 3 ? 'gray' : 'red'));
+            var amountText = r.status == 0 ? '待开奖' : (r.status == 1 ? '+¥'+winAmount.toFixed(2) : (r.status == 3 ? '已退款' : '-¥'+(parseFloat(r.total_amount)||0).toFixed(2)));
+
+            // 解析投注内容
+            var contentHtml = '';
+            try {
+                var bets = JSON.parse(r.bet_content);
+                if(Array.isArray(bets)) {
+                    contentHtml = formatBetContent(bets, r.play_type, r.play_sub);
+                }
+            } catch(e) { contentHtml = r.bet_content || ''; }
+
+            // 开奖号码
+            var drawNums = '';
+            if(r.draw_numbers) {
+                var nums = r.draw_numbers.split(',');
+                var ballColors = ['ball-0','ball-1','ball-2'];
+                drawNums += '<span style="font-size:10px;color:#aaa;margin-right:2px;">开奖</span>';
+                nums.forEach(function(n, idx){ drawNums += '<span class="rec-draw-num '+(ballColors[idx]||'ball-0')+'">'+n.trim()+'</span>'; });
+            }
+
+            var time = r.createtime ? new Date(r.createtime * 1000).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+
+            html += '<div class="rec-card'+(r.status==3?' cancelled':'')+'">';
+            html += '<div class="rec-card-top">';
+            html += '<div class="rec-type"><span class="rec-type-icon '+typeCls+'"><img src="/thumb.php?src=/c788ffd04d7bbafa657bd2dcf4c6ecc4.png&w=200&q=80" style="width:100%;height:100%;object-fit:contain;"></span>';
+            html += '<div><div class="rec-type-name">'+typeName+'</div><div class="rec-period">第'+r.period+'期</div></div></div>';
+            html += '<span class="rec-status '+statusCls+'">'+statusText+'</span>';
+            html += '</div>';
+            html += '<div class="rec-card-body">';
+            html += '<div class="rec-info">';
+            html += '<div class="rec-play">'+playName+(subName?' · '+subName:'')+'</div>';
+            html += '<div class="rec-content">' + contentHtml + '</div>';
+            if(drawNums) html += '<div class="rec-draw-nums">开奖: '+drawNums+'</div>';
+            html += '</div>';
+            html += '<div class="rec-amount-wrap">';
+            html += '<div class="rec-bet-amount">投注 ¥'+(parseFloat(r.total_amount)||0).toFixed(2)+'</div>';
+            html += '<div class="rec-win-amount '+amountCls+'">'+amountText+'</div>';
+            html += '</div>';
+            html += '</div>';
+            html += '<div class="rec-time">'+time+'</div>';
+            // 操作按钮 (撤单功能已被移除)
+            /* 
+            if(r.status == 0) {
+                html += '<div class="rec-actions">';
+                html += '<button class="rec-btn rec-btn-cancel" onclick="cancelBet('+r.id+',this)"><i class="fa-solid fa-xmark"></i> 撤单</button>';
+                html += '</div>';
+            }
+            */
+            html += '</div>';
+        });
+
+        if(reset) container.innerHTML = html;
+        else container.innerHTML = html;
+    }
+
+    function loadMore() {
+        curPage++;
+        loadRecords(false);
+    }
+
+    function cancelBet(betId, btn) {
+        btn.disabled = true;
+        btn.textContent = '处理中...';
+        var fd = new FormData();
+        fd.append('bet_id', betId);
+        LotteryAuth.request('/index.php/api/lottery/cancelBet', {method:'POST', body:fd}).then(function(res){
+            if(res.code === 1) {
+                alert(res.msg);
+                curPage = 1;
+                loadRecords(true);
+            } else {
+                alert(res.msg || '撤单失败');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-xmark"></i> 撤单';
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+        loadRecords(true);
+    });
+    </script>
+</body>
+</html>

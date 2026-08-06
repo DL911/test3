@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>走势分析 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/mobile_light.css">
+    <link rel="stylesheet" href="/assets/lottery/css/lottery_m.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 走势页：去掉所有内边距让表格铺满 */
+        .lm-safe-bottom { padding-left:0 !important; padding-right:0 !important; }
+        #panel-trend .lm-card,
+        #panel-records .lm-card {
+            margin:0 !important;
+            padding:0 !important;
+            border-radius:0 !important;
+            box-shadow:none !important;
+            border:none !important;
+        }
+        #panel-trend .lm-card-title,
+        #panel-records .lm-card-title {
+            padding:10px 12px !important;
+            margin:0 !important;
+        }
+        #panel-trend .lm-table-wrap { margin:0 !important; padding:0 !important; }
+        #panel-trend .lm-table,
+        #panel-records .lm-table { border-radius:0 !important; }
+
+        /* 走势表前4列冻结：期号、百、十、个 */
+        #trendTable th, #trendTable td { white-space:nowrap; min-width:28px; text-align:center; }
+        #trendTable th:nth-child(1), #trendTable td:nth-child(1) { position:sticky; left:0; z-index:2; background:#fff; min-width:44px; }
+        #trendTable th:nth-child(2), #trendTable td:nth-child(2) { position:sticky; left:44px; z-index:2; background:#fff; }
+        #trendTable th:nth-child(3), #trendTable td:nth-child(3) { position:sticky; left:72px; z-index:2; background:#fff; }
+        #trendTable th:nth-child(4), #trendTable td:nth-child(4) { position:sticky; left:100px; z-index:2; background:#fff; box-shadow:2px 0 4px rgba(0,0,0,0.06); }
+        #trendTable thead th:nth-child(-n+4) { z-index:4; background:#f7f8fa; }
+    </style>
+</head>
+<body class="light-mobile">
+
+    <div class="lm-topbar">
+        <a class="back" href="/index.php/index/lottery/index"><i class="fa-solid fa-arrow-left"></i></a>
+        <h2>走势分析</h2>
+    </div>
+
+    <!-- 彩种切换 -->
+    <div class="lm-tabs" style="gap:0;">
+        <div class="lm-tab active" data-type="1" onclick="switchType(1)">福彩3D</div>
+        <div class="lm-tab" data-type="2" onclick="switchType(2)">排列三</div>
+        <div style="flex:1;"></div>
+        <div class="lm-tab active" data-func="trend" onclick="switchFunc('trend')">走势</div>
+        <div class="lm-tab" data-func="pattern" onclick="switchFunc('pattern')">路子</div>
+        <div class="lm-tab" data-func="check" onclick="switchFunc('check')">对奖</div>
+        <div class="lm-tab" data-func="streak" onclick="switchFunc('streak')">长龙</div>
+        <div class="lm-tab" data-func="records" onclick="switchFunc('records')">记录</div>
+    </div>
+
+    <div class="lm-safe-bottom">
+
+        <!-- 走势图 -->
+        <div class="panel-box" id="panel-trend">
+            <div class="lm-card">
+                <div class="lm-card-title"><i class="fa-solid fa-chart-bar"></i> 号码走势 · 最近50期</div>
+                <div class="lm-table-wrap" style="max-height:calc(100vh - 180px);overflow-y:auto;">
+                    <table class="lm-table" id="trendTable"></table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 路子图 -->
+        <div class="panel-box" id="panel-pattern" style="display:none;">
+            <div class="lm-card">
+                <div class="lm-card-title"><i class="fa-solid fa-table-cells"></i> 大小单双路子</div>
+                <div class="lm-pattern-grid" id="patternGrid"></div>
+            </div>
+        </div>
+
+        <!-- 对奖 -->
+        <div class="panel-box" id="panel-check" style="display:none;">
+            <div class="lm-card">
+                <div class="lm-card-title"><i class="fa-solid fa-trophy"></i> 对奖查询</div>
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
+                    <input type="text" class="lm-input" id="checkB" maxlength="1" placeholder="百" style="width:50px;text-align:center;font-size:20px;font-weight:700;padding:10px;">
+                    <input type="text" class="lm-input" id="checkS" maxlength="1" placeholder="十" style="width:50px;text-align:center;font-size:20px;font-weight:700;padding:10px;">
+                    <input type="text" class="lm-input" id="checkG" maxlength="1" placeholder="个" style="width:50px;text-align:center;font-size:20px;font-weight:700;padding:10px;">
+                    <button class="lm-btn lm-btn-primary" onclick="doCheck()" style="width:auto;padding:10px 20px;"><i class="fa-solid fa-search"></i> 查询</button>
+                </div>
+                <div id="checkResult"></div>
+            </div>
+        </div>
+
+        <!-- 长龙 -->
+        <div class="panel-box" id="panel-streak" style="display:none;">
+            <div class="lm-card">
+                <div class="lm-card-title"><i class="fa-solid fa-fire"></i> 长龙排行榜</div>
+                <div id="streakList"></div>
+            </div>
+        </div>
+
+        <!-- 记录 -->
+        <div class="panel-box" id="panel-records" style="display:none;">
+            <div class="lm-card">
+                <div class="lm-card-title"><i class="fa-solid fa-list"></i> 开奖记录</div>
+                <div class="lm-table-wrap">
+                    <table class="lm-table" id="recordTable"></table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 底部导航 -->
+    <nav class="m-bottom-nav">
+        <a href="/index.php/index/lottery/index" class="m-nav-item"><i class="fa-solid fa-dice"></i><span>彩票</span></a>
+        <a href="javascript:;" class="m-nav-item" id="navTrend" onclick="navSwitch('trend')"><i class="fa-solid fa-chart-line"></i><span>走势</span></a>
+        <a href="/index.php/index/lottery/records" class="m-nav-item"><i class="fa-solid fa-clock-rotate-left"></i><span>记录</span></a>
+        <a href="/index.php/index/lottery/user" class="m-nav-item"><i class="fa-solid fa-user"></i><span>我的</span></a>
+    </nav>
+
+<script>
+var currentType = 1, currentFunc = 'trend', drawData = [];
+
+/* --- 底部导航内切换（不跳转页面） --- */
+function navSwitch(f) {
+    switchFunc(f);
+    updateBottomNav(f);
+    // 更新 hash 但不触发跳转
+    history.replaceState(null, '', '#' + f);
+}
+
+function updateBottomNav(f) {
+    document.getElementById('navTrend').classList.toggle('active', f !== 'records');
+    document.getElementById('navRecords').classList.toggle('active', f === 'records');
+}
+
+function switchType(t) {
+    currentType = t;
+    document.querySelectorAll('.lm-tab[data-type]').forEach(function(el){ el.classList.toggle('active', el.dataset.type == t); });
+    loadData();
+}
+function switchFunc(f) {
+    currentFunc = f;
+    document.querySelectorAll('.lm-tab[data-func]').forEach(function(el){ el.classList.toggle('active', el.dataset.func === f); });
+    document.querySelectorAll('.panel-box').forEach(function(el){ el.style.display = el.id === 'panel-'+f ? '' : 'none'; });
+    renderCurrent();
+}
+function loadData() {
+    fetch('/index.php/api/trend/history?type='+currentType+'&limit=50')
+    .then(function(r){ return r.json(); })
+    .then(function(res) { if (res.code===1) { drawData = res.data||[]; renderCurrent(); } });
+}
+function renderCurrent() {
+    if (currentFunc==='trend') renderTrend();
+    else if (currentFunc==='pattern') renderPattern();
+    else if (currentFunc==='streak') loadStreaks();
+    else if (currentFunc==='records') renderRecords();
+}
+
+function renderTrend() {
+    if (!drawData.length) { document.getElementById('trendTable').innerHTML='<tr><td class="lm-empty">暂无数据</td></tr>'; return; }
+    var h = '<thead><tr><th>期号</th><th>百</th><th>十</th><th>个</th>';
+    for(var i=0;i<10;i++) h+='<th>'+i+'</th>';
+    h+='<th>和</th><th>大小</th><th>单双</th></tr></thead><tbody>';
+    drawData.forEach(function(d){
+        h+='<tr><td style="font-weight:600;color:#2B6CB0;font-size:11px;">'+d.period.slice(-5)+'</td>';
+        h+='<td style="font-weight:700;">'+d.b+'</td><td style="font-weight:700;">'+d.s+'</td><td style="font-weight:700;">'+d.g+'</td>';
+        for(var n=0;n<10;n++) h+='<td>'+(d.b===n||d.s===n||d.g===n?'<span class="lm-hit">'+n+'</span>':'<span class="lm-miss">'+n+'</span>')+'</td>';
+        h+='<td style="font-weight:600;">'+d.sum+'</td>';
+        h+='<td><span class="lm-tag '+(d.big_small==='大'?'lm-tag-red':'lm-tag-blue')+'">'+d.big_small+'</span></td>';
+        h+='<td><span class="lm-tag '+(d.odd_even==='单'?'lm-tag-red':'lm-tag-blue')+'">'+d.odd_even+'</span></td></tr>';
+    });
+    document.getElementById('trendTable').innerHTML=h+'</tbody>';
+}
+
+function renderPattern() {
+    var g=document.getElementById('patternGrid');
+    if(!drawData.length){g.innerHTML='<div class="lm-empty" style="grid-column:1/-1;">暂无数据</div>';return;}
+    var cfgs=[
+        {t:'总和大小',k:'big_small',v:['大','小']},{t:'总和单双',k:'odd_even',v:['单','双']},
+        {t:'百位大小',k:'b_bs',v:['大','小']},{t:'十位大小',k:'s_bs',v:['大','小']},
+        {t:'个位大小',k:'g_bs',v:['大','小']},{t:'百位单双',k:'b_oe',v:['单','双']},
+        {t:'十位单双',k:'s_oe',v:['单','双']},{t:'个位单双',k:'g_oe',v:['单','双']}
+    ], h='';
+    var recent = drawData.slice(-15);
+    cfgs.forEach(function(c){
+        h+='<div class="lm-pattern-card"><h4>'+c.t+'</h4><div style="display:flex;flex-wrap:wrap;gap:3px;">';
+        recent.forEach(function(d,i){
+            var val=d[c.k];
+            c.v.forEach(function(v){
+                var cls = val===v ? (v==='大'||v==='单' ? 'red' : 'blue') : 'empty';
+                h+='<span class="lm-pcell '+cls+'">'+( val===v ? v : '' )+'</span>';
+            });
+        });
+        h+='</div></div>';
+    });
+    g.innerHTML=h;
+}
+
+function loadStreaks() {
+    fetch('/index.php/api/trend/streaks?type='+currentType)
+    .then(function(r){return r.json();})
+    .then(function(res){
+        var el=document.getElementById('streakList'),list=(res.code===1)?res.data||[]:[];
+        if(!list.length){el.innerHTML='<div class="lm-empty">当前无长龙</div>';return;}
+        el.innerHTML=list.map(function(s,i){
+            var rc=i===0?'r1':(i===1?'r2':(i===2?'r3':'r4'));
+            return '<div class="lm-streak-item"><div class="lm-rank '+rc+'">'+(i+1)+'</div><div class="lm-streak-name">'+s.name+'</div><div><span class="lm-streak-count">'+s.count+'</span><span class="lm-streak-unit">期</span></div></div>';
+        }).join('');
+    });
+}
+
+function doCheck(){
+    var b=document.getElementById('checkB').value,s=document.getElementById('checkS').value,g=document.getElementById('checkG').value;
+    if(!b||!s||!g){alert('请填写完整3位号码');return;}
+    fetch('/index.php/api/trend/check?type='+currentType+'&numbers='+b+','+s+','+g)
+    .then(function(r){return r.json();})
+    .then(function(res){
+        var el=document.getElementById('checkResult'),list=(res.code===1)?res.data||[]:[];
+        if(!list.length){el.innerHTML='<div class="lm-empty">暂无数据</div>';return;}
+        el.innerHTML=list.map(function(r){
+            var nums=r.numbers.split(','),my=[b,s,g];
+            var nh=nums.map(function(n,i){return n.trim()===my[i].trim()?'<span class="matched">'+n+'</span>':n;}).join(' ');
+            var st='';
+            if(r.is_win) st='<span class="lm-tag lm-tag-red">🎉 中奖</span>';
+            else if(r.group_match) st='<span class="lm-tag lm-tag-blue">组选</span>';
+            else if(r.direct_match>0) st='<span style="color:#A0AEC0;">'+r.direct_match+'位</span>';
+            else st='<span style="color:#D9D9D9;">—</span>';
+            return '<div class="lm-check-row"><span class="lm-check-period">'+r.period+'</span><span class="lm-check-nums">'+nh+'</span>'+st+'</div>';
+        }).join('');
+    });
+}
+
+function renderRecords(){
+    if(!drawData.length){document.getElementById('recordTable').innerHTML='<tr><td class="lm-empty">暂无数据</td></tr>';return;}
+    var ballColors = ['#7c3aed','#0891b2','#e11d48','#2563eb','#16a34a','#ea580c'];
+    var h='<thead><tr><th>期号</th><th>开奖号码</th><th>和值</th><th>大小</th><th>单双</th></tr></thead><tbody>';
+    drawData.slice().reverse().forEach(function(d){
+        var balls = '<div style="display:inline-flex;gap:6px;">';
+        balls += '<span style="display:inline-flex;width:28px;height:28px;border-radius:50%;background:'+ballColors[0]+';color:#fff;font-weight:800;font-size:14px;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.15);">'+d.b+'</span>';
+        balls += '<span style="display:inline-flex;width:28px;height:28px;border-radius:50%;background:'+ballColors[1]+';color:#fff;font-weight:800;font-size:14px;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.15);">'+d.s+'</span>';
+        balls += '<span style="display:inline-flex;width:28px;height:28px;border-radius:50%;background:'+ballColors[2]+';color:#fff;font-weight:800;font-size:14px;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.15);">'+d.g+'</span>';
+        balls += '</div>';
+        h+='<tr><td style="font-weight:700;color:#2563eb;font-size:12px;">'+d.period.slice(-5)+'</td>';
+        h+='<td>'+balls+'</td>';
+        h+='<td style="font-weight:700;font-size:15px;">'+d.sum+'</td>';
+        h+='<td><span class="lm-tag '+(d.big_small==='大'?'lm-tag-red':'lm-tag-blue')+'">'+d.big_small+'</span></td>';
+        h+='<td><span class="lm-tag '+(d.odd_even==='单'?'lm-tag-red':'lm-tag-blue')+'">'+d.odd_even+'</span></td></tr>';
+    });
+    document.getElementById('recordTable').innerHTML=h+'</tbody>';
+}
+
+document.querySelectorAll('.lm-input[maxlength="1"]').forEach(function(inp,i,list){
+    inp.addEventListener('input',function(){if(this.value.length>=1&&list[i+1])list[i+1].focus();});
+});
+
+/* --- 监听 hashchange，支持浏览器前进后退 --- */
+window.addEventListener('hashchange', function() {
+    var h = window.location.hash.replace('#','');
+    if (h && ['trend','pattern','check','streak','records'].indexOf(h) !== -1) {
+        switchFunc(h);
+        updateBottomNav(h);
+    }
+});
+
+/* --- 初始化：根据 hash 确定初始 tab --- */
+var hash = window.location.hash.replace('#','');
+if (hash && ['trend','pattern','check','streak','records'].indexOf(hash) !== -1) {
+    switchFunc(hash);
+    updateBottomNav(hash);
+} else {
+    updateBottomNav('trend');
+}
+loadData();
+</script>
+</body>
+</html>

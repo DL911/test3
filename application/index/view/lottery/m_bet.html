@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title id="pageTitle">投注 - 好运北彩</title>
+    <link rel="stylesheet" href="/assets/lottery/css/lottery_m.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="m-lottery m-bet-page">
+
+    <!-- ===== 顶部栏 ===== -->
+    <header class="m-header m-header-bet">
+        <div class="m-header-left">
+            <a href="/index.php/index/lottery/index" class="m-back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+            <div class="m-card-icon fc3d" id="betLotteryIcon" style="width:28px;height:28px;font-size:13px;overflow:hidden;"><img src="/thumb.php?src=/c788ffd04d7bbafa657bd2dcf4c6ecc4.png&w=200&q=80" style="width:100%;height:100%;object-fit:contain;border-radius:6px;"></div>
+            <span class="m-title" id="betLotteryName">福彩3D</span>
+        </div>
+        <div class="m-header-right">
+            <div id="authBtnWrap">
+                <a href="/index.php/index/lottery/login" style="color:#fff;font-size:12px;padding:3px 10px;background:rgba(255,255,255,0.2);border-radius:12px;text-decoration:none;">登录</a>
+            </div>
+            <div id="userInfoWrap" style="display:none;">
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <div class="m-balance" style="cursor:default;">
+                        <i class="fa-solid fa-wallet"></i>
+                        <span id="currencySymbol">¥</span>
+                        <span id="userBalance">0.00</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== 开奖信息条 ===== -->
+    <div class="m-draw-info">
+        <div class="m-draw-left">
+            <div class="m-draw-period" id="betTimerPeriod">2026103期</div>
+            <div class="m-draw-timer">
+                <span class="m-timer-digit" id="timerH1">2</span><span class="m-timer-digit" id="timerH2">0</span>
+                <span class="m-timer-sep">:</span>
+                <span class="m-timer-digit" id="timerM1">3</span><span class="m-timer-digit" id="timerM2">7</span>
+                <span class="m-timer-sep">:</span>
+                <span class="m-timer-digit" id="timerS1">2</span><span class="m-timer-digit" id="timerS2">0</span>
+            </div>
+            <div class="m-draw-status" id="betTimerStatus">投注中</div>
+        </div>
+        <div class="m-draw-numbers" id="betDrawNumbers">
+            <span class="m-num purple">4</span>
+            <span class="m-num cyan">2</span>
+            <span class="m-num pink">0</span>
+        </div>
+    </div>
+
+    <!-- ===== 盘口切换 ===== -->
+    <div class="m-panel-toggle">
+        <div class="m-panel-btn active" data-panel="shuangmian">双面盘</div>
+        <div class="m-panel-btn" data-panel="biaozhun">标准盘</div>
+        <!-- 开奖历史入口 -->
+        <div class="m-history-btn" id="showHistoryBtn"><i class="fa-solid fa-clock-rotate-left"></i> 开奖</div>
+    </div>
+
+    <!-- ===== 玩法Tab (横向滚动) ===== -->
+    <div class="m-play-tabs-wrap">
+        <div class="m-play-tabs" id="playTypeTabs"></div>
+    </div>
+
+    <!-- ===== 子Tab ===== -->
+    <div class="m-sub-tabs" id="playSubTabs"></div>
+
+    <!-- ===== 玩法说明 ===== -->
+    <div class="m-play-rule" id="playRuleDesc">玩法说明</div>
+
+    <!-- ===== 投注区 ===== -->
+    <div class="m-bet-area" id="betArea"></div>
+
+    <!-- ===== 底部操作栏 (固定) ===== -->
+    <div class="m-bet-bar">
+        <div class="m-bar-info" style="display:flex;flex-direction:column;gap:2px;">
+            <span class="m-bar-balance" style="display:flex;justify-content:space-between;width:100%;">
+                <span>余额: <span id="mBetBalanceShow" style="color:var(--danger);">0</span></span>
+                <span id="currentOddsDisplay" style="color:var(--danger);font-size:12px;font-weight:600;display:none;">赔率: <span id="currentOddsValue">0.00</span></span>
+            </span>
+            <span class="m-bar-bet-info"><span id="mBetCount"></span> <span id="mBetTotal"></span></span>
+        </div>
+        <div class="m-bar-chips" id="betAmountGroup">
+            <div class="m-chip active" data-amount="1">1</div>
+            <div class="m-chip" data-amount="5">5</div>
+            <div class="m-chip" data-amount="10">10</div>
+            <div class="m-chip" data-amount="50">50</div>
+            <div class="m-chip" data-amount="100">100</div>
+        </div>
+        <!-- 标准盘：每注/倍数 -->
+        <div class="bzp-unit-bar" id="bzpUnitBar" style="display:none;flex-wrap:wrap;gap:4px;padding:4px 0;">
+            <div class="bzp-unit-group" style="gap:3px;">
+                <span class="bzp-unit-label" style="font-size:11px;">每注</span>
+                <div class="bzp-unit-btn active" data-unit="2" style="padding:2px 6px;font-size:11px;">2元</div>
+                <div class="bzp-unit-btn" data-unit="1" style="padding:2px 6px;font-size:11px;">1元</div>
+                <div class="bzp-unit-btn" data-unit="0.2" style="padding:2px 6px;font-size:11px;">2角</div>
+                <div class="bzp-unit-btn" data-unit="0.1" style="padding:2px 6px;font-size:11px;">1角</div>
+                <div class="bzp-unit-btn" data-unit="0.02" style="padding:2px 6px;font-size:11px;">2分</div>
+                <div class="bzp-unit-btn" data-unit="0.01" style="padding:2px 6px;font-size:11px;">1分</div>
+                <div class="bzp-unit-btn" data-unit="0.002" style="padding:2px 6px;font-size:11px;">2厘</div>
+                <div class="bzp-unit-btn" data-unit="0.001" style="padding:2px 6px;font-size:11px;">1厘</div>
+            </div>
+            <div class="bzp-multi-group" style="gap:3px;">
+                <span class="bzp-unit-label" style="font-size:11px;">倍数:</span>
+                <span class="bzp-multi-minus" id="bzpMultiMinus" style="width:22px;height:22px;font-size:14px;">−</span>
+                <input type="number" class="bzp-multi-input" id="bzpMultiInput" value="1" min="1" style="width:40px;font-size:12px;">
+                <span class="bzp-multi-plus" id="bzpMultiPlus" style="width:22px;height:22px;font-size:14px;">+</span>
+                <div class="bzp-unit-btn" data-multi="5" style="padding:2px 6px;font-size:11px;">5倍</div>
+                <div class="bzp-unit-btn" data-multi="10" style="padding:2px 6px;font-size:11px;">10倍</div>
+                <div class="bzp-unit-btn" data-multi="20" style="padding:2px 6px;font-size:11px;">20倍</div>
+            </div>
+        </div>
+        <div class="m-bar-actions">
+            <button class="m-btn-submit" id="btnSubmitBet" disabled>投注</button>
+            <button class="m-btn-secondary" id="btnRandomBet">追号</button>
+            <button class="m-btn-secondary" id="btnAddToCart">加入</button>
+            <button class="m-btn-clear" id="btnClearAll" onclick="var a=document.getElementById('betArea');if(a){a.querySelectorAll('.selected').forEach(function(e){e.classList.remove('selected');});a.querySelectorAll('.row-amount').forEach(function(i){i.value='';});BetPage.updateSel?BetPage.updateSel():null;}"><i class="fa-solid fa-trash-can"></i></button>
+        </div>
+    </div>
+
+    <!-- ===== 开奖历史弹层 ===== -->
+    <div class="m-sheet-overlay" id="historySheet">
+        <div class="m-sheet">
+            <div class="m-sheet-header">
+                <span>近期开奖</span>
+                <span class="m-sheet-close" id="closeHistoryBtn"><i class="fa-solid fa-xmark"></i></span>
+            </div>
+            <div class="m-sheet-body">
+                <table class="m-history-table" id="historyTable">
+                    <thead><tr><th>期数</th><th>号码</th><th>总和</th><th>大小</th><th>单双</th></tr></thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 确认投注弹窗 ===== -->
+    <div class="m-sheet-overlay" id="confirmModal">
+        <div class="m-sheet m-confirm-sheet">
+            <div class="m-sheet-header">
+                <span>确认投注</span>
+                <span class="m-sheet-close" id="btnCancelBet"><i class="fa-solid fa-xmark"></i></span>
+            </div>
+            <div class="m-sheet-body" id="confirmContent"></div>
+            <div class="m-confirm-actions">
+                <button class="m-btn-submit" id="btnConfirmBet" style="width:100%;">确认投注</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="lottery-toast" id="toastContainer"></div>
+
+
+    <script src="/assets/lottery/js/auth.js"></script>
+    <script src="/assets/lottery/js/currency_picker.js"></script>
+    <script src="/assets/lottery/js/lottery.js?v={:time()}"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var params = new URLSearchParams(window.location.search);
+            var lotteryType = params.get('type') || 'fc3d';
+            BetPage.init(lotteryType);
+
+            // 开奖历史弹层
+            document.getElementById('showHistoryBtn').addEventListener('click', function() {
+                document.getElementById('historySheet').classList.add('show');
+            });
+            document.getElementById('closeHistoryBtn').addEventListener('click', function() {
+                document.getElementById('historySheet').classList.remove('show');
+            });
+            document.getElementById('historySheet').addEventListener('click', function(e) {
+                if (e.target === this) this.classList.remove('show');
+            });
+        });
+    </script>
+</body>
+</html>

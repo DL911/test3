@@ -1,0 +1,61 @@
+<div class="panel panel-default panel-intro">
+    <div class="panel-heading"><h3 class="panel-title">站内转账记录</h3></div>
+    <div class="panel-body">
+        <div class="form-inline mb-3" style="margin-bottom:15px;">
+            <input type="text" id="filterKeyword" class="form-control" placeholder="订单号/用户名" style="width:200px;margin-right:10px;">
+            <button class="btn btn-primary" onclick="loadList()"><i class="fa fa-search"></i> 搜索</button>
+        </div>
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th width="50">ID</th>
+                    <th>转账单号</th>
+                    <th>转出用户</th>
+                    <th>转入用户</th>
+                    <th>金额</th>
+                    <th>备注</th>
+                    <th>状态</th>
+                    <th>时间</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+        <div id="pagination" style="text-align:center;"></div>
+    </div>
+</div>
+
+<script>
+var currentPage = 1;
+$(function(){ loadList(); });
+
+function loadList(page) {
+    currentPage = page || 1;
+    $.ajax({
+        url: location.href,
+        data: { page: currentPage, limit: 20, keyword: $('#filterKeyword').val() },
+        success: function(res) {
+            if (res.code !== 1) return;
+            var d = res.data, html = '';
+            if (!d.list || !d.list.length) {
+                html = '<tr><td colspan="8" style="text-align:center;">暂无数据</td></tr>';
+            } else {
+                d.list.forEach(function(r) {
+                    html += '<tr>'+
+                        '<td>'+r.id+'</td>'+
+                        '<td><small>'+r.order_no+'</small></td>'+
+                        '<td>'+(r.from_nickname||r.from_username||'--')+'</td>'+
+                        '<td>'+(r.to_nickname||r.to_username||'--')+'</td>'+
+                        '<td><strong style="color:#f60;">¥'+parseFloat(r.amount).toFixed(2)+'</strong></td>'+
+                        '<td><small>'+(r.remark||'-')+'</small></td>'+
+                        '<td><span class="label '+(r.status==1?'label-success':'label-danger')+'">'+(r.status==1?'成功':'失败')+'</span></td>'+
+                        '<td><small>'+r.create_date+'</small></td></tr>';
+                });
+            }
+            $('#tableBody').html(html);
+            var pages = Math.ceil(d.total / 20), ph = '';
+            if (pages > 1) { for (var i=1;i<=pages;i++) ph += '<button class="btn btn-sm '+(i===currentPage?'btn-primary':'btn-default')+'" onclick="loadList('+i+')" style="margin:2px;">'+i+'</button>'; }
+            $('#pagination').html(ph ? '<div>共'+d.total+'条 '+ph+'</div>' : '');
+        }
+    });
+}
+</script>
