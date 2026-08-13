@@ -119,8 +119,13 @@
 .kefu-toolbar .btn-img { background: none; border: 1px solid #ddd; border-radius: 4px; padding: 4px 10px; cursor: pointer; color: #666; font-size: 13px; }
 .kefu-toolbar .btn-img:hover { background: #e6f7ff; border-color: #1890ff; color: #1890ff; }
 .kefu-toolbar .send-hint { margin-left: auto; font-size: 11px; color: #bbb; }
+.channel-bar { display:flex; gap:8px; align-items:center; padding:10px; background:#fff; border:1px solid #ddd; border-bottom:0; }
+.channel-tab { border:1px solid #ddd; background:#fafafa; padding:6px 12px; border-radius:4px; cursor:pointer; }
+.channel-tab.active { color:#fff; border-color:transparent; background:#18bc9c; }
+.channel-manage { margin-left:auto; }
 </style>
 
+<div class="channel-bar" id="channelBar"><span style="color:#999">加载通道...</span><button class="btn btn-default btn-xs channel-manage" id="manageChannels"><i class="fa fa-cog"></i> 通道管理</button></div>
 <div class="kefu-container">
     <div class="kefu-sidebar" id="userList">
         <div class="kefu-sidebar-empty">
@@ -164,6 +169,8 @@
     })();
 
     var currentUserId = 0;
+    var currentChannel = 'general';
+    var channelMap = {};
     var lastMsgId = 0;
 
     function kefuUrl(action) {
@@ -188,6 +195,7 @@
         $.ajax({
             url: kefuUrl('get_user_list'),
             type: "GET",
+            data: {channel: currentChannel},
             success: function(res) {
                 if(res.code == 1) {
                     if(!res.data || res.data.length === 0) {
@@ -216,7 +224,8 @@
                         lastMsgId = 0;
                         $("#chatArea").empty();
                         $("#chatPlaceholder").remove();
-                        $("#chatHeader").html('<i class="fa fa-user" style="margin-right:8px;color:#1890ff;"></i> 正在与 ' + uname + ' 交谈');
+                        var cname = channelMap[currentChannel] ? channelMap[currentChannel].name : currentChannel;
+                        $("#chatHeader").html('<i class="fa fa-user" style="margin-right:8px;color:#1890ff;"></i> [' + cname + '] 正在与 ' + uname + ' 交谈');
                         $("#inputArea").show();
                         $(".user-item").removeClass('active');
                         $(this).addClass('active');
@@ -233,7 +242,7 @@
         $.ajax({
             url: kefuUrl('get_chat_history'),
             type: "GET",
-            data: {user_id: currentUserId, last_id: lastMsgId},
+            data: {user_id: currentUserId, channel: currentChannel, last_id: lastMsgId},
             success: function(res) {
                 if(res.code == 1 && res.data && res.data.length > 0) {
                     var html = '';
@@ -273,7 +282,7 @@
         $.ajax({
             url: kefuUrl('send_message'),
             type: "POST",
-            data: {user_id: currentUserId, content: content},
+            data: {user_id: currentUserId, channel: currentChannel, content: content},
             success: function(res) {
                 $("#btnSend").prop('disabled', false);
                 if(res.code == 1) {
@@ -289,7 +298,39 @@
         });
     }
 
+    function loadChannels() {
+        $.get(kefuUrl('channels'), function(res) {
+            if(res.code != 1 || !res.data) return;
+            var html = '';
+            res.data.forEach(function(c) {
+                channelMap[c.code] = c;
+                if(parseInt(c.status) !== 1) return;
+                html += '<button class="channel-tab '+(c.code===currentChannel?'active':'')+'" data-code="'+c.code+'" style="--channel-color:'+c.color+'">'+c.name+'</button>';
+            });
+            html += '<button class="btn btn-default btn-xs channel-manage" id="manageChannels"><i class="fa fa-cog"></i> 通道管理</button>';
+            $('#channelBar').html(html);
+            $('.channel-tab').on('click', function(){
+                currentChannel=$(this).data('code'); currentUserId=0; lastMsgId=0;
+                $('.channel-tab').removeClass('active'); $(this).addClass('active');
+                $('#chatArea').html('<div class="kefu-placeholder"><i class="fa fa-comment-dots"></i><span>请从左侧选择一个用户开始会话</span></div>');
+                $('#inputArea').hide(); loadUserList();
+            });
+            $('#manageChannels').on('click', showChannelManager);
+        });
+    }
+
+    function showChannelManager() {
+        var rows='';
+        Object.keys(channelMap).forEach(function(code){var c=channelMap[code]; rows += '<tr><td>'+c.code+'</td><td><input class="form-control input-sm c-name" value="'+c.name+'"></td><td><input class="form-control input-sm c-desc" value="'+(c.description||'')+'"></td><td><input class="form-control input-sm c-weigh" type="number" value="'+c.weigh+'"></td><td><input type="checkbox" class="c-status" '+(parseInt(c.status)===1?'checked':'')+'></td><td><button class="btn btn-primary btn-xs save-channel" data-id="'+c.id+'" data-code="'+c.code+'">保存</button></td></tr>';});
+        layer.open({type:1,title:'客服通道管理',area:['760px','500px'],content:'<div style="padding:15px"><table class="table table-bordered"><thead><tr><th>编码</th><th>名称</th><th>说明</th><th>排序</th><th>启用</th><th></th></tr></thead><tbody>'+rows+'</tbody></table><hr><h5>新增通道</h5><div class="form-inline"><input id="newCode" class="form-control" placeholder="英文编码"><input id="newName" class="form-control" placeholder="显示名称"><button id="addChannel" class="btn btn-success">新增</button></div></div>',success:function(box){
+            box.find('.save-channel').click(function(){var tr=$(this).closest('tr'); saveChannel({id:$(this).data('id'),code:$(this).data('code'),name:tr.find('.c-name').val(),description:tr.find('.c-desc').val(),weigh:tr.find('.c-weigh').val(),status:tr.find('.c-status').prop('checked')?1:0});});
+            box.find('#addChannel').click(function(){saveChannel({code:box.find('#newCode').val(),name:box.find('#newName').val(),status:1});});
+        }});
+    }
+    function saveChannel(data){$.post(kefuUrl('save_channel'),data,function(res){if(res.code==1){layer.msg('保存成功'); channelMap={}; loadChannels();}else layer.alert(res.msg||'保存失败');});}
+
     // 初始化
+    loadChannels();
     loadUserList();
     $("#btnSend").on('click', sendMessage);
     $("#chatInput").on('keydown', function(e) {
@@ -318,7 +359,7 @@
                     $.ajax({
                         url: kefuUrl('send_message'),
                         type: 'POST',
-                        data: {user_id: currentUserId, content: '[img]'+res.data.url+'[/img]'},
+                        data: {user_id: currentUserId, channel: currentChannel, content: '[img]'+res.data.url+'[/img]'},
                         success: function(r) {
                             if(r.code == 1) loadChatHistory();
                         }
@@ -336,4 +377,3 @@
     setInterval(loadChatHistory, 3000);
 })();
 </script>
-

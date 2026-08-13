@@ -3,11 +3,12 @@ namespace app\api\controller;
 
 use app\common\controller\Api;
 use think\Db;
+use app\common\library\KefuChannel;
 
 class Kefu extends Api
 {
     // 只有获取未读数接口不需要强制验证(手动判断登录)，其他接口均需要登录
-    protected $noNeedLogin = ['unreadCount'];
+    protected $noNeedLogin = ['unreadCount', 'channels'];
     protected $noNeedRight = ['*'];
 
     /**
@@ -16,12 +17,14 @@ class Kefu extends Api
     public function history()
     {
         $user_id = $this->auth->id;
+        $channel = KefuChannel::normalize($this->request->get('channel', KefuChannel::DEFAULT_CODE));
         $page = $this->request->get('page/d', 1);
         $limit = $this->request->get('limit/d', 20);
 
         // 获取记录并倒序排列后，再反转为正序(因为需要呈现最新的在底端)
         $list = Db::name('lottery_kefu_message')
             ->where('user_id', $user_id)
+            ->where('channel', $channel)
             ->order('id', 'desc')
             ->page($page, $limit)
             ->select();
@@ -36,7 +39,7 @@ class Kefu extends Api
             }
         }
         if (!empty($unreadIds)) {
-            Db::name('lottery_kefu_message')->where('id', 'in', $unreadIds)->update(['is_read' => 1]);
+            Db::name('lottery_kefu_message')->where('id', 'in', $unreadIds)->where('channel', $channel)->update(['is_read' => 1]);
         }
 
         $this->success("获取成功", ['list' => $list]);
@@ -48,6 +51,7 @@ class Kefu extends Api
     public function send()
     {
         $user_id = $this->auth->id;
+        $channel = KefuChannel::normalize($this->request->post('channel', KefuChannel::DEFAULT_CODE));
         $content = $this->request->post('content', '');
         
         if (empty($content)) {
@@ -57,6 +61,7 @@ class Kefu extends Api
         $data = [
             'user_id' => $user_id,
             'admin_id' => 0, 
+            'channel' => $channel,
             'sender_type' => 'user',
             'content' => $content,
             'is_read' => 0,
@@ -80,10 +85,12 @@ class Kefu extends Api
     public function poll()
     {
         $user_id = $this->auth->id;
+        $channel = KefuChannel::normalize($this->request->get('channel', KefuChannel::DEFAULT_CODE));
         $last_id = $this->request->get('last_id/d', 0);
 
         $where = [
             'user_id' => $user_id,
+            'channel' => $channel,
             'id' => ['>', $last_id]
         ];
 
@@ -100,7 +107,7 @@ class Kefu extends Api
             }
         }
         if (!empty($unreadIds)) {
-            Db::name('lottery_kefu_message')->where('id', 'in', $unreadIds)->update(['is_read' => 1]);
+            Db::name('lottery_kefu_message')->where('id', 'in', $unreadIds)->where('channel', $channel)->update(['is_read' => 1]);
         }
 
         $this->success("检查成功", ['list' => $list]);
@@ -123,6 +130,11 @@ class Kefu extends Api
             ->count();
             
         $this->success("", ['count' => $count]);
+    }
+
+    public function channels()
+    {
+        $this->success('', ['list' => KefuChannel::all(true)]);
     }
 
     /**

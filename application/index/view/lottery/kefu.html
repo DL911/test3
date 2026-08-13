@@ -39,6 +39,9 @@
             font-weight: 600;
             margin: 0;
         }
+        .channel-select { flex-shrink:0; display:flex; gap:8px; padding:8px 10px; background:#fff; overflow-x:auto; }
+        .channel-select a { white-space:nowrap; padding:6px 12px; border:1px solid #ddd; border-radius:16px; color:#666; text-decoration:none; font-size:13px; }
+        .channel-select a.active { background:#18bc9c; color:#fff; border-color:#18bc9c; }
         .chat-container {
             flex: 1;
             overflow-y: auto;
@@ -210,8 +213,9 @@
     <!-- 顶部栏 -->
     <div class="chat-header">
         <a href="javascript:history.back();" class="back"><i class="fa-solid fa-angle-left"></i></a>
-        <h1>在线客服</h1>
+        <h1 id="channelTitle">在线客服</h1>
     </div>
+    <div class="channel-select" id="channelSelect"></div>
 
     <!-- 聊天内容区 -->
     <div class="chat-container" id="chatContainer">
@@ -284,9 +288,11 @@
         }
     }
 
+    var currentChannel = new URLSearchParams(location.search).get('channel') || 'general';
+    var channelQuery = 'channel=' + encodeURIComponent(currentChannel);
     // 加载历史记录
     function loadHistory() {
-        LotteryAuth.request('/index.php/api/kefu/history', {
+        LotteryAuth.request('/index.php/api/kefu/history?' + channelQuery, {
             method: 'GET'
         }).then(res => {
             if (res.code === 1 && res.data && res.data.list) {
@@ -318,7 +324,7 @@
 
         LotteryAuth.request('/index.php/api/kefu/send', {
             method: 'POST',
-            body: JSON.stringify({ content: content })
+            body: JSON.stringify({ content: content, channel: currentChannel })
         }).then(res => {
             sendBtn.disabled = false;
             if (res.code === 1) {
@@ -338,7 +344,7 @@
         if (isPolling) return;
         isPolling = true;
         
-        LotteryAuth.request('/index.php/api/kefu/poll?last_id=' + lastId, {
+        LotteryAuth.request('/index.php/api/kefu/poll?last_id=' + lastId + '&' + channelQuery, {
             method: 'GET'
         }).then(res => {
             isPolling = false;
@@ -420,7 +426,7 @@
                 // 发送到服务器
                 LotteryAuth.request('/index.php/api/kefu/send', {
                     method: 'POST',
-                    body: JSON.stringify({ content: imgContent })
+                    body: JSON.stringify({ content: imgContent, channel: currentChannel })
                 }).then(function(r) {
                     if (r.code === 1 && r.data && r.data.id > lastId) {
                         lastId = r.data.id;
@@ -436,6 +442,9 @@
 
     // 初始化
     document.addEventListener('DOMContentLoaded', () => {
+        fetch('/index.php/api/kefu/channels').then(r=>r.json()).then(res=>{
+            let html=''; (res.data&&res.data.list||[]).forEach(c=>{if(c.code===currentChannel) document.getElementById('channelTitle').textContent=c.name; html+='<a class="'+(c.code===currentChannel?'active':'')+'" href="?channel='+encodeURIComponent(c.code)+'">'+c.name+'</a>';}); document.getElementById('channelSelect').innerHTML=html;
+        });
         loadHistory();
     });
 

@@ -4,6 +4,7 @@ namespace app\admin\controller\lottery;
 
 use app\common\controller\Backend;
 use think\Db;
+use app\common\library\KefuChannel;
 
 /**
  * 在线客服系统
@@ -12,6 +13,7 @@ use think\Db;
  */
 class Kefu extends Backend
 {
+    protected $noNeedRight = ['get_user_list', 'get_chat_history', 'send_message', 'global_status', 'upload_image', 'channels', 'save_channel', 'delete_channel'];
     /**
      * 客服工作台
      */
@@ -29,7 +31,8 @@ class Kefu extends Backend
      */
     public function get_user_list()
     {
-        $subQuery = Db::name('lottery_kefu_message')->field('user_id, MAX(createtime) as last_time')->group('user_id')->buildSql();
+        $channel = KefuChannel::normalize($this->request->get('channel', KefuChannel::DEFAULT_CODE), false);
+        $subQuery = Db::name('lottery_kefu_message')->where('channel', $channel)->field('user_id, MAX(createtime) as last_time')->group('user_id')->buildSql();
         
         $list = Db::name('user')
             ->alias('u')
@@ -41,6 +44,7 @@ class Kefu extends Backend
         foreach($list as &$v) {
             $v['unread'] = Db::name('lottery_kefu_message')
                 ->where('user_id', $v['id'])
+                ->where('channel', $channel)
                 ->where('sender_type', 'user')
                 ->where('is_read', 0)
                 ->count();
@@ -55,9 +59,10 @@ class Kefu extends Backend
     public function get_chat_history()
     {
         $user_id = $this->request->param('user_id');
+        $channel = KefuChannel::normalize($this->request->param('channel', KefuChannel::DEFAULT_CODE), false);
         $last_id = $this->request->param('last_id', 0);
         
-        $where = ['user_id' => $user_id];
+        $where = ['user_id' => $user_id, 'channel' => $channel];
         if ($last_id > 0) {
             $where['id'] = ['>', $last_id];
         }
@@ -74,6 +79,7 @@ class Kefu extends Backend
         // 标记所有来自用户的为已读
         Db::name('lottery_kefu_message')
             ->where('user_id', $user_id)
+            ->where('channel', $channel)
             ->where('sender_type', 'user')
             ->where('is_read', 0)
             ->update(['is_read' => 1]);
@@ -89,6 +95,7 @@ class Kefu extends Backend
         $user_id = $this->request->post('user_id');
         $content = $this->request->post('content');
         $admin_id = $this->auth->id;
+        $channel = KefuChannel::normalize($this->request->post('channel', KefuChannel::DEFAULT_CODE), false);
 
         if (empty($content) || empty($user_id)) {
             $this->error('参数错误');
@@ -97,6 +104,7 @@ class Kefu extends Backend
         $data = [
             'user_id' => $user_id,
             'admin_id' => $admin_id,
+            'channel' => $channel,
             'sender_type' => 'admin',
             'content' => $content,
             'is_read' => 0,
@@ -118,11 +126,45 @@ class Kefu extends Backend
      */
     public function global_status()
     {
-        $unread = Db::name('lottery_kefu_message')
+        $rows = Db::name('lottery_kefu_message')
             ->where('sender_type', 'user')
             ->where('is_read', 0)
-            ->count();
-        $this->success('', null, ['unread' => $unread]);
+            ->field('channel,COUNT(*) unread')->group('channel')->select();
+        $byChannel = []; $unread = 0;
+        foreach ($rows as $row) { $byChannel[$row['channel']] = (int)$row['unread']; $unread += (int)$row['unread']; }
+        $this->success('', null, ['unread' => $unread, 'channels' => $byChannel]);
+    }
+
+    public function channels()
+    {
+        $this->success('', null, KefuChannel::all(false));
+    }
+
+    public function save_channel()
+    {
+        $id = $this->request->post('id/d', 0);
+        $code = strtolower(trim($this->request->post('code', '')));
+        $name = trim($this->request->post('name', ''));
+        if (!preg_match('/^[a-z][a-z0-9_]{1,31}$/', $code) || $name === '') $this->error('编码或名称格式不正确');
+        $data = ['code'=>$code, 'name'=>$name, 'description'=>trim($this->request->post('description','')), 'icon'=>trim($this->request->post('icon','fa-comments')), 'color'=>trim($this->request->post('color','#18bc9c')), 'weigh'=>$this->request->post('weigh/d',0), 'status'=>$this->request->post('status/d',1), 'updatetime'=>time()];
+        if ($id) {
+            $existing = Db::name('lottery_kefu_channel')->where('id',$id)->find();
+            if (!$existing) $this->error('通道不存在');
+            $data['code'] = $existing['code'];
+            Db::name('lottery_kefu_channel')->where('id',$id)->update($data);
+        }
+        else { $data['createtime']=time(); Db::name('lottery_kefu_channel')->insert($data); }
+        $this->success('保存成功');
+    }
+
+    public function delete_channel()
+    {
+        $id = $this->request->post('id/d', 0);
+        $row = Db::name('lottery_kefu_channel')->where('id',$id)->find();
+        if (!$row || $row['code'] === KefuChannel::DEFAULT_CODE) $this->error('默认通道不能删除');
+        if (Db::name('lottery_kefu_message')->where('channel',$row['code'])->count()) $this->error('该通道已有消息，请停用而不要删除');
+        Db::name('lottery_kefu_channel')->where('id',$id)->delete();
+        $this->success('删除成功');
     }
 
     /**
@@ -144,4 +186,3 @@ class Kefu extends Backend
         }
     }
 }
-

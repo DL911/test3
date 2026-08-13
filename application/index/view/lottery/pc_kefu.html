@@ -41,6 +41,9 @@
         .chat-msg-avatar-wrap { display:flex; flex-direction:column; align-items:center; flex-shrink:0; gap:3px; }
         .chat-msg-avatar-name { font-size:10px; color:#999; white-space:nowrap; max-width:56px; overflow:hidden; text-overflow:ellipsis; }
         .chat-msg.admin .chat-msg-avatar-name { color:#0d6efd; font-weight:600; }
+        .channel-select { display:flex; gap:10px; margin-bottom:14px; }
+        .channel-select a { padding:8px 16px; background:#fff; border:1px solid #ddd; border-radius:8px; color:#555; text-decoration:none; }
+        .channel-select a.active { background:#0d6efd; color:#fff; border-color:#0d6efd; }
     </style>
 </head>
 <body class="lottery-page">
@@ -48,12 +51,13 @@
 
     <div class="pc-page">
         <a href="/index.php/index/lottery/user" class="pc-back"><i class="fa-solid fa-arrow-left"></i> 返回个人中心</a>
+        <div class="channel-select" id="channelSelect"></div>
 
         <div class="chat-container">
             <div class="chat-header">
                 <div class="chat-header-avatar"><i class="fa-solid fa-headset"></i></div>
                 <div class="chat-header-info">
-                    <h4>在线客服</h4>
+                    <h4 id="channelTitle">在线客服</h4>
                     <small>通常5分钟内回复</small>
                 </div>
             </div>
@@ -74,6 +78,8 @@
     <script src="/assets/lottery/js/auth.js"></script>
     <script>
     var lastMsgId = 0, pollTimer = null;
+    var currentChannel = new URLSearchParams(location.search).get('channel') || 'general';
+    var channelQuery = 'channel=' + encodeURIComponent(currentChannel);
 
     function renderMessages(list) {
         if(!list || !list.length) return;
@@ -110,7 +116,7 @@
     }
 
     function loadHistory() {
-        LotteryAuth.request('/index.php/api/kefu/history', {method:'GET'}).then(function(res) {
+        LotteryAuth.request('/index.php/api/kefu/history?' + channelQuery, {method:'GET'}).then(function(res) {
             if(res.code === 1) {
                 var list = res.data && res.data.list || [];
                 if(list.length) {
@@ -130,6 +136,7 @@
         input.value = '';
         var fd = new FormData();
         fd.append('content', text);
+        fd.append('channel', currentChannel);
 
         LotteryAuth.request('/index.php/api/kefu/send', {method:'POST', body:fd}).then(function(res) {
             if(res.code === 1) renderMessages([res.data]);
@@ -150,6 +157,7 @@
             if(res.code === 1 && res.data && res.data.url) {
                 var fd2 = new FormData();
                 fd2.append('content', res.data.url);
+                fd2.append('channel', currentChannel);
                 LotteryAuth.request('/index.php/api/kefu/send', {method:'POST', body:fd2}).then(function(r2) {
                     if(r2.code === 1) renderMessages([r2.data]);
                 });
@@ -160,7 +168,7 @@
 
     function startPoll() {
         pollTimer = setInterval(function() {
-            LotteryAuth.request('/index.php/api/kefu/poll?last_id=' + lastMsgId, {method:'GET'}).then(function(res) {
+            LotteryAuth.request('/index.php/api/kefu/poll?last_id=' + lastMsgId + '&' + channelQuery, {method:'GET'}).then(function(res) {
                 if(res.code === 1 && res.data && res.data.list) {
                     renderMessages(res.data.list);
                 }
@@ -169,6 +177,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', function(){
+        fetch('/index.php/api/kefu/channels').then(function(r){return r.json()}).then(function(res){
+            var list=res.data&&res.data.list||[], html=''; list.forEach(function(c){if(c.code===currentChannel) document.getElementById('channelTitle').textContent=c.name; html+='<a class="'+(c.code===currentChannel?'active':'')+'" href="?channel='+encodeURIComponent(c.code)+'"><i class="fa-solid '+c.icon+'"></i> '+c.name+'</a>';}); document.getElementById('channelSelect').innerHTML=html;
+        });
         LotteryAuth.initHeader && LotteryAuth.initHeader();
         if(LotteryAuth.isLoggedIn()) {
             loadHistory();
