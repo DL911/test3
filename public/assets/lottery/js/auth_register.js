@@ -78,6 +78,9 @@
             var password = document.getElementById('regPassword').value;
             var password2 = document.getElementById('regPassword2').value;
             var agree = document.getElementById('agreeTerms').checked;
+            var securityTeacher = document.getElementById('securityTeacher').value.trim();
+            var securityHometown = document.getElementById('securityHometown').value.trim();
+            var securityFriend = document.getElementById('securityFriend').value.trim();
             var valid = true;
 
             // 验证用户名
@@ -123,6 +126,10 @@
             }
 
             if (!valid) return;
+            if (securityTeacher.length < 2 || securityHometown.length < 2 || securityFriend.length < 2) {
+                showToast('请完整填写三项安全问题答案，每项至少2个字符', 'error');
+                return;
+            }
 
             var btn = document.getElementById('btnRegister');
             btn.classList.add('auth-btn-loading');
@@ -136,6 +143,9 @@
             formData.append('password', password);
             formData.append('email', username + '_' + Date.now() + '@lottery.com');
             formData.append('device_id', registerDeviceId);
+            formData.append('security_teacher', securityTeacher);
+            formData.append('security_hometown', securityHometown);
+            formData.append('security_friend', securityFriend);
             if (invite) {
                 formData.append('invite', invite);
             }

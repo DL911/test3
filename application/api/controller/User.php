@@ -15,7 +15,7 @@ use think\Validate;
  */
 class User extends Api
 {
-    protected $noNeedLogin = ['login', 'mobilelogin', 'register', 'resetpwd', 'changeemail', 'changemobile', 'third'];
+    protected $noNeedLogin = ['login', 'mobilelogin', 'register', 'resetpwd', 'resetBySecurity', 'changeemail', 'changemobile', 'third'];
     protected $noNeedRight = '*';
 
     public function _initialize()
@@ -154,11 +154,22 @@ class User extends Api
         $password = $this->request->post('password');
         $email = $this->request->post('email');
         $mobile = $this->request->post('mobile');
+        $securityTeacher = $this->normalizeSecurityAnswer($this->request->post('security_teacher', ''));
+        $securityHometown = $this->normalizeSecurityAnswer($this->request->post('security_hometown', ''));
+        $securityFriend = $this->normalizeSecurityAnswer($this->request->post('security_friend', ''));
         // POST优先，Cookie作为缓存/代理丢失表单字段时的兼容来源
         $deviceId = strtolower(trim($this->request->post('device_id', $this->request->cookie('lottery_register_device_id', ''))));
         $registerIp = $this->request->ip();
         if (!$username || !$password) {
             $this->error(__('Invalid parameters'));
+        }
+        if (mb_strlen($securityTeacher) < 2 || mb_strlen($securityHometown) < 2 || mb_strlen($securityFriend) < 2) {
+            $this->error('请完整填写三项安全问题答案，每项至少2个字符');
+        }
+        try {
+            Db::name('user_security_answer')->where('id', 0)->count();
+        } catch (\Exception $e) {
+            $this->error('安全问题功能尚未完成数据库升级，请联系管理员');
         }
         if (!preg_match('/^[a-f0-9]{32}$/', $deviceId)) {
             // 部分WebView/缓存代理可能不提交前端生成的字段；由服务端兜底生成并持久化
@@ -203,6 +214,17 @@ class User extends Api
         if ($ret) {
             $newUserId = $this->auth->id;
             try {
+                Db::name('user_security_answer')->insert([
+                    'user_id'=>$newUserId,
+                    'answer_teacher'=>password_hash($securityTeacher, PASSWORD_DEFAULT),
+                    'answer_hometown'=>password_hash($securityHometown, PASSWORD_DEFAULT),
+                    'answer_friend'=>password_hash($securityFriend, PASSWORD_DEFAULT),
+                    'createtime'=>time(), 'updatetime'=>time(),
+                ]);
+            } catch (\Exception $e) {
+                $this->error('安全问题保存失败，请联系管理员确认数据库升级已执行');
+            }
+            try {
                 Db::name('user_register_device')->insert([
                     'user_id' => $newUserId,
                     'device_hash' => $deviceHash,
@@ -235,6 +257,34 @@ class User extends Api
         } else {
             $this->error($this->auth->getError());
         }
+    }
+
+    public function resetBySecurity()
+    {
+        $account = trim($this->request->post('account', ''));
+        $newPassword = $this->request->post('newpassword', '');
+        $teacher = $this->normalizeSecurityAnswer($this->request->post('security_teacher', ''));
+        $hometown = $this->normalizeSecurityAnswer($this->request->post('security_hometown', ''));
+        $friend = $this->normalizeSecurityAnswer($this->request->post('security_friend', ''));
+        if ($account === '' || !preg_match('/^\S{6,30}$/', $newPassword)) $this->error('账号或新密码格式不正确');
+        $user = \app\common\model\User::where('username|mobile', $account)->find();
+        if (!$user) $this->error('账号不存在');
+        $answers = Db::name('user_security_answer')->where('user_id', $user->id)->find();
+        if (!$answers) $this->error('该账号尚未设置安全问题，请联系管理员处理');
+        $valid = password_verify($teacher, $answers['answer_teacher'])
+            && password_verify($hometown, $answers['answer_hometown'])
+            && password_verify($friend, $answers['answer_friend']);
+        if (!$valid) $this->error('安全问题答案不正确');
+        $this->auth->direct($user->id);
+        if (!$this->auth->changepwd($newPassword, '', true)) $this->error($this->auth->getError());
+        $this->success('密码重置成功');
+    }
+
+    private function normalizeSecurityAnswer($answer)
+    {
+        $answer = trim((string)$answer);
+        $answer = preg_replace('/\s+/u', '', $answer);
+        return mb_strtolower($answer, 'UTF-8');
     }
 
     /**

@@ -689,6 +689,9 @@
                         </div>
                         <div class="reg-error-msg">两次密码不一致</div>
                     </div>
+                    <div class="reg-field"><label>安全问题：您小学名称？</label><div class="reg-input-wrap" id="wrapSecurityTeacher"><i class="fa-solid fa-shield-halved"></i><input type="text" id="securityTeacher" placeholder="请牢记答案" maxlength="50"></div><div class="reg-error-msg">请填写至少2个字符</div></div>
+                    <div class="reg-field"><label>安全问题：您童年长期居住地名称？</label><div class="reg-input-wrap" id="wrapSecurityHometown"><i class="fa-solid fa-house"></i><input type="text" id="securityHometown" placeholder="街道、社区或村庄名称" maxlength="50"></div><div class="reg-error-msg">请填写至少2个字符</div></div>
+                    <div class="reg-field"><label>安全问题：您最难忘的一位朋友姓名？</label><div class="reg-input-wrap" id="wrapSecurityFriend"><i class="fa-solid fa-user-group"></i><input type="text" id="securityFriend" placeholder="请牢记答案" maxlength="50"></div><div class="reg-error-msg">请填写至少2个字符</div></div>
 
                     <input type="hidden" id="regInviteCode" value="">
 
@@ -918,6 +921,9 @@
                 var password = document.getElementById('regPassword').value;
                 var password2 = document.getElementById('regPassword2').value;
                 var invite = document.getElementById('regInviteCode').value.trim();
+                var securityTeacher = document.getElementById('securityTeacher').value.trim();
+                var securityHometown = document.getElementById('securityHometown').value.trim();
+                var securityFriend = document.getElementById('securityFriend').value.trim();
                 var valid = true;
 
                 // 验证用户名
@@ -940,6 +946,9 @@
                     document.getElementById('wrapPassword2').classList.add('error');
                     valid = false;
                 }
+                if (securityTeacher.length < 2) { document.getElementById('wrapSecurityTeacher').classList.add('error'); valid = false; }
+                if (securityHometown.length < 2) { document.getElementById('wrapSecurityHometown').classList.add('error'); valid = false; }
+                if (securityFriend.length < 2) { document.getElementById('wrapSecurityFriend').classList.add('error'); valid = false; }
 
                 if (!valid) return;
 
@@ -952,6 +961,9 @@
                 formData.append('mobile', mobile);
                 formData.append('password', password);
                 formData.append('email', mobile + '@lottery.com');
+                formData.append('security_teacher', securityTeacher);
+                formData.append('security_hometown', securityHometown);
+                formData.append('security_friend', securityFriend);
                 if (invite) {
                     formData.append('invite', invite);
                 }

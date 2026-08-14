@@ -77,6 +77,21 @@
         });
     }
 
+    var forgot=document.getElementById('forgotPassword'),mask=document.getElementById('securityMask');
+    if(forgot) forgot.addEventListener('click',function(){mask.classList.add('show')});
+    var close=document.getElementById('securityClose');if(close)close.addEventListener('click',function(){mask.classList.remove('show')});
+    if(mask)mask.addEventListener('click',function(e){if(e.target===mask)mask.classList.remove('show')});
+    var securitySubmit=document.getElementById('securitySubmit');
+    if(securitySubmit)securitySubmit.addEventListener('click',function(){
+        var account=document.getElementById('securityAccount').value.trim(),teacher=document.getElementById('resetTeacher').value.trim();
+        var hometown=document.getElementById('resetHometown').value.trim(),friend=document.getElementById('resetFriend').value.trim();
+        var pwd=document.getElementById('securityNewPassword').value,pwd2=document.getElementById('securityNewPassword2').value;
+        if(!account||teacher.length<2||hometown.length<2||friend.length<2){showToast('请完整填写账号和三项安全问题答案','error');return}
+        if(pwd.length<6||pwd.length>30){showToast('新密码长度需要6-30位','error');return}if(pwd!==pwd2){showToast('两次输入的密码不一致','error');return}
+        var fd=new FormData();fd.append('account',account);fd.append('security_teacher',teacher);fd.append('security_hometown',hometown);fd.append('security_friend',friend);fd.append('newpassword',pwd);
+        securitySubmit.disabled=true;fetch('/index.php/api/user/resetBySecurity',{method:'POST',body:fd}).then(function(r){return r.json()}).then(function(r){securitySubmit.disabled=false;if(r.code===1){showToast('密码重置成功，请使用新密码登录','success');mask.classList.remove('show');document.getElementById('loginAccount').value=account}else showToast(r.msg||'密码重置失败','error')}).catch(function(){securitySubmit.disabled=false;showToast('网络错误，请稍后重试','error')});
+    });
+
     // 输入时清除错误
     document.querySelectorAll('.auth-field-input').forEach(function(inp) {
         inp.addEventListener('input', function() {

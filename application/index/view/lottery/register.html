@@ -120,6 +120,11 @@
                         <div class="auth-field-error" id="regPwd2Error">两次密码不一致</div>
                     </div>
 
+                    <!-- 安全问题（用于找回密码） -->
+                    <div class="auth-field"><label class="auth-field-label">您小学名称？</label><div class="auth-field-input-wrap"><i class="fa-solid fa-shield-halved auth-field-icon"></i><input type="text" class="auth-field-input" id="securityTeacher" placeholder="请牢记答案" maxlength="50"></div></div>
+                    <div class="auth-field"><label class="auth-field-label">您童年长期居住地名称？</label><div class="auth-field-input-wrap"><i class="fa-solid fa-house auth-field-icon"></i><input type="text" class="auth-field-input" id="securityHometown" placeholder="街道、社区或村庄名称" maxlength="50"></div></div>
+                    <div class="auth-field"><label class="auth-field-label">您最难忘的一位朋友姓名？</label><div class="auth-field-input-wrap"><i class="fa-solid fa-user-group auth-field-icon"></i><input type="text" class="auth-field-input" id="securityFriend" placeholder="请牢记答案" maxlength="50"></div></div>
+
                     <!-- 邀请码 -->
                     <div class="auth-field">
                         <label class="auth-field-label">邀请码 <span style="color:rgba(255,255,255,0.4);font-weight:400;text-transform:none;">(选填)</span></label>
@@ -156,6 +161,6 @@
 </div>
 
 <div class="auth-toast" id="toastContainer"></div>
-<script src="/assets/lottery/js/auth_register.js?v=2026081401"></script>
+<script src="/assets/lottery/js/auth_register.js?v=2026081404"></script>
 </body>
 </html>

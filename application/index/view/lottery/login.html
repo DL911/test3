@@ -6,6 +6,7 @@
     <title>登录 - 好运北彩</title>
     <link rel="stylesheet" href="/assets/lottery/css/lottery_auth.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>.security-mask{display:none;position:fixed;inset:0;background:rgba(3,10,25,.75);z-index:9999;align-items:center;justify-content:center;padding:18px}.security-mask.show{display:flex}.security-dialog{width:440px;max-width:100%;max-height:90vh;overflow:auto;background:#fff;color:#333;border-radius:16px;padding:24px}.security-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.security-head h3{margin:0}.security-close{border:0;background:none;font-size:25px;cursor:pointer}.security-field{margin-bottom:12px}.security-field label{display:block;font-size:13px;color:#666;margin-bottom:5px}.security-field input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #ddd;border-radius:8px}.security-submit{width:100%;padding:12px;border:0;border-radius:8px;background:#168fea;color:#fff;font-weight:700;cursor:pointer}</style>
 </head>
 <body>
 
@@ -96,7 +97,7 @@
                         <label class="auth-remember">
                             <input type="checkbox" checked> 记住我
                         </label>
-                        <a href="javascript:;" class="auth-forgot">忘记密码？</a>
+                        <a href="javascript:;" class="auth-forgot" id="forgotPassword">忘记密码？</a>
                     </div>
 
                     <!-- 登录按钮 -->
@@ -117,6 +118,14 @@
 </div>
 
 <div class="auth-toast" id="toastContainer"></div>
-<script src="/assets/lottery/js/auth_login.js"></script>
+<div class="security-mask" id="securityMask"><div class="security-dialog"><div class="security-head"><h3>通过安全问题找回密码</h3><button class="security-close" id="securityClose" type="button">&times;</button></div>
+<div class="security-field"><label>用户名或手机号</label><input id="securityAccount" placeholder="请输入注册账号"></div>
+<div class="security-field"><label>您小学名称？</label><input id="resetTeacher" maxlength="50"></div>
+<div class="security-field"><label>您童年长期居住地名称？</label><input id="resetHometown" maxlength="50"></div>
+<div class="security-field"><label>您最难忘的一位朋友姓名？</label><input id="resetFriend" maxlength="50"></div>
+<div class="security-field"><label>新密码</label><input type="password" id="securityNewPassword" placeholder="6-30位新密码"></div>
+<div class="security-field"><label>确认新密码</label><input type="password" id="securityNewPassword2"></div>
+<button class="security-submit" id="securitySubmit" type="button">确认重置密码</button></div></div>
+<script src="/assets/lottery/js/auth_login.js?v=2026081403"></script>
 </body>
 </html>
