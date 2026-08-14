@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS `fa_lottery_kefu_channel` (
   `code` varchar(32) NOT NULL COMMENT '通道编码',
   `name` varchar(50) NOT NULL COMMENT '通道名称',
   `description` varchar(255) NOT NULL DEFAULT '' COMMENT '前端说明',
+  `announcement` varchar(500) NOT NULL DEFAULT '' COMMENT '滚动公告',
+  `image` varchar(255) NOT NULL DEFAULT '' COMMENT '宣传图片',
+  `intro` text COMMENT '玩法介绍',
   `icon` varchar(50) NOT NULL DEFAULT 'fa-comments' COMMENT 'FontAwesome图标',
   `color` varchar(20) NOT NULL DEFAULT '#18bc9c' COMMENT '展示颜色',
   `weigh` int(10) NOT NULL DEFAULT 0 COMMENT '排序',
@@ -30,5 +33,13 @@ CREATE TABLE IF NOT EXISTS `fa_lottery_kefu_channel` (
 
 INSERT IGNORE INTO `fa_lottery_kefu_channel` (`code`,`name`,`description`,`icon`,`color`,`weigh`,`status`,`createtime`,`updatetime`) VALUES
 ('general','综合咨询','其他业务及综合问题','fa-comments','#18bc9c',100,1,UNIX_TIMESTAMP(),UNIX_TIMESTAMP()),
-('finance','充值提现','充值、提现及到账问题','fa-credit-card','#f59e0b',90,1,UNIX_TIMESTAMP(),UNIX_TIMESTAMP()),
-('lottery','投注咨询','投注、开奖及规则问题','fa-ticket','#3b82f6',80,1,UNIX_TIMESTAMP(),UNIX_TIMESTAMP());
+('wanli','万丽百家乐开户窗口','万丽百家乐开户咨询','fa-gem','#ef4444',90,1,UNIX_TIMESTAMP(),UNIX_TIMESTAMP()),
+('dongfang','东方汇百家乐','东方汇百家乐开户咨询','fa-chess-queen','#8b5cf6',80,1,UNIX_TIMESTAMP(),UNIX_TIMESTAMP()),
+('crown','皇冠足球开户窗口','皇冠足球开户咨询','fa-futbol','#0ea5e9',70,1,UNIX_TIMESTAMP(),UNIX_TIMESTAMP());
+
+CREATE TABLE IF NOT EXISTS `fa_lottery_kefu_user_remark` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT, `user_id` int(10) unsigned NOT NULL,
+  `channel` varchar(32) NOT NULL DEFAULT 'general', `remark` varchar(100) NOT NULL DEFAULT '',
+  `admin_id` int(10) unsigned NOT NULL DEFAULT 0, `createtime` bigint(16) DEFAULT NULL, `updatetime` bigint(16) DEFAULT NULL,
+  PRIMARY KEY (`id`), UNIQUE KEY `uk_user_channel` (`user_id`,`channel`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='客服用户备注';

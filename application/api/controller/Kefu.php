@@ -8,7 +8,7 @@ use app\common\library\KefuChannel;
 class Kefu extends Api
 {
     // 只有获取未读数接口不需要强制验证(手动判断登录)，其他接口均需要登录
-    protected $noNeedLogin = ['unreadCount', 'channels'];
+    protected $noNeedLogin = ['unreadCount', 'channels', 'channelDetail'];
     protected $noNeedRight = ['*'];
 
     /**
@@ -135,6 +135,13 @@ class Kefu extends Api
     public function channels()
     {
         $this->success('', ['list' => KefuChannel::all(true)]);
+    }
+
+    public function channelDetail()
+    {
+        $code = KefuChannel::normalize($this->request->get('channel', KefuChannel::DEFAULT_CODE));
+        $map = KefuChannel::map(true);
+        $this->success('', isset($map[$code]) ? $map[$code] : $map[KefuChannel::DEFAULT_CODE]);
     }
 
     /**

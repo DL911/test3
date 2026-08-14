@@ -12,8 +12,9 @@ class KefuChannel
     {
         return [
             ['code' => 'general', 'name' => '综合咨询', 'description' => '其他业务及综合问题', 'icon' => 'fa-comments', 'color' => '#18bc9c', 'weigh' => 100, 'status' => 1],
-            ['code' => 'finance', 'name' => '充值提现', 'description' => '充值、提现及到账问题', 'icon' => 'fa-credit-card', 'color' => '#f59e0b', 'weigh' => 90, 'status' => 1],
-            ['code' => 'lottery', 'name' => '投注咨询', 'description' => '投注、开奖及规则问题', 'icon' => 'fa-ticket', 'color' => '#3b82f6', 'weigh' => 80, 'status' => 1],
+            ['code' => 'wanli', 'name' => '万丽百家乐开户窗口', 'description' => '万丽百家乐开户咨询', 'icon' => 'fa-gem', 'color' => '#ef4444', 'weigh' => 90, 'status' => 1],
+            ['code' => 'dongfang', 'name' => '东方汇百家乐', 'description' => '东方汇百家乐开户咨询', 'icon' => 'fa-chess-queen', 'color' => '#8b5cf6', 'weigh' => 80, 'status' => 1],
+            ['code' => 'crown', 'name' => '皇冠足球开户窗口', 'description' => '皇冠足球开户咨询', 'icon' => 'fa-futbol', 'color' => '#0ea5e9', 'weigh' => 70, 'status' => 1],
         ];
     }
 

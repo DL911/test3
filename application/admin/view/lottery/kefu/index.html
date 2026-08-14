@@ -87,6 +87,7 @@
 .user-info { flex: 1; overflow: hidden; }
 .user-name { font-weight: bold; font-size: 14px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
 .user-time { font-size: 12px; color: #999; margin-top: 2px; }
+.user-remark { font-size:11px;color:#e67e22;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 .user-item:hover, .user-item.active { background: #e6f7ff; }
 .user-unread {
     background: #ff4d4f; color: white; font-size: 12px; border-radius: 10px;
@@ -206,10 +207,12 @@
                     res.data.forEach(function(u) {
                         var activeCls = (u.id == currentUserId) ? 'active' : '';
                         var unreadHtml = u.unread > 0 ? '<span class="user-unread">'+u.unread+'</span>' : '';
-                        html += '<div class="user-item '+activeCls+'" data-id="'+u.id+'" data-name="'+(u.nickname||u.username)+'">'
+                        var showName = u.service_remark ? u.service_remark : (u.nickname||u.username);
+                        html += '<div class="user-item '+activeCls+'" data-id="'+u.id+'" data-name="'+showName+'" data-remark="'+(u.service_remark||'')+'">'
                             + '<div class="avatar"><i class="fa fa-user"></i></div>'
                             + '<div class="user-info">'
                             + '<div class="user-name">'+(u.nickname||u.username)+' (ID:'+u.id+')</div>'
+                            + '<div class="user-remark">'+(u.service_remark ? '备注：'+u.service_remark : '点击会话后可设置备注')+'</div>'
                             + '<div class="user-time">'+formatTime(u.last_time)+'</div>'
                             + '</div>'
                             + unreadHtml
@@ -225,7 +228,12 @@
                         $("#chatArea").empty();
                         $("#chatPlaceholder").remove();
                         var cname = channelMap[currentChannel] ? channelMap[currentChannel].name : currentChannel;
-                        $("#chatHeader").html('<i class="fa fa-user" style="margin-right:8px;color:#1890ff;"></i> [' + cname + '] 正在与 ' + uname + ' 交谈');
+                        $("#chatHeader").html('<i class="fa fa-user" style="margin-right:8px;color:#1890ff;"></i> [' + cname + '] 正在与 ' + uname + ' 交谈 <button class="btn btn-xs btn-default" id="editRemark" style="margin-left:auto"><i class="fa fa-pencil"></i> 设置备注</button>');
+                        $('#editRemark').on('click', function(){
+                            layer.prompt({title:'设置当前咨询用户备注',value:$('.user-item.active').data('remark')||''},function(value,idx){
+                                $.post(kefuUrl('save_user_remark'),{user_id:currentUserId,channel:currentChannel,remark:value},function(r){if(r.code==1){layer.close(idx);layer.msg('备注已保存');loadUserList();}else layer.alert(r.msg||'保存失败');});
+                            });
+                        });
                         $("#inputArea").show();
                         $(".user-item").removeClass('active');
                         $(this).addClass('active');
@@ -321,9 +329,9 @@
 
     function showChannelManager() {
         var rows='';
-        Object.keys(channelMap).forEach(function(code){var c=channelMap[code]; rows += '<tr><td>'+c.code+'</td><td><input class="form-control input-sm c-name" value="'+c.name+'"></td><td><input class="form-control input-sm c-desc" value="'+(c.description||'')+'"></td><td><input class="form-control input-sm c-weigh" type="number" value="'+c.weigh+'"></td><td><input type="checkbox" class="c-status" '+(parseInt(c.status)===1?'checked':'')+'></td><td><button class="btn btn-primary btn-xs save-channel" data-id="'+c.id+'" data-code="'+c.code+'">保存</button></td></tr>';});
-        layer.open({type:1,title:'客服通道管理',area:['760px','500px'],content:'<div style="padding:15px"><table class="table table-bordered"><thead><tr><th>编码</th><th>名称</th><th>说明</th><th>排序</th><th>启用</th><th></th></tr></thead><tbody>'+rows+'</tbody></table><hr><h5>新增通道</h5><div class="form-inline"><input id="newCode" class="form-control" placeholder="英文编码"><input id="newName" class="form-control" placeholder="显示名称"><button id="addChannel" class="btn btn-success">新增</button></div></div>',success:function(box){
-            box.find('.save-channel').click(function(){var tr=$(this).closest('tr'); saveChannel({id:$(this).data('id'),code:$(this).data('code'),name:tr.find('.c-name').val(),description:tr.find('.c-desc').val(),weigh:tr.find('.c-weigh').val(),status:tr.find('.c-status').prop('checked')?1:0});});
+        Object.keys(channelMap).forEach(function(code){var c=channelMap[code]; rows += '<div class="panel panel-default" style="padding:12px;margin-bottom:10px"><div class="row"><div class="col-sm-2"><b>'+c.code+'</b><input class="form-control input-sm c-name" value="'+c.name+'"></div><div class="col-sm-3">滚动公告<input class="form-control input-sm c-ann" value="'+(c.announcement||'')+'"></div><div class="col-sm-3">宣传图片URL<input class="form-control input-sm c-image" value="'+(c.image||'')+'"></div><div class="col-sm-3">玩法介绍<textarea class="form-control input-sm c-intro">'+(c.intro||'')+'</textarea></div><div class="col-sm-1"><label><input type="checkbox" class="c-status" '+(parseInt(c.status)===1?'checked':'')+'>启用</label><button class="btn btn-primary btn-xs save-channel" data-id="'+c.id+'" data-code="'+c.code+'">保存</button></div></div></div>';});
+        layer.open({type:1,title:'客服通道、公告和展示内容管理',area:['1050px','650px'],content:'<div style="padding:15px">'+rows+'<hr><h5>新增通道</h5><div class="form-inline"><input id="newCode" class="form-control" placeholder="英文编码"><input id="newName" class="form-control" placeholder="显示名称"><button id="addChannel" class="btn btn-success">新增</button></div></div>',success:function(box){
+            box.find('.save-channel').click(function(){var tr=$(this).closest('.panel'); saveChannel({id:$(this).data('id'),code:$(this).data('code'),name:tr.find('.c-name').val(),announcement:tr.find('.c-ann').val(),image:tr.find('.c-image').val(),intro:tr.find('.c-intro').val(),status:tr.find('.c-status').prop('checked')?1:0});});
             box.find('#addChannel').click(function(){saveChannel({code:box.find('#newCode').val(),name:box.find('#newName').val(),status:1});});
         }});
     }

@@ -39,9 +39,6 @@
             font-weight: 600;
             margin: 0;
         }
-        .channel-select { flex-shrink:0; display:flex; gap:8px; padding:8px 10px; background:#fff; overflow-x:auto; }
-        .channel-select a { white-space:nowrap; padding:6px 12px; border:1px solid #ddd; border-radius:16px; color:#666; text-decoration:none; font-size:13px; }
-        .channel-select a.active { background:#18bc9c; color:#fff; border-color:#18bc9c; }
         .chat-container {
             flex: 1;
             overflow-y: auto;
@@ -215,8 +212,6 @@
         <a href="javascript:history.back();" class="back"><i class="fa-solid fa-angle-left"></i></a>
         <h1 id="channelTitle">在线客服</h1>
     </div>
-    <div class="channel-select" id="channelSelect"></div>
-
     <!-- 聊天内容区 -->
     <div class="chat-container" id="chatContainer">
         <div class="system-msg">官方人工客服为您服务</div>
@@ -442,9 +437,6 @@
 
     // 初始化
     document.addEventListener('DOMContentLoaded', () => {
-        fetch('/index.php/api/kefu/channels').then(r=>r.json()).then(res=>{
-            let html=''; (res.data&&res.data.list||[]).forEach(c=>{if(c.code===currentChannel) document.getElementById('channelTitle').textContent=c.name; html+='<a class="'+(c.code===currentChannel?'active':'')+'" href="?channel='+encodeURIComponent(c.code)+'">'+c.name+'</a>';}); document.getElementById('channelSelect').innerHTML=html;
-        });
         loadHistory();
     });
 

@@ -1,191 +1,30 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>在线客服 - 好运北彩</title>
-    <link rel="stylesheet" href="/assets/lottery/css/lottery.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body.lottery-page { background:#f0f2f5; }
-        .pc-page { max-width:720px; margin:80px auto 40px; padding:0 24px; }
-        .pc-back { display:inline-flex; align-items:center; gap:8px; color:#0d6efd; text-decoration:none; font-size:13px; font-weight:600; margin-bottom:18px; padding:8px 18px; border-radius:20px; background:#fff; border:1px solid #d0e0f8; box-shadow:0 1px 3px rgba(0,0,0,0.04); transition:all 0.2s; }
-        .pc-back:hover { background:#e8f0fe; border-color:#0d6efd; transform:translateX(-2px); }
-
-        .chat-container { background:#fff; border-radius:14px; overflow:hidden; display:flex; flex-direction:column; height:calc(100vh - 180px); min-height:400px; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
-        .chat-header { padding:16px 24px; background:linear-gradient(135deg,#1a3a6c,#0d6efd); display:flex; align-items:center; gap:12px; }
-        .chat-header-avatar { width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; }
-        .chat-header-info h4 { color:#fff; font-size:16px; margin:0; }
-        .chat-header-info small { color:rgba(255,255,255,0.7); font-size:12px; }
-
-        .chat-messages { flex:1; overflow-y:auto; padding:20px 24px; display:flex; flex-direction:column; gap:16px; background:#f8f9fa; }
-        .chat-msg { display:flex; gap:12px; max-width:70%; }
-        .chat-msg.user { align-self:flex-end; flex-direction:row-reverse; }
-        .chat-msg-avatar { width:36px; height:36px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff; }
-        .chat-msg.admin .chat-msg-avatar { background:linear-gradient(135deg,#1a3a6c,#0d6efd); }
-        .chat-msg.user .chat-msg-avatar { background:linear-gradient(135deg,#34d399,#059669); }
-        .chat-msg-bubble { padding:12px 16px; border-radius:14px; font-size:14px; line-height:1.6; word-break:break-word; }
-        .chat-msg.admin .chat-msg-bubble { background:#fff; color:#333; border-bottom-left-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
-        .chat-msg.user .chat-msg-bubble { background:linear-gradient(135deg,#1a3a6c,#0d6efd); color:#fff; border-bottom-right-radius:4px; }
-        .chat-msg-time { font-size:11px; color:#999; margin-top:4px; }
-        .chat-msg.user .chat-msg-time { text-align:right; }
-
-        .chat-input-area { padding:16px 24px; background:#fff; border-top:1px solid #e0e0e0; display:flex; gap:12px; align-items:flex-end; }
-        .chat-input-area textarea { flex:1; padding:10px 14px; border-radius:10px; border:1px solid #ddd; background:#f8f9fa; color:#333; font-size:14px; resize:none; height:44px; max-height:100px; font-family:inherit; }
-        .chat-input-area textarea:focus { outline:none; border-color:#0d6efd; }
-        .chat-send-btn { padding:10px 24px; border:none; border-radius:10px; background:linear-gradient(135deg,#1a3a6c,#0d6efd); color:#fff; font-weight:700; cursor:pointer; white-space:nowrap; font-size:14px; }
-        .chat-send-btn:hover { box-shadow:0 4px 14px rgba(13,110,253,0.3); }
-        .chat-img-btn { padding:10px; border:none; border-radius:10px; background:#f8f9fa; border:1px solid #ddd; color:#888; cursor:pointer; font-size:16px; }
-        .chat-img-btn:hover { color:#0d6efd; border-color:#0d6efd; }
-        .chat-empty { text-align:center; color:#999; padding:60px 0; }
-        .chat-msg-avatar-wrap { display:flex; flex-direction:column; align-items:center; flex-shrink:0; gap:3px; }
-        .chat-msg-avatar-name { font-size:10px; color:#999; white-space:nowrap; max-width:56px; overflow:hidden; text-overflow:ellipsis; }
-        .chat-msg.admin .chat-msg-avatar-name { color:#0d6efd; font-weight:600; }
-        .channel-select { display:flex; gap:10px; margin-bottom:14px; }
-        .channel-select a { padding:8px 16px; background:#fff; border:1px solid #ddd; border-radius:8px; color:#555; text-decoration:none; }
-        .channel-select a.active { background:#0d6efd; color:#fff; border-color:#0d6efd; }
-    </style>
-</head>
-<body class="lottery-page">
-    {include file="lottery/pc_header" /}
-
-    <div class="pc-page">
-        <a href="/index.php/index/lottery/user" class="pc-back"><i class="fa-solid fa-arrow-left"></i> 返回个人中心</a>
-        <div class="channel-select" id="channelSelect"></div>
-
-        <div class="chat-container">
-            <div class="chat-header">
-                <div class="chat-header-avatar"><i class="fa-solid fa-headset"></i></div>
-                <div class="chat-header-info">
-                    <h4 id="channelTitle">在线客服</h4>
-                    <small>通常5分钟内回复</small>
-                </div>
-            </div>
-
-            <div class="chat-messages" id="chatMessages">
-                <div class="chat-empty"><i class="fa-solid fa-comments" style="font-size:40px; margin-bottom:12px;"></i><div>发送消息开始对话</div></div>
-            </div>
-
-            <div class="chat-input-area">
-                <button class="chat-img-btn" onclick="document.getElementById('chatImageFile').click()"><i class="fa-solid fa-image"></i></button>
-                <input type="file" id="chatImageFile" accept="image/*" style="display:none;" onchange="sendImage(this)">
-                <textarea id="chatInput" placeholder="输入消息..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
-                <button class="chat-send-btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i> 发送</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="/assets/lottery/js/auth.js"></script>
-    <script>
-    var lastMsgId = 0, pollTimer = null;
-    var currentChannel = new URLSearchParams(location.search).get('channel') || 'general';
-    var channelQuery = 'channel=' + encodeURIComponent(currentChannel);
-
-    function renderMessages(list) {
-        if(!list || !list.length) return;
-        var container = document.getElementById('chatMessages');
-        // 清空空状态
-        var empty = container.querySelector('.chat-empty');
-        if(empty) empty.remove();
-
-        list.forEach(function(msg) {
-            if(msg.id <= lastMsgId) return;
-            lastMsgId = msg.id;
-
-            var div = document.createElement('div');
-            div.className = 'chat-msg ' + (msg.sender_type === 'user' ? 'user' : 'admin');
-
-            var icon = msg.sender_type === 'user' ? 'fa-user' : 'fa-headset';
-            var time = msg.createtime ? new Date(msg.createtime * 1000).toLocaleString('zh-CN', {hour:'2-digit',minute:'2-digit'}) : '';
-
-            var content = msg.content;
-            // 图片消息
-            if(content.match(/\.(jpg|jpeg|png|gif|webp)$/i) || content.indexOf('/uploads/kefu/') > -1) {
-                content = '<img src="' + content + '" style="max-width:240px; border-radius:8px; cursor:pointer;" onclick="window.open(this.src)">';
-            }
-
-            var avatarName = msg.sender_type === 'user' ? '我' : '好运北彩';
-
-            div.innerHTML = '<div class="chat-msg-avatar-wrap"><div class="chat-msg-avatar"><i class="fa-solid ' + icon + '"></i></div><div class="chat-msg-avatar-name">' + avatarName + '</div></div>'
-                + '<div><div class="chat-msg-bubble">' + content + '</div><div class="chat-msg-time">' + time + '</div></div>';
-
-            container.appendChild(div);
-        });
-
-        container.scrollTop = container.scrollHeight;
-    }
-
-    function loadHistory() {
-        LotteryAuth.request('/index.php/api/kefu/history?' + channelQuery, {method:'GET'}).then(function(res) {
-            if(res.code === 1) {
-                var list = res.data && res.data.list || [];
-                if(list.length) {
-                    document.getElementById('chatMessages').innerHTML = '';
-                    renderMessages(list);
-                }
-            }
-        });
-    }
-
-    function sendMessage() {
-        var input = document.getElementById('chatInput');
-        var text = input.value.trim();
-        if(!text) return;
-        if(!LotteryAuth.isLoggedIn()) { alert('请先登录'); return; }
-
-        input.value = '';
-        var fd = new FormData();
-        fd.append('content', text);
-        fd.append('channel', currentChannel);
-
-        LotteryAuth.request('/index.php/api/kefu/send', {method:'POST', body:fd}).then(function(res) {
-            if(res.code === 1) renderMessages([res.data]);
-            else alert(res.msg || '发送失败');
-        });
-    }
-
-    function sendImage(input) {
-        if(!input.files || !input.files[0]) return;
-        if(!LotteryAuth.isLoggedIn()) { alert('请先登录'); return; }
-
-        var fd = new FormData();
-        fd.append('file', input.files[0]);
-
-        fetch('/index.php/api/kefu/uploadImage', {
-            method:'POST', headers:{'token': LotteryAuth.getToken()}, body:fd
-        }).then(function(r){return r.json()}).then(function(res) {
-            if(res.code === 1 && res.data && res.data.url) {
-                var fd2 = new FormData();
-                fd2.append('content', res.data.url);
-                fd2.append('channel', currentChannel);
-                LotteryAuth.request('/index.php/api/kefu/send', {method:'POST', body:fd2}).then(function(r2) {
-                    if(r2.code === 1) renderMessages([r2.data]);
-                });
-            } else { alert(res.msg || '上传失败'); }
-        });
-        input.value = '';
-    }
-
-    function startPoll() {
-        pollTimer = setInterval(function() {
-            LotteryAuth.request('/index.php/api/kefu/poll?last_id=' + lastMsgId + '&' + channelQuery, {method:'GET'}).then(function(res) {
-                if(res.code === 1 && res.data && res.data.list) {
-                    renderMessages(res.data.list);
-                }
-            });
-        }, 5000);
-    }
-
-    document.addEventListener('DOMContentLoaded', function(){
-        fetch('/index.php/api/kefu/channels').then(function(r){return r.json()}).then(function(res){
-            var list=res.data&&res.data.list||[], html=''; list.forEach(function(c){if(c.code===currentChannel) document.getElementById('channelTitle').textContent=c.name; html+='<a class="'+(c.code===currentChannel?'active':'')+'" href="?channel='+encodeURIComponent(c.code)+'"><i class="fa-solid '+c.icon+'"></i> '+c.name+'</a>';}); document.getElementById('channelSelect').innerHTML=html;
-        });
-        LotteryAuth.initHeader && LotteryAuth.initHeader();
-        if(LotteryAuth.isLoggedIn()) {
-            loadHistory();
-            startPoll();
-        }
-    });
-    </script>
-</body>
-</html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>在线客服 - 好运北彩</title>
+<link rel="stylesheet" href="/assets/lottery/css/lottery.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body.lottery-page{background:#f0f2f5}.service-layout{display:flex;padding-top:72px;min-height:100vh}.service-side{width:230px;background:#fff;border-right:1px solid #e7ebf0;padding:22px 0;flex-shrink:0}.service-side-title{padding:0 24px 14px;color:#999;font-size:13px;font-weight:700}.service-link{display:flex;align-items:center;gap:11px;padding:14px 22px;color:#555;text-decoration:none;border-left:3px solid transparent;font-size:14px}.service-link:hover{background:#f4f9ff}.service-link.active{background:#e8f4ff;color:#168fea;border-left-color:#168fea;font-weight:700}.service-main{flex:1;max-width:1120px;padding:24px;margin:0 auto}.notice{display:flex;align-items:center;background:#fff;border-radius:12px;padding:13px 18px;margin-bottom:16px;box-shadow:0 2px 10px rgba(20,40,80,.05);overflow:hidden}.notice i{color:#ff4d4f;margin-right:12px}.notice-track{overflow:hidden;white-space:nowrap;flex:1}.notice-text{display:inline-block;padding-left:100%;animation:noticeMove 18s linear infinite;color:#f04444}@keyframes noticeMove{to{transform:translateX(-100%)}}
+.general-service .service-side,.general-service .notice,.general-service .intro-card{display:none}.general-service .service-main{max-width:760px;padding-top:30px}.general-service .chat-box{height:calc(100vh - 145px);min-height:480px}
+.service-content{display:flex;flex-direction:column;gap:18px}.intro-card,.chat-box{background:#fff;border-radius:14px;box-shadow:0 2px 10px rgba(20,40,80,.06);overflow:hidden}.intro-image{width:100%;max-height:320px;object-fit:cover;display:none}.intro-body{padding:22px;min-height:130px}.intro-body h2{font-size:21px;margin:0 0 12px}.intro-text{color:#666;line-height:1.9;white-space:pre-wrap}.chat-box{height:560px;display:flex;flex-direction:column}.chat-head{padding:15px 18px;background:linear-gradient(135deg,#1a3a6c,#0d6efd);color:#fff}.chat-head h3{margin:0 0 3px;font-size:16px}.chat-head small{opacity:.75}.chat-messages{flex:1;overflow:auto;padding:16px;background:#f7f9fc}.chat-msg{display:flex;gap:9px;margin-bottom:14px;max-width:86%}.chat-msg.user{margin-left:auto;flex-direction:row-reverse}.avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#168fea;color:#fff;flex-shrink:0}.chat-msg.user .avatar{background:#31b877}.bubble{padding:9px 12px;border-radius:10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08);word-break:break-word}.chat-msg.user .bubble{background:#168fea;color:#fff}.msg-time{font-size:10px;color:#aaa;margin-top:3px}.chat-input{display:flex;gap:8px;padding:12px;border-top:1px solid #eee}.chat-input textarea{flex:1;height:45px;resize:none;border:1px solid #ddd;border-radius:8px;padding:10px}.chat-input button{border:0;border-radius:8px;padding:0 16px;cursor:pointer}.send{background:#168fea;color:#fff}.empty{text-align:center;color:#aaa;padding-top:100px}@media(max-width:900px){.service-side{display:none}.service-main{padding:14px}.chat-box{height:560px}}
+</style></head><body class="lottery-page">
+{include file="lottery/pc_header" /}
+<div class="service-layout"><aside class="service-side"><div class="service-side-title">客服咨询</div>
+<a class="service-link" data-channel="wanli" href="?channel=wanli"><i class="fa-solid fa-gem"></i>万丽百家乐开户窗口</a>
+<a class="service-link" data-channel="dongfang" href="?channel=dongfang"><i class="fa-solid fa-chess-queen"></i>东方汇百家乐</a>
+<a class="service-link" data-channel="crown" href="?channel=crown"><i class="fa-solid fa-futbol"></i>皇冠足球开户窗口</a>
+<a class="service-link" data-channel="general" href="?channel=general"><i class="fa-solid fa-headset"></i>原在线客服</a></aside>
+<main class="service-main"><div class="notice"><i class="fa-solid fa-bullhorn"></i><div class="notice-track"><span class="notice-text" id="announcement">欢迎使用在线客服</span></div></div>
+<div class="service-content"><section class="intro-card"><img id="introImage" class="intro-image" alt="业务介绍"><div class="intro-body"><h2 id="channelTitle">在线客服</h2><div class="intro-text" id="introText">客服正在为您服务</div></div></section>
+<section class="chat-box"><div class="chat-head"><h3 id="chatTitle">在线客服</h3><small>通常5分钟内回复</small></div><div class="chat-messages" id="chatMessages"><div class="empty">发送消息开始对话</div></div>
+<div class="chat-input"><button onclick="document.getElementById('chatImageFile').click()"><i class="fa-solid fa-image"></i></button><input type="file" id="chatImageFile" accept="image/*" hidden onchange="sendImage(this)"><textarea id="chatInput" placeholder="输入消息..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"></textarea><button class="send" onclick="sendMessage()">发送</button></div></section></div></main></div>
+<script src="/assets/lottery/js/auth.js"></script><script>
+var currentChannel=new URLSearchParams(location.search).get('channel')||'general',lastMsgId=0;
+function esc(s){var d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML}
+function renderMessages(list){if(!list||!list.length)return;var box=document.getElementById('chatMessages'),empty=box.querySelector('.empty');if(empty)empty.remove();list.forEach(function(m){if(+m.id<=lastMsgId)return;lastMsgId=+m.id;var row=document.createElement('div');row.className='chat-msg '+(m.sender_type==='user'?'user':'admin');var content=esc(m.content);var im=m.content.match(/^\[img\](.*?)\[\/img\]$/)||m.content.match(/^(\/uploads\/kefu\/.*\.(?:jpg|jpeg|png|gif|webp))$/i);if(im)content='<img src="'+esc(im[1])+'" style="max-width:220px;border-radius:7px" onclick="window.open(this.src)">';row.innerHTML='<div class="avatar"><i class="fa-solid '+(m.sender_type==='user'?'fa-user':'fa-headset')+'"></i></div><div><div class="bubble">'+content+'</div><div class="msg-time">'+new Date(m.createtime*1000).toLocaleString()+'</div></div>';box.appendChild(row)});box.scrollTop=box.scrollHeight}
+function loadHistory(){LotteryAuth.request('/index.php/api/kefu/history?channel='+encodeURIComponent(currentChannel),{method:'GET'}).then(function(r){if(r.code===1){document.getElementById('chatMessages').innerHTML='';renderMessages(r.data.list)}})}
+function sendMessage(){var i=document.getElementById('chatInput'),v=i.value.trim();if(!v)return;if(!LotteryAuth.isLoggedIn()){alert('请先登录');return}var f=new FormData();f.append('content',v);f.append('channel',currentChannel);i.value='';LotteryAuth.request('/index.php/api/kefu/send',{method:'POST',body:f}).then(function(r){if(r.code===1)renderMessages([r.data]);else alert(r.msg||'发送失败')})}
+function sendImage(i){if(!i.files[0])return;var f=new FormData();f.append('file',i.files[0]);fetch('/index.php/api/kefu/uploadImage',{method:'POST',headers:{token:LotteryAuth.getToken()},body:f}).then(function(r){return r.json()}).then(function(r){if(r.code!==1)return alert(r.msg||'上传失败');var m=new FormData();m.append('content','[img]'+r.data.url+'[/img]');m.append('channel',currentChannel);return LotteryAuth.request('/index.php/api/kefu/send',{method:'POST',body:m})}).then(function(r){if(r&&r.code===1)renderMessages([r.data])});i.value=''}
+document.addEventListener('DOMContentLoaded',function(){if(currentChannel==='general')document.body.classList.add('general-service');document.querySelectorAll('.service-link').forEach(function(a){if(a.dataset.channel===currentChannel)a.classList.add('active')});fetch('/index.php/api/kefu/channelDetail?channel='+encodeURIComponent(currentChannel)).then(function(r){return r.json()}).then(function(r){var d=r.data||{};document.getElementById('channelTitle').textContent=d.name||'在线客服';document.getElementById('chatTitle').textContent=currentChannel==='general'?'在线客服':(d.name||'在线客服');document.getElementById('announcement').textContent=d.announcement||d.description||'欢迎使用在线客服';document.getElementById('introText').textContent=d.intro||d.description||'';if(d.image){var im=document.getElementById('introImage');im.src=d.image;im.style.display='block'}});LotteryAuth.initHeader&&LotteryAuth.initHeader();if(LotteryAuth.isLoggedIn()){loadHistory();setInterval(function(){LotteryAuth.request('/index.php/api/kefu/poll?last_id='+lastMsgId+'&channel='+encodeURIComponent(currentChannel),{method:'GET'}).then(function(r){if(r.code===1)renderMessages(r.data.list)})},5000)}});
+</script></body></html>

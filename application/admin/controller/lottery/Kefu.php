@@ -13,7 +13,7 @@ use app\common\library\KefuChannel;
  */
 class Kefu extends Backend
 {
-    protected $noNeedRight = ['get_user_list', 'get_chat_history', 'send_message', 'global_status', 'upload_image', 'channels', 'save_channel', 'delete_channel'];
+    protected $noNeedRight = ['get_user_list', 'get_chat_history', 'send_message', 'global_status', 'upload_image', 'channels', 'save_channel', 'delete_channel', 'save_user_remark'];
     /**
      * 客服工作台
      */
@@ -42,6 +42,8 @@ class Kefu extends Backend
             ->select();
 
         foreach($list as &$v) {
+            try { $v['service_remark'] = (string)Db::name('lottery_kefu_user_remark')->where(['user_id'=>$v['id'],'channel'=>$channel])->value('remark'); }
+            catch (\Exception $e) { $v['service_remark'] = ''; }
             $v['unread'] = Db::name('lottery_kefu_message')
                 ->where('user_id', $v['id'])
                 ->where('channel', $channel)
@@ -146,7 +148,7 @@ class Kefu extends Backend
         $code = strtolower(trim($this->request->post('code', '')));
         $name = trim($this->request->post('name', ''));
         if (!preg_match('/^[a-z][a-z0-9_]{1,31}$/', $code) || $name === '') $this->error('编码或名称格式不正确');
-        $data = ['code'=>$code, 'name'=>$name, 'description'=>trim($this->request->post('description','')), 'icon'=>trim($this->request->post('icon','fa-comments')), 'color'=>trim($this->request->post('color','#18bc9c')), 'weigh'=>$this->request->post('weigh/d',0), 'status'=>$this->request->post('status/d',1), 'updatetime'=>time()];
+        $data = ['code'=>$code, 'name'=>$name, 'description'=>trim($this->request->post('description','')), 'announcement'=>trim($this->request->post('announcement','')), 'image'=>trim($this->request->post('image','')), 'intro'=>$this->request->post('intro',''), 'icon'=>trim($this->request->post('icon','fa-comments')), 'color'=>trim($this->request->post('color','#18bc9c')), 'weigh'=>$this->request->post('weigh/d',0), 'status'=>$this->request->post('status/d',1), 'updatetime'=>time()];
         if ($id) {
             $existing = Db::name('lottery_kefu_channel')->where('id',$id)->find();
             if (!$existing) $this->error('通道不存在');
@@ -155,6 +157,19 @@ class Kefu extends Backend
         }
         else { $data['createtime']=time(); Db::name('lottery_kefu_channel')->insert($data); }
         $this->success('保存成功');
+    }
+
+    public function save_user_remark()
+    {
+        $userId = $this->request->post('user_id/d', 0);
+        $channel = KefuChannel::normalize($this->request->post('channel', KefuChannel::DEFAULT_CODE), false);
+        $remark = mb_substr(trim($this->request->post('remark', '')), 0, 100);
+        if (!$userId) $this->error('用户参数错误');
+        $row = Db::name('lottery_kefu_user_remark')->where(['user_id'=>$userId,'channel'=>$channel])->find();
+        $data = ['remark'=>$remark,'admin_id'=>$this->auth->id,'updatetime'=>time()];
+        if ($row) Db::name('lottery_kefu_user_remark')->where('id',$row['id'])->update($data);
+        else { $data['user_id']=$userId; $data['channel']=$channel; $data['createtime']=time(); Db::name('lottery_kefu_user_remark')->insert($data); }
+        $this->success('备注已保存');
     }
 
     public function delete_channel()
