@@ -1,0 +1,18 @@
+<div class="panel panel-default panel-intro">
+    <div class="panel-heading"><h3 class="panel-title"><i class="fa fa-cogs"></i> 客服通道管理</h3></div>
+    <div class="panel-body">
+        <div class="alert alert-info">配置各客服入口的名称、滚动公告、宣传图片和玩法介绍。通道编码创建后不可修改。</div>
+        <div id="channelList"><div class="text-center text-muted">加载中...</div></div>
+        <hr>
+        <div class="form-inline"><input id="newCode" class="form-control" placeholder="英文编码"><input id="newName" class="form-control" placeholder="显示名称"><button id="addChannel" class="btn btn-success"><i class="fa fa-plus"></i> 新增通道</button></div>
+    </div>
+</div>
+<script>
+(function wait(){if(typeof jQuery==='undefined'){setTimeout(wait,100);return}var $=jQuery,Dialog=window.Layer||window.layer||(parent&&(parent.Layer||parent.layer));
+var entry=(function(){var m=location.pathname.match(/(\/[^\/]*\.php)/i);return m?m[1]:'/index.php'})();
+function url(a){return entry+'/lottery/kefu/'+a} function esc(s){return $('<div>').text(s==null?'':s).html()}
+function load(){ $.get(url('channels'),function(r){if(r.code!=1)return;var h='';(r.data||[]).forEach(function(c){h+='<div class="panel panel-default channel-row" style="padding:15px"><div class="row"><div class="col-sm-2"><b>'+esc(c.code)+'</b><label>名称</label><input class="form-control c-name" value="'+esc(c.name)+'"></div><div class="col-sm-3"><label>滚动公告</label><textarea class="form-control c-ann" rows="3">'+esc(c.announcement||'')+'</textarea></div><div class="col-sm-3"><label>宣传图片</label><div class="input-group"><input class="form-control c-image" value="'+esc(c.image||'')+'"><span class="input-group-btn"><button class="btn btn-default upload" type="button"><i class="fa fa-upload"></i></button></span></div><input type="file" class="image-file" accept="image/*" hidden>'+(c.image?'<img src="'+esc(c.image)+'" style="max-width:100%;max-height:100px;margin-top:8px">':'')+'</div><div class="col-sm-3"><label>玩法介绍</label><textarea class="form-control c-intro" rows="5">'+esc(c.intro||'')+'</textarea></div><div class="col-sm-1"><label><input type="checkbox" class="c-status" '+(+c.status===1?'checked':'')+'> 启用</label><button class="btn btn-primary btn-sm save" data-id="'+c.id+'" data-code="'+esc(c.code)+'">保存</button></div></div></div>'});$('#channelList').html(h);bind()}).fail(function(){$('#channelList').html('<div class="alert alert-danger">加载失败，请确认已执行客服升级SQL</div>')}) }
+function bind(){$('.save').click(function(){var p=$(this).closest('.channel-row');save({id:$(this).data('id'),code:$(this).data('code'),name:p.find('.c-name').val(),announcement:p.find('.c-ann').val(),image:p.find('.c-image').val(),intro:p.find('.c-intro').val(),status:p.find('.c-status').prop('checked')?1:0})});$('.upload').click(function(){$(this).closest('.channel-row').find('.image-file').click()});$('.image-file').change(function(){var f=this.files[0],p=$(this).closest('.channel-row');if(!f)return;var d=new FormData();d.append('file',f);$.ajax({url:url('upload_image'),type:'POST',data:d,processData:false,contentType:false,success:function(r){if(r.code==1){p.find('.c-image').val(r.data.url);Dialog.msg('上传成功，请保存')}else Dialog.alert(r.msg||'上传失败')}})})}
+function save(d){$.post(url('save_channel'),d,function(r){if(r.code==1){Dialog.msg('保存成功');load()}else Dialog.alert(r.msg||'保存失败')})}
+$('#addChannel').click(function(){save({code:$('#newCode').val(),name:$('#newName').val(),status:1})});load()})();
+</script>

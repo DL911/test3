@@ -19,11 +19,40 @@ class Kefu extends Backend
      */
     public function index()
     {
+        $this->ensureAdminMenu();
         if ($this->request->isAjax()) {
             // Fastadmin 拦截 ajax 请求
             return '';
         }
         return $this->view->fetch();
+    }
+
+    private function ensureAdminMenu()
+    {
+        try {
+            $parentId = Db::name('auth_rule')->where('name', 'lottery/kefu_center')->value('id');
+            if (!$parentId) {
+                $parentId = Db::name('auth_rule')->insertGetId([
+                    'type'=>'menu','pid'=>0,'name'=>'lottery/kefu_center','title'=>'客服工作台','icon'=>'fa fa-comments',
+                    'url'=>'','condition'=>'','remark'=>'','ismenu'=>1,'weigh'=>80,'status'=>'normal','createtime'=>time(),'updatetime'=>time()
+                ]);
+            }
+            $items = [
+                ['name'=>'lottery/kefu/index','title'=>'在线会话','icon'=>'fa fa-commenting','weigh'=>100],
+                ['name'=>'lottery/kefu_channel/index','title'=>'通道管理','icon'=>'fa fa-cogs','weigh'=>90],
+            ];
+            foreach ($items as $item) {
+                if (!Db::name('auth_rule')->where('name', $item['name'])->value('id')) {
+                    Db::name('auth_rule')->insert([
+                        'type'=>'menu','pid'=>$parentId,'name'=>$item['name'],'title'=>$item['title'],'icon'=>$item['icon'],
+                        'url'=>'','condition'=>'','remark'=>'','ismenu'=>1,'menutype'=>'addtabs','weigh'=>$item['weigh'],
+                        'status'=>'normal','createtime'=>time(),'updatetime'=>time()
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            // 菜单补齐失败不影响客服工作台本身
+        }
     }
 
     /**

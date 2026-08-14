@@ -123,10 +123,9 @@
 .channel-bar { display:flex; gap:8px; align-items:center; padding:10px; background:#fff; border:1px solid #ddd; border-bottom:0; }
 .channel-tab { border:1px solid #ddd; background:#fafafa; padding:6px 12px; border-radius:4px; cursor:pointer; }
 .channel-tab.active { color:#fff; border-color:transparent; background:#18bc9c; }
-.channel-manage { margin-left:auto; }
 </style>
 
-<div class="channel-bar" id="channelBar"><span style="color:#999">加载通道...</span><button class="btn btn-default btn-xs channel-manage" id="manageChannels"><i class="fa fa-cog"></i> 通道管理</button></div>
+<div class="channel-bar" id="channelBar"><span style="color:#999">加载通道...</span></div>
 <div class="kefu-container">
     <div class="kefu-sidebar" id="userList">
         <div class="kefu-sidebar-empty">
@@ -319,7 +318,6 @@
                 if(parseInt(c.status) !== 1) return;
                 html += '<button class="channel-tab '+(c.code===currentChannel?'active':'')+'" data-code="'+c.code+'" style="--channel-color:'+c.color+'">'+c.name+'</button>';
             });
-            html += '<button class="btn btn-default btn-xs channel-manage" id="manageChannels"><i class="fa fa-cog"></i> 通道管理</button>';
             $('#channelBar').html(html);
             $('.channel-tab').on('click', function(){
                 currentChannel=$(this).data('code'); currentUserId=0; lastMsgId=0;
@@ -327,30 +325,9 @@
                 $('#chatArea').html('<div class="kefu-placeholder"><i class="fa fa-comment-dots"></i><span>请从左侧选择一个用户开始会话</span></div>');
                 $('#inputArea').hide(); loadUserList();
             });
-            $('#manageChannels').on('click', showChannelManager);
             loadUserList();
         }).fail(function(){ loadUserList(); });
     }
-
-    function showChannelManager() {
-        var rows='';
-        Object.keys(channelMap).forEach(function(code){var c=channelMap[code]; rows += '<div class="panel panel-default" style="padding:12px;margin-bottom:10px"><div class="row"><div class="col-sm-2"><b>'+c.code+'</b><input class="form-control input-sm c-name" value="'+c.name+'"></div><div class="col-sm-3">滚动公告<input class="form-control input-sm c-ann" value="'+(c.announcement||'')+'"></div><div class="col-sm-3">宣传图片<div class="input-group"><input class="form-control input-sm c-image" value="'+(c.image||'')+'" placeholder="图片URL"><span class="input-group-btn"><button class="btn btn-default btn-sm upload-channel-image" type="button"><i class="fa fa-upload"></i> 上传</button></span></div><input class="channel-image-file" type="file" accept="image/*" style="display:none"></div><div class="col-sm-3">玩法介绍<textarea class="form-control input-sm c-intro" rows="3">'+(c.intro||'')+'</textarea></div><div class="col-sm-1"><label><input type="checkbox" class="c-status" '+(parseInt(c.status)===1?'checked':'')+'>启用</label><button class="btn btn-primary btn-xs save-channel" data-id="'+c.id+'" data-code="'+c.code+'">保存</button></div></div></div>';});
-        if (!Dialog) { alert('弹窗组件尚未加载，请刷新后台后重试'); return; }
-        Dialog.open({type:1,title:'客服通道、公告和展示内容管理',area:['1050px','650px'],content:'<div style="padding:15px">'+rows+'<hr><h5>新增通道</h5><div class="form-inline"><input id="newCode" class="form-control" placeholder="英文编码"><input id="newName" class="form-control" placeholder="显示名称"><button id="addChannel" class="btn btn-success">新增</button></div></div>',success:function(box){
-            box.find('.save-channel').click(function(){var tr=$(this).closest('.panel'); saveChannel({id:$(this).data('id'),code:$(this).data('code'),name:tr.find('.c-name').val(),announcement:tr.find('.c-ann').val(),image:tr.find('.c-image').val(),intro:tr.find('.c-intro').val(),status:tr.find('.c-status').prop('checked')?1:0});});
-            box.find('.upload-channel-image').click(function(){ $(this).closest('.panel').find('.channel-image-file').click(); });
-            box.find('.channel-image-file').change(function(){
-                var input=this,panel=$(this).closest('.panel'); if(!input.files[0]) return;
-                var fd=new FormData(); fd.append('file',input.files[0]);
-                $.ajax({url:kefuUrl('upload_image'),type:'POST',data:fd,processData:false,contentType:false,success:function(r){
-                    if(r.code==1&&r.data&&r.data.url){panel.find('.c-image').val(r.data.url);Dialog.msg('上传成功，请点击保存');}
-                    else Dialog.alert(r.msg||'上传失败');
-                },error:function(){Dialog.alert('上传失败');}}); input.value='';
-            });
-            box.find('#addChannel').click(function(){saveChannel({code:box.find('#newCode').val(),name:box.find('#newName').val(),status:1});});
-        }});
-    }
-    function saveChannel(data){$.post(kefuUrl('save_channel'),data,function(res){if(res.code==1){Dialog.msg('保存成功'); channelMap={}; loadChannels();}else Dialog.alert(res.msg||'保存失败');});}
 
     // 初始化
     loadChannels();
