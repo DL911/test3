@@ -161,7 +161,13 @@ class User extends Api
             $this->error(__('Invalid parameters'));
         }
         if (!preg_match('/^[a-f0-9]{32}$/', $deviceId)) {
-            $this->error('无法识别当前设备，请刷新注册页面后重试');
+            // 部分WebView/缓存代理可能不提交前端生成的字段；由服务端兜底生成并持久化
+            try {
+                $deviceId = bin2hex(random_bytes(16));
+            } catch (\Exception $e) {
+                $deviceId = md5(uniqid((string)mt_rand(), true));
+            }
+            \think\Cookie::set('lottery_register_device_id', $deviceId, 31536000);
         }
         $deviceHash = hash('sha256', $deviceId);
         try {
