@@ -5,13 +5,18 @@
     // 简易设备标识：同一浏览器配置只允许注册一次
     function getRegisterDeviceId() {
         var key = 'lottery_register_device_id';
-        var id = localStorage.getItem(key) || '';
+        var id = '';
+        try { id = localStorage.getItem(key) || ''; } catch (e) {}
+        if (!id) {
+            var match = document.cookie.match(new RegExp('(?:^|; )' + key + '=([^;]*)'));
+            if (match) id = decodeURIComponent(match[1]);
+        }
         if (!/^[a-f0-9]{32}$/.test(id)) {
             var bytes = new Uint8Array(16);
             if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(bytes);
             else for (var i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
             id = Array.prototype.map.call(bytes, function(b){ return ('0' + b.toString(16)).slice(-2); }).join('');
-            localStorage.setItem(key, id);
+            try { localStorage.setItem(key, id); } catch (e) {}
         }
         document.cookie = key + '=' + id + '; path=/; max-age=31536000; SameSite=Lax';
         return id;

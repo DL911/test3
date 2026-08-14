@@ -154,7 +154,8 @@ class User extends Api
         $password = $this->request->post('password');
         $email = $this->request->post('email');
         $mobile = $this->request->post('mobile');
-        $deviceId = strtolower(trim($this->request->post('device_id', '')));
+        // POST优先，Cookie作为缓存/代理丢失表单字段时的兼容来源
+        $deviceId = strtolower(trim($this->request->post('device_id', $this->request->cookie('lottery_register_device_id', ''))));
         $registerIp = $this->request->ip();
         if (!$username || !$password) {
             $this->error(__('Invalid parameters'));
