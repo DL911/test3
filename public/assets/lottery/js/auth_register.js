@@ -2,6 +2,22 @@
  * 注册页面逻辑
  */
 (function() {
+    // 简易设备标识：同一浏览器配置只允许注册一次
+    function getRegisterDeviceId() {
+        var key = 'lottery_register_device_id';
+        var id = localStorage.getItem(key) || '';
+        if (!/^[a-f0-9]{32}$/.test(id)) {
+            var bytes = new Uint8Array(16);
+            if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(bytes);
+            else for (var i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+            id = Array.prototype.map.call(bytes, function(b){ return ('0' + b.toString(16)).slice(-2); }).join('');
+            localStorage.setItem(key, id);
+        }
+        document.cookie = key + '=' + id + '; path=/; max-age=31536000; SameSite=Lax';
+        return id;
+    }
+    var registerDeviceId = getRegisterDeviceId();
+
     // 检查URL是否带邀请码
     var urlParams = new URLSearchParams(window.location.search);
     var inviteCode = urlParams.get('invite') || '';
@@ -114,6 +130,7 @@
             formData.append('mobile', mobile);
             formData.append('password', password);
             formData.append('email', username + '_' + Date.now() + '@lottery.com');
+            formData.append('device_id', registerDeviceId);
             if (invite) {
                 formData.append('invite', invite);
             }

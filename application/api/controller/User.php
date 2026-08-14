@@ -154,8 +154,28 @@ class User extends Api
         $password = $this->request->post('password');
         $email = $this->request->post('email');
         $mobile = $this->request->post('mobile');
+        $deviceId = strtolower(trim($this->request->post('device_id', '')));
+        $registerIp = $this->request->ip();
         if (!$username || !$password) {
             $this->error(__('Invalid parameters'));
+        }
+        if (!preg_match('/^[a-f0-9]{32}$/', $deviceId)) {
+            $this->error('无法识别当前设备，请刷新注册页面后重试');
+        }
+        $deviceHash = hash('sha256', $deviceId);
+        try {
+            if (Db::name('user_register_device')->where('device_hash', $deviceHash)->find()) {
+                $this->error('当前设备已注册过账号，请直接登录或找回密码');
+            }
+            $ipCount = Db::name('user_register_device')->where('register_ip', $registerIp)
+                ->where('createtime', '>=', time() - 86400)->count();
+            if ($ipCount >= 3) {
+                $this->error('当前网络24小时内注册次数已达上限，请稍后再试');
+            }
+        } catch (\think\exception\HttpResponseException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            // 升级表尚未部署时保持原注册流程可用
         }
         if ($email && !Validate::is($email, "email")) {
             $this->error(__('Email is incorrect'));
@@ -174,11 +194,32 @@ class User extends Api
         if (!isset($extend['invite_rebate_rate'])) $extend['invite_rebate_rate'] = 0.015;
         $ret = $this->auth->register($username, $password, $email, $mobile, $extend);
         if ($ret) {
+            $newUserId = $this->auth->id;
+            try {
+                Db::name('user_register_device')->insert([
+                    'user_id' => $newUserId,
+                    'device_hash' => $deviceHash,
+                    'register_ip' => $registerIp,
+                    'user_agent' => mb_substr($this->request->server('HTTP_USER_AGENT', ''), 0, 255),
+                    'createtime' => time(),
+                ]);
+            } catch (\Exception $e) {
+                // 风控记录失败不影响已完成的账号注册
+            }
             // 邀请码绑定上级
             $invite = $this->request->post('invite', $this->request->param('invite', ''));
             if ($invite) {
                 $parent = \app\common\model\User::get(intval($invite));
-                if ($parent && $parent->id != $this->auth->id) {
+                $isRelated = false;
+                if ($parent && $parent->id != $newUserId) {
+                    try {
+                        $parentRegister = Db::name('user_register_device')->where('user_id', $parent->id)->find();
+                        if ($parentRegister && ($parentRegister['device_hash'] === $deviceHash || $parentRegister['register_ip'] === $registerIp)) {
+                            $isRelated = true;
+                        }
+                    } catch (\Exception $e) {}
+                }
+                if ($parent && $parent->id != $newUserId && !$isRelated) {
                     \app\common\model\User::where('id', $this->auth->id)->update(['pid' => $parent->id]);
                 }
             }
