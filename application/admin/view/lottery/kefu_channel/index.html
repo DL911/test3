@@ -5,25 +5,18 @@
         <div id="channelList">
             {volist name="channels" id="channel"}
             {if in_array($channel['code'], ['general','wanli','dongfang','crown'])}
-            <div class="panel panel-default channel-row" style="padding:15px">
+            <form class="panel panel-default channel-row" style="padding:15px" method="post" enctype="multipart/form-data" action="">
+                <input type="hidden" name="code" value="{$channel.code|htmlentities}">
                 <div class="row">
-                    <div class="col-sm-2"><b>{$channel.code|htmlentities}</b><br><label>名称</label><input class="form-control c-name" value="{$channel.name|htmlentities}"></div>
-                    <div class="col-sm-3"><label>滚动公告</label><textarea class="form-control c-ann" rows="3">{$channel.announcement|default=''|htmlentities}</textarea></div>
-                    <div class="col-sm-3"><label>宣传图片</label><div class="input-group"><input class="form-control c-image" value="{$channel.image|default=''|htmlentities}"><span class="input-group-btn"><button class="btn btn-default upload" type="button"><i class="fa fa-upload"></i></button></span></div><input type="file" class="image-file" accept="image/*" style="display:none">{if !empty($channel.image)}<img src="{$channel.image|htmlentities}" style="max-width:100%;max-height:100px;margin-top:8px">{/if}</div>
-                    <div class="col-sm-3"><label>玩法介绍</label><textarea class="form-control c-intro" rows="5">{$channel.intro|default=''|htmlentities}</textarea></div>
-                    <div class="col-sm-1"><label><input type="checkbox" class="c-status" {if $channel.status==1}checked{/if}> 启用</label><button class="btn btn-primary btn-sm save" data-id="{$channel.id|default=0}" data-code="{$channel.code|htmlentities}">保存</button></div>
+                    <div class="col-sm-2"><b>{$channel.code|htmlentities}</b><br><label>名称</label><input name="name" class="form-control" value="{$channel.name|htmlentities}" required></div>
+                    <div class="col-sm-3"><label>滚动公告</label><textarea name="announcement" class="form-control" rows="3">{$channel.announcement|default=''|htmlentities}</textarea></div>
+                    <div class="col-sm-3"><label>宣传图片URL</label><input name="image" class="form-control" value="{$channel.image|default=''|htmlentities}"><label style="margin-top:8px">或上传新图片</label><input name="image_file" type="file" class="form-control" accept="image/*">{if !empty($channel.image)}<img src="{$channel.image|htmlentities}" style="max-width:100%;max-height:100px;margin-top:8px">{/if}</div>
+                    <div class="col-sm-3"><label>玩法介绍</label><textarea name="intro" class="form-control" rows="5">{$channel.intro|default=''|htmlentities}</textarea></div>
+                    <div class="col-sm-1"><label><input type="checkbox" name="status" value="1" {if $channel.status==1}checked{/if}> 启用</label><button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-save"></i> 保存</button></div>
                 </div>
-            </div>
+            </form>
             {/if}
             {/volist}
         </div>
     </div>
 </div>
-<script>
-(function wait(){if(typeof jQuery==='undefined'){setTimeout(wait,100);return}var $=jQuery,Dialog=window.Layer||window.layer||(parent&&(parent.Layer||parent.layer));
-var entry=(function(){var m=location.pathname.match(/(\/[^\/]*\.php)/i);return m?m[1]:'/index.php'})();
-function url(a){return entry+'/lottery/kefu/'+a} function esc(s){return $('<div>').text(s==null?'':s).html()}
-function bind(){$('.save').click(function(){var p=$(this).closest('.channel-row');save({id:$(this).data('id'),code:$(this).data('code'),name:p.find('.c-name').val(),announcement:p.find('.c-ann').val(),image:p.find('.c-image').val(),intro:p.find('.c-intro').val(),status:p.find('.c-status').prop('checked')?1:0})});$('.upload').click(function(){$(this).closest('.channel-row').find('.image-file').click()});$('.image-file').change(function(){var f=this.files[0],p=$(this).closest('.channel-row');if(!f)return;var d=new FormData();d.append('file',f);$.ajax({url:url('upload_image'),type:'POST',data:d,processData:false,contentType:false,success:function(r){if(r.code==1){p.find('.c-image').val(r.data.url);Dialog.msg('上传成功，请保存')}else Dialog.alert(r.msg||'上传失败')}})})}
-function save(d){$.post(url('save_channel'),d,function(r){if(r.code==1){Dialog.msg('保存成功');setTimeout(function(){location.reload()},500)}else Dialog.alert(r.msg||'保存失败')})}
-bind()})();
-</script>
