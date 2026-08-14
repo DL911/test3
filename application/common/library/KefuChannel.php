@@ -2,7 +2,6 @@
 namespace app\common\library;
 
 use think\Db;
-use think\Exception;
 
 class KefuChannel
 {
@@ -22,10 +21,15 @@ class KefuChannel
     {
         try {
             $query = Db::name('lottery_kefu_channel')->order('weigh', 'desc')->order('id', 'asc');
-            if ($enabledOnly) $query->where('status', 1);
             $rows = $query->select();
-            return $rows ?: self::defaults();
-        } catch (Exception $e) {
+            $merged = [];
+            foreach (self::defaults() as $item) $merged[$item['code']] = $item;
+            foreach ($rows as $item) $merged[$item['code']] = array_merge(isset($merged[$item['code']]) ? $merged[$item['code']] : [], $item);
+            $result = array_values($merged);
+            if ($enabledOnly) $result = array_values(array_filter($result, function ($item) { return intval($item['status']) === 1; }));
+            usort($result, function ($a, $b) { return intval($b['weigh']) - intval($a['weigh']); });
+            return $result;
+        } catch (\Throwable $e) {
             return self::defaults();
         }
     }
