@@ -201,6 +201,38 @@
             font-size: 12px;
             margin: 8px 0;
         }
+        .channel-business {
+            display: none;
+            width: 100%;
+            flex-shrink: 0;
+        }
+        .channel-notice {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            background: #fff8e8;
+            border: 1px solid #ffe0a3;
+            border-radius: 10px;
+            color: #9a6400;
+            overflow: hidden;
+        }
+        .channel-notice-track { flex: 1; overflow: hidden; white-space: nowrap; }
+        .channel-notice-text { display: inline-block; min-width: 100%; padding-left: 100%; animation: channelNoticeMove 15s linear infinite; }
+        @keyframes channelNoticeMove { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+        .channel-intro {
+            overflow: hidden;
+            margin-bottom: 4px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.05);
+        }
+        .channel-intro-image { display: none; width: 100%; height: auto; object-fit: contain; background: #f7f9fc; }
+        .channel-intro-body { padding: 14px; }
+        .channel-intro-title { margin-bottom: 8px; color: var(--m-primary); font-size: 14px; font-weight: 700; }
+        .channel-intro-text { color: var(--m-text-sub); font-size: 13px; line-height: 1.8; white-space: pre-wrap; word-break: break-word; }
+        @media (prefers-reduced-motion: reduce) { .channel-notice-text { padding-left: 0; animation: none; } }
         .chat-bubble img {
             max-width: 180px;
             max-height: 180px;
@@ -229,6 +261,19 @@
     </div>
     <!-- 聊天内容区 -->
     <div class="chat-container" id="chatContainer">
+        <section class="channel-business" id="channelBusiness">
+            <div class="channel-notice">
+                <i class="fa-solid fa-bullhorn"></i>
+                <div class="channel-notice-track"><span class="channel-notice-text" id="channelAnnouncement"></span></div>
+            </div>
+            <div class="channel-intro">
+                <img class="channel-intro-image" id="channelIntroImage" alt="业务介绍">
+                <div class="channel-intro-body">
+                    <div class="channel-intro-title">玩法介绍</div>
+                    <div class="channel-intro-text" id="channelIntroText"></div>
+                </div>
+            </div>
+        </section>
         <div class="system-msg">官方人工客服为您服务</div>
         <!-- 消息将通过JS渲染在这里 -->
     </div>
@@ -300,6 +345,24 @@
 
     var currentChannel = new URLSearchParams(location.search).get('channel') || 'general';
     var channelQuery = 'channel=' + encodeURIComponent(currentChannel);
+    function loadChannelDetail() {
+        if (currentChannel === 'general') return;
+        fetch('/index.php/api/kefu/channelDetail?' + channelQuery)
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res.code !== 1 || !res.data) return;
+                var detail = res.data;
+                document.getElementById('channelTitle').textContent = detail.name || '在线客服';
+                document.getElementById('channelAnnouncement').textContent = detail.announcement || detail.description || '欢迎使用在线客服';
+                document.getElementById('channelIntroText').textContent = detail.intro || detail.description || '';
+                if (detail.image) {
+                    var image = document.getElementById('channelIntroImage');
+                    image.src = detail.image;
+                    image.style.display = 'block';
+                }
+                document.getElementById('channelBusiness').style.display = 'block';
+            });
+    }
     // 加载历史记录
     function loadHistory() {
         LotteryAuth.request('/index.php/api/kefu/history?' + channelQuery, {
@@ -309,7 +372,9 @@
                 res.data.list.forEach(msg => {
                     renderMessage(msg);
                 });
-                scrollToBottom();
+                // 业务通道首次进入先展示后台配置；综合咨询直接定位最新消息。
+                if (currentChannel === 'general') scrollToBottom();
+                else chatContainer.scrollTop = 0;
                 startPolling(); // 加载完历史记录后开始轮询
             }
         });
@@ -452,6 +517,7 @@
 
     // 初始化
     document.addEventListener('DOMContentLoaded', () => {
+        loadChannelDetail();
         loadHistory();
     });
 
