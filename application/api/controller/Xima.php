@@ -121,18 +121,17 @@ class Xima extends Api
             // 加余额
             Db::name('user')->where('id', $userId)->setInc('money', $totalAmount);
 
-            Db::commit();
-
             $newBalance = Db::name('user')->where('id', $userId)->value('money');
-            $this->success('领取成功，¥' . $totalAmount . ' 已到账', [
-                'claimed_amount' => $totalAmount,
-                'claimed_count'  => count($records),
-                'balance'        => $newBalance,
-            ]);
+            Db::commit();
         } catch (\Exception $e) {
             Db::rollback();
             $this->error('领取失败: ' . $e->getMessage());
         }
+        $this->success('领取成功，¥' . $totalAmount . ' 已到账', [
+            'claimed_amount' => $totalAmount,
+            'claimed_count'  => count($records),
+            'balance'        => $newBalance,
+        ]);
     }
 
     /**

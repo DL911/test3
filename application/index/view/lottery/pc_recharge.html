@@ -265,6 +265,9 @@
                         <div class="pay-name">USDT</div>
                     </div>
                 </div>
+                <div id="pcWdFeeNotice" style="margin:0 0 16px;padding:10px 14px;background:#fff7e6;border:1px solid #ffd591;border-radius:8px;color:#d46b08;font-size:13px;">
+                    <i class="fa-solid fa-circle-info" style="margin-right:6px;"></i>微信、支付宝提现手续费为1%
+                </div>
 
                 <!-- 余额 -->
                 <div style="display:flex;justify-content:space-between;align-items:center;background:#f0f4ff;border-radius:10px;padding:14px 18px;margin:16px 0;">
@@ -509,6 +512,8 @@
         // USDT 提现才显示汇率折算框
         var box = document.getElementById('wdUsdtBox');
         if (box) box.style.display = (wdPayType === 'usdt') ? '' : 'none';
+        var feeNotice = document.getElementById('pcWdFeeNotice');
+        if (feeNotice) feeNotice.style.display = (wdPayType === 'wechat' || wdPayType === 'alipay') ? '' : 'none';
         updateWdUsdt();
     }
 

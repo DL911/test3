@@ -23,7 +23,8 @@ class Lottery extends Api
      */
     public function getUsdtRate()
     {
-        $cacheKey = 'usdt_cny_rate';
+        // 使用独立缓存键，避免上线后继续命中旧的单来源汇率。
+        $cacheKey = 'usdt_cny_rate_min_v1';
         // 提现汇率上浮幅度（比充值汇率高 +0.07）
         $withdrawDiff = 0.07;
         $cached = \think\Cache::get($cacheKey);
@@ -38,39 +39,30 @@ class Lottery extends Api
 
         $rate = 0;
         $source = '';
+        $urls = [
+            'OKX(欧意)' => 'https://www.okx.com/api/v5/market/exchange-rate',
+            'CoinGecko' => 'https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=cny',
+            'Coinbase' => 'https://api.coinbase.com/v2/exchange-rates?currency=USDT',
+        ];
+        $responses = $this->httpGetMultiple($urls);
+        $quotes = [];
 
-        // 源1（优先）: OKX(欧意) 官方汇率接口 —— USDT≈USD，直接取 usdCny
-        $r = $this->httpGet('https://www.okx.com/api/v5/market/exchange-rate');
-        if ($r) {
-            $j = json_decode($r, true);
-            if (isset($j['data'][0]['usdCny']) && floatval($j['data'][0]['usdCny']) > 0) {
-                $rate = floatval($j['data'][0]['usdCny']);
-                $source = 'OKX(欧意)';
-            }
-        }
+        $j = isset($responses['OKX(欧意)']) ? json_decode($responses['OKX(欧意)'], true) : [];
+        if (isset($j['data'][0]['usdCny'])) $quotes['OKX(欧意)'] = floatval($j['data'][0]['usdCny']);
 
-        // 源2: CoinGecko 直接 USDT->CNY
-        if ($rate <= 0) {
-            $r = $this->httpGet('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=cny');
-            if ($r) {
-                $j = json_decode($r, true);
-                if (isset($j['tether']['cny']) && $j['tether']['cny'] > 0) {
-                    $rate = floatval($j['tether']['cny']);
-                    $source = 'CoinGecko';
-                }
-            }
-        }
+        $j = isset($responses['CoinGecko']) ? json_decode($responses['CoinGecko'], true) : [];
+        if (isset($j['tether']['cny'])) $quotes['CoinGecko'] = floatval($j['tether']['cny']);
 
-        // 源3: Coinbase 汇率（USDT->CNY，数据准确无需key）
-        if ($rate <= 0) {
-            $r = $this->httpGet('https://api.coinbase.com/v2/exchange-rates?currency=USDT');
-            if ($r) {
-                $j = json_decode($r, true);
-                if (isset($j['data']['rates']['CNY']) && $j['data']['rates']['CNY'] > 0) {
-                    $rate = floatval($j['data']['rates']['CNY']);
-                    $source = 'Coinbase';
-                }
-            }
+        $j = isset($responses['Coinbase']) ? json_decode($responses['Coinbase'], true) : [];
+        if (isset($j['data']['rates']['CNY'])) $quotes['Coinbase'] = floatval($j['data']['rates']['CNY']);
+
+        // USDT/CNY 正常报价限定在4~10，防止某一来源异常值被当成最低价。
+        $quotes = array_filter($quotes, function ($value) {
+            return is_finite($value) && $value >= 4 && $value <= 10;
+        });
+        if ($quotes) {
+            $rate = min($quotes);
+            $source = array_search($rate, $quotes, true);
         }
 
         // 兜底：使用上次缓存或默认值
@@ -90,6 +82,7 @@ class Lottery extends Api
             'withdraw_rate' => round($rate + $withdrawDiff, 4),
             'withdraw_diff' => $withdrawDiff,
             'source'        => $source,
+            'quotes'        => array_map(function ($value) { return round($value, 4); }, $quotes),
             'updatetime'    => date('Y-m-d H:i:s'),
         ];
 
@@ -100,6 +93,51 @@ class Lottery extends Api
         }
 
         $this->success('', $data);
+    }
+
+    /**
+     * 并发请求多个汇率来源；无curl_multi时退化为顺序请求。
+     */
+    private function httpGetMultiple(array $urls, $timeout = 5)
+    {
+        if (!function_exists('curl_multi_init')) {
+            $responses = [];
+            foreach ($urls as $name => $url) $responses[$name] = $this->httpGet($url, $timeout);
+            return $responses;
+        }
+
+        $multi = curl_multi_init();
+        $handles = [];
+        foreach ($urls as $name => $url) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+            curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0');
+            curl_multi_add_handle($multi, $ch);
+            $handles[$name] = $ch;
+        }
+
+        do {
+            $status = curl_multi_exec($multi, $running);
+            if ($running) {
+                $selected = curl_multi_select($multi, 1.0);
+                if ($selected === -1) usleep(10000);
+            }
+        } while ($running && $status === CURLM_OK);
+
+        $responses = [];
+        foreach ($handles as $name => $ch) {
+            $body = curl_multi_getcontent($ch);
+            $responses[$name] = $body ?: '';
+            curl_multi_remove_handle($multi, $ch);
+            curl_close($ch);
+        }
+        curl_multi_close($multi);
+        return $responses;
     }
 
     /**
@@ -652,6 +690,13 @@ class Lottery extends Api
             $totalAmount = $betCount * $amount;
         }
 
+        // 福彩3D/排列三标准盘的三星直选复式，每注金额最高500元。
+        // 必须在服务端重新计算后校验，防止绕过页面直接提交。
+        $perBetAmount = $bzpUnit * $bzpMultiple;
+        if ($panelType === 'biaozhun' && $playType === 'sx_zx_fushi' && $perBetAmount > 500) {
+            $this->error('三星直选复式每注金额不能超过500元');
+        }
+
         // 标准盘验证总金额，双面盘/行式验证单注金额
         $checkAmount = ($panelType === 'biaozhun' && $bzpUnit > 0 && $bzpMultiple > 0) ? $totalAmount : $amount;
         if ($checkAmount < $config['min_bet'] || $checkAmount > $config['max_bet']) {
@@ -883,15 +928,8 @@ class Lottery extends Api
                 // 洗码失败不中断投注
             }
 
-            Db::commit();
-
             $newBalance = Db::name('user')->where('id', $userId)->value('money');
-            $this->success('投注成功', [
-                'order_no'     => $orderNo,
-                'bet_count'    => $betCount,
-                'total_amount' => $totalAmount,
-                'balance'      => $newBalance
-            ]);
+            Db::commit();
         } catch (\think\exception\HttpResponseException $e) {
             // $this->success / $this->error 内部抛的，必须原样抛出
             throw $e;
@@ -899,6 +937,12 @@ class Lottery extends Api
             Db::rollback();
             $this->error('投注失败: ' . $e->getMessage());
         }
+        $this->success('投注成功', [
+            'order_no'     => $orderNo,
+            'bet_count'    => $betCount,
+            'total_amount' => $totalAmount,
+            'balance'      => $newBalance
+        ]);
     }
 
     /**
@@ -1036,13 +1080,13 @@ class Lottery extends Api
             } catch (\Exception $xe) {}
 
             Db::commit();
-            $this->success('撤单成功，已退还 ¥' . number_format($refund, 2));
         } catch (\think\exception\HttpResponseException $e) {
             throw $e;
         } catch (\Exception $e) {
             Db::rollback();
             $this->error('撤单失败: ' . $e->getMessage());
         }
+        $this->success('撤单成功，已退还 ¥' . number_format($refund, 2));
     }
 
     /**

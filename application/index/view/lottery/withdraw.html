@@ -26,6 +26,9 @@
             <div class="lm-pay-tab" data-type="alipay" onclick="selWd('alipay')"><i class="lm-pay-icon alipay fa-brands fa-alipay"></i><span class="lm-pay-name">支付宝</span></div>
             <div class="lm-pay-tab" data-type="usdt" onclick="selWd('usdt')"><i class="lm-pay-icon usdt fa-solid fa-coins"></i><span class="lm-pay-name">USDT</span></div>
         </div>
+        <div id="mWdFeeNotice" style="margin:-4px 16px 12px;padding:9px 12px;background:#fff7e6;border:1px solid #ffd591;border-radius:8px;color:#d46b08;font-size:13px;">
+            <i class="fa-solid fa-circle-info" style="margin-right:5px;"></i>微信、支付宝提现手续费为1%
+        </div>
 
         <div class="lm-card">
             <!-- USDT 地址输入（仅 USDT 提现时显示） -->
@@ -101,6 +104,8 @@ document.addEventListener('DOMContentLoaded',function(){
 function selWd(t){
     wdType=t;
     document.querySelectorAll('.lm-pay-tab').forEach(function(el){el.classList.toggle('active',el.dataset.type===t);});
+    var feeNotice = document.getElementById('mWdFeeNotice');
+    if (feeNotice) feeNotice.style.display = (t === 'wechat' || t === 'alipay') ? '' : 'none';
     document.getElementById('wdUsdtBox').style.display = (t==='usdt') ? '' : 'none';
     var addrBox = document.getElementById('mWdAddrBox');
     if (addrBox) addrBox.style.display = (t==='usdt') ? '' : 'none';

@@ -146,13 +146,13 @@ class Rebate extends Api
             \app\common\model\User::where('id', $userId)->setInc('money', $rebateAmount);
 
             Db::commit();
-            $this->success('领取成功，¥' . $rebateAmount . ' 已到账', [
-                'rebate_amount' => $rebateAmount,
-            ]);
         } catch (\Exception $e) {
             Db::rollback();
             $this->error('领取失败: ' . $e->getMessage());
         }
+        $this->success('领取成功，¥' . $rebateAmount . ' 已到账', [
+            'rebate_amount' => $rebateAmount,
+        ]);
     }
 
     /**

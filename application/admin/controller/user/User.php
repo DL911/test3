@@ -4,6 +4,7 @@ namespace app\admin\controller\user;
 
 use app\common\controller\Backend;
 use app\common\library\Auth;
+use think\Db;
 
 /**
  * 会员管理
@@ -46,8 +47,23 @@ class User extends Backend
                 ->where($where)
                 ->order($sort, $order)
                 ->paginate($limit);
+
+            // 实名信息存放在独立认证表；旧环境无该表时仍保持会员列表可用。
+            $realNames = [];
+            try {
+                $userIds = [];
+                foreach ($list as $item) $userIds[] = $item->id;
+                if ($userIds) {
+                    $realNames = Db::name('user_verify')
+                        ->where('user_id', 'in', array_unique($userIds))
+                        ->column('real_name', 'user_id');
+                }
+            } catch (\Exception $e) {
+                $realNames = [];
+            }
             foreach ($list as $k => $v) {
                 $v->avatar = $v->avatar ? cdnurl($v->avatar, true) : letter_avatar($v->nickname);
+                $v->real_name = isset($realNames[$v->id]) ? $realNames[$v->id] : '';
                 $v->hidden(['password', 'salt']);
             }
             $result = array("total" => $list->total(), "rows" => $list->items());
@@ -80,6 +96,22 @@ class User extends Backend
         $this->modelValidate = true;
         if (!$row) {
             $this->error(__('No Results were found'));
+        }
+        if ($this->request->isPost()) {
+            $params = $this->request->post('row/a', []);
+            if (array_key_exists('money', $params)) {
+                if (!is_numeric($params['money'])) {
+                    $this->error('余额格式不正确');
+                }
+                $newMoney = round((float)$params['money'], 2);
+                $currentMoney = round((float)$row['money'], 2);
+                if ($newMoney < 0) {
+                    $this->error('余额不能小于0');
+                }
+                if ($newMoney > $currentMoney) {
+                    $this->error('编辑会员时余额只能减少，不能增加');
+                }
+            }
         }
         $this->view->assign('groupList', build_select('row[group_id]', \app\admin\model\UserGroup::column('id,name'), $row['group_id'], ['class' => 'form-control selectpicker']));
         return parent::edit($ids);

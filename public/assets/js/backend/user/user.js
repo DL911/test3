@@ -30,6 +30,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'group.name', title: __('Group')},
                         {field: 'username', title: __('Username'), operate: 'LIKE'},
                         {field: 'nickname', title: __('Nickname'), operate: 'LIKE'},
+                        {field: 'real_name', title: '真实姓名', operate: false, formatter: function(value){return value || '<span class="text-muted">未认证</span>'; }},
                         {field: 'mobile', title: __('Mobile'), operate: 'LIKE'},
                         {field: 'avatar', title: __('Avatar'), events: Table.api.events.image, formatter: Table.api.formatter.image, operate: false},
                         {field: 'money', title: '余额', sortable: true, formatter: function(v){return '<b style="color:#e67e22;">¥'+parseFloat(v||0).toFixed(2)+'</b>';}},

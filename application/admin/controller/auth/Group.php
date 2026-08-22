@@ -168,11 +168,11 @@ class Group extends Backend
                     }
                     model("AuthGroup")->saveAll($childparams);
                     Db::commit();
-                    $this->success();
                 } catch (Exception $e) {
                     Db::rollback();
                     $this->error($e->getMessage());
                 }
+                $this->success();
             }
             $this->error();
             return;

@@ -175,11 +175,11 @@ class Payment extends Api
             Db::name('withdraw_order')->insert($wdData);
 
             Db::commit();
-            $this->success('提现申请已提交，请等待后台审核', ['order_no' => $orderNo]);
         } catch (\Exception $e) {
             Db::rollback();
             $this->error('提交失败: ' . $e->getMessage());
         }
+        $this->success('提现申请已提交，请等待后台审核', ['order_no' => $orderNo]);
     }
 
     /**
@@ -240,11 +240,11 @@ class Payment extends Api
                 ]);
                 \app\common\model\User::where('id', $order['user_id'])->setInc('money', $order['amount']);
                 Db::commit();
-                $this->success('充值已确认，已到账 ¥' . $order['amount']);
             } catch (\Exception $e) {
                 Db::rollback();
                 $this->error('操作失败');
             }
+            $this->success('充值已确认，已到账 ¥' . $order['amount']);
         } elseif ($action === 'reject') {
             Db::name('recharge_order')->where('id', $orderId)->update([
                 'status' => 2, 'admin_remark' => $remark, 'updatetime' => time()
@@ -286,11 +286,11 @@ class Payment extends Api
                 // 退回余额
                 \app\common\model\User::where('id', $order['user_id'])->setInc('money', $order['amount']);
                 Db::commit();
-                $this->success('已拒绝，余额已退回');
             } catch (\Exception $e) {
                 Db::rollback();
                 $this->error('操作失败');
             }
+            $this->success('已拒绝，余额已退回');
         } else {
             $this->error('无效操作');
         }
@@ -345,19 +345,19 @@ class Payment extends Api
                 'updatetime'   => time(),
             ]);
 
-            Db::commit();
             // 重新查询最新余额
             $newBalance = Db::name('user')->where('id', $userId)->value('money');
-            $this->success('转账成功', [
-                'order_no' => $orderNo,
-                'to_user'  => $toUser['nickname'] ?: $toUser['username'],
-                'amount'   => $amount,
-                'balance'  => $newBalance,
-            ]);
+            Db::commit();
         } catch (\Exception $e) {
             Db::rollback();
             $this->error('转账失败: ' . $e->getMessage());
         }
+        $this->success('转账成功', [
+            'order_no' => $orderNo,
+            'to_user'  => $toUser['nickname'] ?: $toUser['username'],
+            'amount'   => $amount,
+            'balance'  => $newBalance,
+        ]);
     }
 
     /**
