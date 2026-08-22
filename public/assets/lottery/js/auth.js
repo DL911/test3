@@ -279,11 +279,16 @@ var LotteryAuth = (function() {
         if ((!entries.length && !totalEntries.length) || !isLoggedIn()) return;
         request(API_BASE + '/kefu/unreadCount', {method: 'GET'}).then(function(res) {
             if (res.code !== 1 || !res.data) return;
-            var channels = res.data.channels || {};
+            var rawChannels = res.data.channels || {};
+            var channels = {};
+            Object.keys(rawChannels).forEach(function(channel) {
+                channels[String(channel).trim().toLowerCase()] = rawChannels[channel];
+            });
             entries.forEach(function(entry) {
                 var badge = entry.querySelector('.kefu-unread-badge');
                 if (!badge) return;
-                var count = parseInt(channels[entry.getAttribute('data-kefu-channel')] || 0, 10);
+                var channel = String(entry.getAttribute('data-kefu-channel') || '').trim().toLowerCase();
+                var count = parseInt(channels[channel] || 0, 10);
                 badge.textContent = count > 99 ? '99+' : count;
                 badge.style.display = count > 0 ? 'inline-block' : 'none';
             });
