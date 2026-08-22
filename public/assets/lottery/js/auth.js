@@ -272,12 +272,31 @@ var LotteryAuth = (function() {
         return fetch(url, fetchOpts).then(function(r) { return r.json(); });
     }
 
+    /** 更新前台客服入口的分通道未读红点。 */
+    function refreshKefuUnread() {
+        var entries = document.querySelectorAll('[data-kefu-channel]');
+        if (!entries.length || !isLoggedIn()) return;
+        request(API_BASE + '/kefu/unreadCount', {method: 'GET'}).then(function(res) {
+            if (res.code !== 1 || !res.data) return;
+            var channels = res.data.channels || {};
+            entries.forEach(function(entry) {
+                var badge = entry.querySelector('.kefu-unread-badge');
+                if (!badge) return;
+                var count = parseInt(channels[entry.getAttribute('data-kefu-channel')] || 0, 10);
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.style.display = count > 0 ? 'inline-block' : 'none';
+            });
+        }).catch(function() {});
+    }
+
     // 页面加载自动初始化
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', function() { init(); refreshKefuUnread(); });
     } else {
         init();
+        refreshKefuUnread();
     }
+    setInterval(refreshKefuUnread, 5000);
 
     // 公开接口
     return {

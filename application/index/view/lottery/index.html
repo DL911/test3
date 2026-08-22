@@ -66,18 +66,19 @@
                 <span>排列三</span>
             </div>
             <div class="sidebar-group-title" style="margin-top:16px;">客服咨询</div>
-            <div class="sidebar-item" onclick="location.href='/index.php/index/lottery/kefu?channel=wanli'">
-                <span class="item-icon"><i class="fa-solid fa-gem"></i></span><span>万利百家乐开户窗口</span>
+            <div class="sidebar-item kefu-channel-entry" data-kefu-channel="wanli" onclick="location.href='/index.php/index/lottery/kefu?channel=wanli'">
+                <span class="item-icon"><i class="fa-solid fa-gem"></i></span><span>万利百家乐开户窗口</span><span class="kefu-unread-badge"></span>
             </div>
-            <div class="sidebar-item" onclick="location.href='/index.php/index/lottery/kefu?channel=dongfang'">
-                <span class="item-icon"><i class="fa-solid fa-chess-queen"></i></span><span>东方汇百家乐</span>
+            <div class="sidebar-item kefu-channel-entry" data-kefu-channel="dongfang" onclick="location.href='/index.php/index/lottery/kefu?channel=dongfang'">
+                <span class="item-icon"><i class="fa-solid fa-chess-queen"></i></span><span>东方汇百家乐</span><span class="kefu-unread-badge"></span>
             </div>
-            <div class="sidebar-item" onclick="location.href='/index.php/index/lottery/kefu?channel=crown'">
-                <span class="item-icon"><i class="fa-solid fa-futbol"></i></span><span>皇冠足球开户窗口</span>
+            <div class="sidebar-item kefu-channel-entry" data-kefu-channel="crown" onclick="location.href='/index.php/index/lottery/kefu?channel=crown'">
+                <span class="item-icon"><i class="fa-solid fa-futbol"></i></span><span>皇冠足球开户窗口</span><span class="kefu-unread-badge"></span>
             </div>
-            <div class="sidebar-item" onclick="location.href='/index.php/index/lottery/kefu?channel=general'">
-                <span class="item-icon"><i class="fa-solid fa-headset"></i></span><span>综合咨询</span>
+            <div class="sidebar-item kefu-channel-entry" data-kefu-channel="general" onclick="location.href='/index.php/index/lottery/kefu?channel=general'">
+                <span class="item-icon"><i class="fa-solid fa-headset"></i></span><span>综合咨询</span><span class="kefu-unread-badge"></span>
             </div>
+            <style>.kefu-channel-entry .kefu-unread-badge{display:none;margin-left:auto;min-width:18px;height:18px;line-height:18px;padding:0 5px;border-radius:10px;background:#ff3b30;color:#fff;font-size:11px;text-align:center;box-shadow:0 1px 4px rgba(255,59,48,.35)}</style>
         </aside>
 
         <!-- MAIN CONTENT -->

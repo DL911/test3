@@ -132,25 +132,25 @@
     <!-- ===== 客服咨询入口（与 PC 首页左侧栏保持一致） ===== -->
     <section class="m-kefu-portals" aria-label="客服咨询">
         <div class="m-kefu-portals-title"><i class="fa-solid fa-headset"></i> 客服咨询</div>
-        <a class="m-kefu-portal wanli" href="/index.php/index/lottery/kefu?channel=wanli">
+        <a class="m-kefu-portal wanli" data-kefu-channel="wanli" href="/index.php/index/lottery/kefu?channel=wanli">
             <span class="m-kefu-portal-icon"><i class="fa-solid fa-gem"></i></span>
             <span class="m-kefu-portal-name">万利百家乐开户窗口</span>
-            <i class="fa-solid fa-chevron-right"></i>
+            <span class="kefu-unread-badge"></span><i class="fa-solid fa-chevron-right"></i>
         </a>
-        <a class="m-kefu-portal dongfang" href="/index.php/index/lottery/kefu?channel=dongfang">
+        <a class="m-kefu-portal dongfang" data-kefu-channel="dongfang" href="/index.php/index/lottery/kefu?channel=dongfang">
             <span class="m-kefu-portal-icon"><i class="fa-solid fa-chess-queen"></i></span>
             <span class="m-kefu-portal-name">东方汇百家乐</span>
-            <i class="fa-solid fa-chevron-right"></i>
+            <span class="kefu-unread-badge"></span><i class="fa-solid fa-chevron-right"></i>
         </a>
-        <a class="m-kefu-portal crown" href="/index.php/index/lottery/kefu?channel=crown">
+        <a class="m-kefu-portal crown" data-kefu-channel="crown" href="/index.php/index/lottery/kefu?channel=crown">
             <span class="m-kefu-portal-icon"><i class="fa-solid fa-futbol"></i></span>
             <span class="m-kefu-portal-name">皇冠足球开户窗口</span>
-            <i class="fa-solid fa-chevron-right"></i>
+            <span class="kefu-unread-badge"></span><i class="fa-solid fa-chevron-right"></i>
         </a>
-        <a class="m-kefu-portal general" href="/index.php/index/lottery/kefu?channel=general">
+        <a class="m-kefu-portal general" data-kefu-channel="general" href="/index.php/index/lottery/kefu?channel=general">
             <span class="m-kefu-portal-icon"><i class="fa-solid fa-headset"></i></span>
             <span class="m-kefu-portal-name">综合咨询</span>
-            <i class="fa-solid fa-chevron-right"></i>
+            <span class="kefu-unread-badge"></span><i class="fa-solid fa-chevron-right"></i>
         </a>
     </section>
     <style>
@@ -165,6 +165,7 @@
         .m-kefu-portal.dongfang .m-kefu-portal-icon{background:linear-gradient(135deg,#a78bfa,#7c3aed)}
         .m-kefu-portal.crown .m-kefu-portal-icon{background:linear-gradient(135deg,#38bdf8,#0284c7)}
         .m-kefu-portal-name{flex:1;font-size:13px;font-weight:600}
+        .m-kefu-portal .kefu-unread-badge{display:none;min-width:18px;height:18px;line-height:18px;padding:0 5px;border-radius:10px;background:#ff3b30;color:#fff;font-size:11px;text-align:center;box-shadow:0 1px 4px rgba(255,59,48,.35)}
         .m-kefu-portal>i{color:#bbb;font-size:11px}
     </style>
 

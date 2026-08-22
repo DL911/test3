@@ -119,17 +119,26 @@ class Kefu extends Api
     public function unreadCount()
     {
         if (!$this->auth->isLogin()) {
-            $this->success("", ['count' => 0]);
+            $this->success("", ['count' => 0, 'channels' => []]);
             return;
         }
         $user_id = $this->auth->id;
-        $count = Db::name('lottery_kefu_message')
+        $rows = Db::name('lottery_kefu_message')
             ->where('user_id', $user_id)
             ->where('sender_type', 'admin')
             ->where('is_read', 0)
-            ->count();
-            
-        $this->success("", ['count' => $count]);
+            ->field('channel, COUNT(*) AS unread')
+            ->group('channel')
+            ->select();
+        $count = 0;
+        $channels = [];
+        foreach ($rows as $row) {
+            $unread = (int)$row['unread'];
+            $channels[$row['channel']] = $unread;
+            $count += $unread;
+        }
+
+        $this->success("", ['count' => $count, 'channels' => $channels]);
     }
 
     public function channels()
