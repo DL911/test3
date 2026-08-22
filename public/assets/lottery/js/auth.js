@@ -275,7 +275,8 @@ var LotteryAuth = (function() {
     /** 更新前台客服入口的分通道未读红点。 */
     function refreshKefuUnread() {
         var entries = document.querySelectorAll('[data-kefu-channel]');
-        if (!entries.length || !isLoggedIn()) return;
+        var totalEntries = document.querySelectorAll('[data-kefu-unread-total]');
+        if ((!entries.length && !totalEntries.length) || !isLoggedIn()) return;
         request(API_BASE + '/kefu/unreadCount', {method: 'GET'}).then(function(res) {
             if (res.code !== 1 || !res.data) return;
             var channels = res.data.channels || {};
@@ -285,6 +286,31 @@ var LotteryAuth = (function() {
                 var count = parseInt(channels[entry.getAttribute('data-kefu-channel')] || 0, 10);
                 badge.textContent = count > 99 ? '99+' : count;
                 badge.style.display = count > 0 ? 'inline-block' : 'none';
+            });
+            var total = parseInt(res.data.count || 0, 10);
+            var firstUnreadChannel = '';
+            Object.keys(channels).some(function(channel) {
+                if (parseInt(channels[channel] || 0, 10) > 0) {
+                    firstUnreadChannel = channel;
+                    return true;
+                }
+                return false;
+            });
+            totalEntries.forEach(function(entry) {
+                if (entry.getAttribute('data-kefu-unread-total') === 'text') {
+                    entry.innerHTML = total > 0
+                        ? '<span style="color:#e53935;font-weight:700;">您有 ' + total + ' 条未读消息</span>'
+                        : '联系官方客服';
+                } else {
+                    entry.textContent = total > 99 ? '99+' : total;
+                    entry.style.display = total > 0 ? 'inline-flex' : 'none';
+                }
+                var link = entry.closest ? entry.closest('a') : null;
+                if (link) {
+                    link.href = firstUnreadChannel
+                        ? '/index.php/index/lottery/kefu?channel=' + encodeURIComponent(firstUnreadChannel)
+                        : '/index.php/index/lottery/kefu';
+                }
             });
         }).catch(function() {});
     }

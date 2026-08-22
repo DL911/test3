@@ -158,7 +158,7 @@
                 </a>
                 <a class="lm-menu-item" href="/index.php/index/lottery/kefu">
                     <div class="lm-menu-icon" style="background: linear-gradient(135deg, #36d1dc 0%, #5b86e5 100%);"><i class="fa-solid fa-headset"></i></div>
-                    <div class="lm-menu-text"><span>在线客服</span><small id="kefuUnreadText">联系官方客服</small></div>
+                    <div class="lm-menu-text"><span>在线客服</span><small id="kefuUnreadText" data-kefu-unread-total="text">联系官方客服</small></div>
                     <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
                 </a>
                 <a class="lm-menu-item" href="javascript:;" onclick="openUserPasswordReset()">
@@ -211,7 +211,7 @@
 
 
 
-    <script src="/assets/lottery/js/auth.js?v=2026082202"></script>
+    <script src="/assets/lottery/js/auth.js?v=2026082203"></script>
     <script src="/assets/lottery/js/currency_picker.js"></script>
     <script>
     // ===== 退出登录 =====
@@ -365,18 +365,6 @@
 
         // logout handled by doLogout() onclick
 
-        // 检查客服未读
-        if (LotteryAuth.isLoggedIn()) {
-            LotteryAuth.request('/index.php/api/kefu/unreadCount', {method: 'GET'})
-                .then(function(res) {
-                    if (res.code === 1 && res.data && res.data.count > 0) {
-                        var textEl = document.getElementById('kefuUnreadText');
-                        if (textEl) {
-                            textEl.innerHTML = '<span style="color:var(--m-accent);font-weight:bold;">您有 ' + res.data.count + ' 条未读消息</span>';
-                        }
-                    }
-                });
-        }
     });
 
 

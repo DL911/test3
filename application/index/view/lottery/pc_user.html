@@ -203,7 +203,7 @@
                 </a>
                 <a class="uc-nav-item" href="/index.php/index/lottery/kefu">
                     <i class="fa-solid fa-headset"></i> 在线客服
-                    <span id="kefuBadge" style="display:none; margin-left:auto; background:#e33; color:#fff; padding:1px 8px; border-radius:10px; font-size:11px;"></span>
+                    <span id="kefuBadge" data-kefu-unread-total="badge" style="display:none; margin-left:auto; align-items:center; justify-content:center; background:#e33; color:#fff; padding:1px 8px; border-radius:10px; font-size:11px;"></span>
                     <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
                 <a class="uc-nav-item" href="javascript:;" onclick="openUserPasswordReset()">
@@ -343,7 +343,7 @@
         </div></div>
     </div>
 
-    <script src="/assets/lottery/js/auth.js?v=2026082202"></script>
+    <script src="/assets/lottery/js/auth.js?v=2026082203"></script>
     <script>
     var usdtRate = 7.2; // 默认值，会被实时覆盖
     // 实时获取USDT汇率（优先OKX欧意）
@@ -689,12 +689,6 @@
                 }
             });
 
-            LotteryAuth.request('/index.php/api/kefu/unreadCount', {method:'GET'}).then(function(res){
-                if(res.code===1 && res.data && res.data.count > 0) {
-                    var b = document.getElementById('kefuBadge');
-                    if(b) { b.style.display=''; b.textContent=res.data.count; }
-                }
-            });
         }
     });
     function goIfVerified(url) {
