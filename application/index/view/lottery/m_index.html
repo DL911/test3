@@ -129,6 +129,45 @@
 
     </div>
 
+    <!-- ===== 客服咨询入口（与 PC 首页左侧栏保持一致） ===== -->
+    <section class="m-kefu-portals" aria-label="客服咨询">
+        <div class="m-kefu-portals-title"><i class="fa-solid fa-headset"></i> 客服咨询</div>
+        <a class="m-kefu-portal wanli" href="/index.php/index/lottery/kefu?channel=wanli">
+            <span class="m-kefu-portal-icon"><i class="fa-solid fa-gem"></i></span>
+            <span class="m-kefu-portal-name">万利百家乐开户窗口</span>
+            <i class="fa-solid fa-chevron-right"></i>
+        </a>
+        <a class="m-kefu-portal dongfang" href="/index.php/index/lottery/kefu?channel=dongfang">
+            <span class="m-kefu-portal-icon"><i class="fa-solid fa-chess-queen"></i></span>
+            <span class="m-kefu-portal-name">东方汇百家乐</span>
+            <i class="fa-solid fa-chevron-right"></i>
+        </a>
+        <a class="m-kefu-portal crown" href="/index.php/index/lottery/kefu?channel=crown">
+            <span class="m-kefu-portal-icon"><i class="fa-solid fa-futbol"></i></span>
+            <span class="m-kefu-portal-name">皇冠足球开户窗口</span>
+            <i class="fa-solid fa-chevron-right"></i>
+        </a>
+        <a class="m-kefu-portal general" href="/index.php/index/lottery/kefu?channel=general">
+            <span class="m-kefu-portal-icon"><i class="fa-solid fa-headset"></i></span>
+            <span class="m-kefu-portal-name">综合咨询</span>
+            <i class="fa-solid fa-chevron-right"></i>
+        </a>
+    </section>
+    <style>
+        .m-kefu-portals{margin:0 12px 76px;padding:12px;background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+        .m-kefu-portals-title{margin-bottom:8px;color:#333;font-size:14px;font-weight:700}
+        .m-kefu-portals-title i{margin-right:6px;color:#1890ff}
+        .m-kefu-portal{display:flex;align-items:center;gap:10px;padding:11px 4px;color:#333;text-decoration:none;border-top:1px solid #f2f2f2}
+        .m-kefu-portal:active{background:#f7f9fc}
+        .m-kefu-portal-icon{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;color:#fff;flex-shrink:0}
+        .m-kefu-portal.general .m-kefu-portal-icon{background:linear-gradient(135deg,#34d399,#059669)}
+        .m-kefu-portal.wanli .m-kefu-portal-icon{background:linear-gradient(135deg,#ff7875,#cf1322)}
+        .m-kefu-portal.dongfang .m-kefu-portal-icon{background:linear-gradient(135deg,#a78bfa,#7c3aed)}
+        .m-kefu-portal.crown .m-kefu-portal-icon{background:linear-gradient(135deg,#38bdf8,#0284c7)}
+        .m-kefu-portal-name{flex:1;font-size:13px;font-weight:600}
+        .m-kefu-portal>i{color:#bbb;font-size:11px}
+    </style>
+
     <!-- ===== 底部导航 ===== -->
     <nav class="m-bottom-nav">
         <a href="/index.php/index/lottery/index" class="m-nav-item active">
