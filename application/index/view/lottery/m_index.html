@@ -37,6 +37,20 @@
         <div class="m-banner-track" id="mBannerTrack"></div>
         <div class="m-banner-dots" id="mBannerDots"></div>
     </div>
+
+    {if $announcement}
+    <div class="m-home-announcement" role="status" aria-label="平台公告">
+        <i class="fa-solid fa-bullhorn"></i>
+        <div><span>{$announcement|htmlentities}</span></div>
+    </div>
+    <style>
+        .m-home-announcement{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#fff8e8;border-bottom:1px solid #ffe0a3;color:#9a6400;font-size:13px;overflow:hidden}
+        .m-home-announcement>div{flex:1;overflow:hidden;white-space:nowrap}
+        .m-home-announcement span{display:inline-block;min-width:100%;padding-left:100%;animation:mHomeAnnouncementScroll 15s linear infinite}
+        @keyframes mHomeAnnouncementScroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+        @media (prefers-reduced-motion:reduce){.m-home-announcement span{padding-left:0;animation:none}}
+    </style>
+    {/if}
     <style>
         .m-banner { position:relative; margin:0; overflow:hidden; }
         .m-banner-track { display:flex; transition:transform 0.4s ease; }

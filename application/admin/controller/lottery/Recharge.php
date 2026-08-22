@@ -44,6 +44,8 @@ class Recharge extends Backend
                 ->page($page, $limit)
                 ->select();
 
+            $this->appendRealNames($list);
+
             $total = Db::name('recharge_order')
                 ->alias('r')
                 ->join('user u', 'u.id = r.user_id', 'LEFT')
@@ -60,6 +62,20 @@ class Recharge extends Backend
         }
 
         return $this->view->fetch();
+    }
+
+    /** 兼容尚未安装实名认证升级表的旧环境。 */
+    private function appendRealNames(&$list)
+    {
+        foreach ($list as &$item) $item['real_name'] = '';
+        if (!$list) return;
+        try {
+            $userIds = array_unique(array_column($list, 'user_id'));
+            $names = Db::name('user_verify')->where('user_id', 'in', $userIds)->column('real_name', 'user_id');
+            foreach ($list as &$item) $item['real_name'] = isset($names[$item['user_id']]) ? $names[$item['user_id']] : '';
+        } catch (\Exception $e) {
+            // 旧库没有 user_verify 时保持原列表可用
+        }
     }
 
     /**

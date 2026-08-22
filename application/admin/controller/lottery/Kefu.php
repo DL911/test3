@@ -61,6 +61,7 @@ class Kefu extends Backend
     public function get_user_list()
     {
         $channel = KefuChannel::normalize($this->request->get('channel', KefuChannel::DEFAULT_CODE), false);
+        $focusUserId = $this->request->get('focus_user_id/d', 0);
         $subQuery = Db::name('lottery_kefu_message')->where('channel', $channel)->field('user_id, MAX(createtime) as last_time')->group('user_id')->buildSql();
         
         $list = Db::name('user')
@@ -69,6 +70,21 @@ class Kefu extends Backend
             ->field('u.id, u.username, u.nickname, u.avatar, m.last_time')
             ->order('m.last_time', 'desc')
             ->select();
+
+        // 财务审核可直接发起会话，即使该用户此前从未咨询过。
+        if ($focusUserId) {
+            $found = false;
+            foreach ($list as $item) {
+                if ((int)$item['id'] === $focusUserId) { $found = true; break; }
+            }
+            if (!$found) {
+                $focusUser = Db::name('user')->where('id', $focusUserId)->field('id, username, nickname, avatar')->find();
+                if ($focusUser) {
+                    $focusUser['last_time'] = time();
+                    array_unshift($list, $focusUser);
+                }
+            }
+        }
 
         foreach($list as &$v) {
             try { $v['service_remark'] = (string)Db::name('lottery_kefu_user_remark')->where(['user_id'=>$v['id'],'channel'=>$channel])->value('remark'); }

@@ -123,6 +123,7 @@
 .channel-bar { display:flex; gap:8px; align-items:center; padding:10px; background:#fff; border:1px solid #ddd; border-bottom:0; }
 .channel-tab { border:1px solid #ddd; background:#fafafa; padding:6px 12px; border-radius:4px; cursor:pointer; }
 .channel-tab.active { color:#fff; border-color:transparent; background:#18bc9c; }
+.channel-unread-dot { display:inline-block; min-width:17px; height:17px; line-height:17px; margin-left:5px; padding:0 4px; border-radius:9px; background:#ff4d4f; color:#fff; font-size:11px; text-align:center; vertical-align:1px; }
 </style>
 
 <div class="channel-bar" id="channelBar"><span style="color:#999">加载通道...</span></div>
@@ -169,9 +170,11 @@
     })();
 
     var currentUserId = 0;
-    var currentChannel = 'general';
+    var requestedChannel = new URLSearchParams(window.location.search).get('channel') || 'general';
+    var currentChannel = requestedChannel;
     var channelMap = {};
     var lastMsgId = 0;
+    var requestedUserId = parseInt(new URLSearchParams(window.location.search).get('user_id') || 0, 10);
     var Dialog = window.Layer || window.layer || (window.parent && (window.parent.Layer || window.parent.layer));
 
     function kefuUrl(action) {
@@ -196,7 +199,7 @@
         $.ajax({
             url: kefuUrl('get_user_list'),
             type: "GET",
-            data: {channel: currentChannel},
+            data: {channel: currentChannel, focus_user_id: requestedUserId || 0},
             success: function(res) {
                 if(res.code == 1) {
                     if(!res.data || res.data.length === 0) {
@@ -240,6 +243,10 @@
                         $(this).find('.user-unread').remove();
                         loadChatHistory();
                     });
+                    if (requestedUserId) {
+                        var requestedItem = $('.user-item[data-id="'+requestedUserId+'"]');
+                        if (requestedItem.length) { requestedUserId = 0; requestedItem.trigger('click'); }
+                    }
                 }
             },
             error: function() {
@@ -318,6 +325,7 @@
                 if(parseInt(c.status) !== 1) return;
                 html += '<button class="channel-tab '+(c.code===currentChannel?'active':'')+'" data-code="'+c.code+'" style="--channel-color:'+c.color+'">'+c.name+'</button>';
             });
+            if (!channelMap[currentChannel] || parseInt(channelMap[currentChannel].status) !== 1) currentChannel = 'general';
             $('#channelBar').html(html);
             $('.channel-tab').on('click', function(){
                 currentChannel=$(this).data('code'); currentUserId=0; lastMsgId=0;
@@ -326,7 +334,20 @@
                 $('#inputArea').hide(); loadUserList();
             });
             loadUserList();
+            loadChannelUnread();
         }).fail(function(){ loadUserList(); });
+    }
+
+    function loadChannelUnread() {
+        $.get(kefuUrl('global_status'), function(res) {
+            if (res.code != 1 || !res.data) return;
+            var counts = res.data.channels || {};
+            $('.channel-tab').each(function() {
+                var count = parseInt(counts[$(this).data('code')] || 0, 10);
+                $(this).find('.channel-unread-dot').remove();
+                if (count > 0) $(this).append('<span class="channel-unread-dot">'+(count > 99 ? '99+' : count)+'</span>');
+            });
+        });
     }
 
     // 初始化
@@ -374,5 +395,6 @@
 
     setInterval(loadUserList, 5000);
     setInterval(loadChatHistory, 3000);
+    setInterval(loadChannelUnread, 5000);
 })();
 </script>

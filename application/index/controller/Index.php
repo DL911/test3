@@ -13,7 +13,8 @@ class Index extends Frontend
 
     public function index()
     {
-        return $this->view->fetch();
+        // 根域名默认进入彩票大厅；保留独立控制器，避免影响后台和 API 路由。
+        return $this->redirect('/index/lottery/index', [], 302);
     }
 
 }

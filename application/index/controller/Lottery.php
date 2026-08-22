@@ -3,6 +3,7 @@
 namespace app\index\controller;
 
 use app\common\controller\Frontend;
+use app\common\library\KefuChannel;
 
 /**
  * 彩票投注控制器
@@ -71,6 +72,9 @@ class Lottery extends Frontend
      */
     public function index()
     {
+        $channels = KefuChannel::map(false);
+        $general = isset($channels[KefuChannel::DEFAULT_CODE]) ? $channels[KefuChannel::DEFAULT_CODE] : [];
+        $this->view->assign('announcement', trim(isset($general['announcement']) ? $general['announcement'] : ''));
         if ($this->isMobile()) {
             return $this->view->fetch('lottery/m_index');
         }

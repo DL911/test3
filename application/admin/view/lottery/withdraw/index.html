@@ -13,9 +13,9 @@
         </div>
         <table class="table table-bordered table-hover">
             <thead><tr>
-                <th width="50">ID</th><th>订单号</th><th>用户</th><th>金额</th><th>方式</th><th>收款码</th><th>收款信息</th><th>状态</th><th>备注</th><th>时间</th><th width="160">操作</th>
+                <th width="50">ID</th><th>订单号</th><th>用户</th><th>真实姓名</th><th>金额</th><th>方式</th><th>收款码</th><th>收款信息</th><th>状态</th><th>备注</th><th>时间</th><th width="210">操作</th>
             </tr></thead>
-            <tbody id="tableBody"><tr><td colspan="11" style="text-align:center;color:#999;">加载中...</td></tr></tbody>
+            <tbody id="tableBody"><tr><td colspan="12" style="text-align:center;color:#999;">加载中...</td></tr></tbody>
         </table>
         <div id="pagination" style="text-align:center;"></div>
     </div>
@@ -40,10 +40,10 @@ function wdLoadList(page) {
     xhr.onload = function(){
         try {
             var res = JSON.parse(xhr.responseText);
-            if(res.code !== 1) { document.getElementById('tableBody').innerHTML='<tr><td colspan="11" style="color:red;">'+res.msg+'</td></tr>'; return; }
+            if(res.code !== 1) { document.getElementById('tableBody').innerHTML='<tr><td colspan="12" style="color:red;">'+wdEscape(res.msg)+'</td></tr>'; return; }
             var d = res.data, list = d.list || [], html = '';
             if(!list.length){
-                html = '<tr><td colspan="11" style="text-align:center;color:#999;">暂无数据</td></tr>';
+                html = '<tr><td colspan="12" style="text-align:center;color:#999;">暂无数据</td></tr>';
             } else {
                 for(var i=0;i<list.length;i++){
                     var r = list[i];
@@ -66,10 +66,12 @@ function wdLoadList(page) {
                         actions = '<button class="btn btn-xs btn-success" onclick="wdAudit('+r.id+',\'approve\')"><i class="fa fa-check"></i> 已打款</button> '+
                                   '<button class="btn btn-xs btn-danger" onclick="wdAudit('+r.id+',\'reject\')"><i class="fa fa-times"></i> 拒绝</button>';
                     } else { actions = '<span class="text-muted">已处理</span>'; }
+                    actions += ' <button class="btn btn-xs btn-primary" onclick="wdOpenChat('+parseInt(r.user_id,10)+')"><i class="fa fa-comments"></i> 会话</button>';
                     html += '<tr>'+
                         '<td>'+r.id+'</td>'+
                         '<td><small>'+r.order_no+'</small></td>'+
                         '<td>'+(r.nickname||r.username||'--')+'<br><small class="text-muted">余额:¥'+(r.user_balance||0)+'</small></td>'+
+                        '<td>'+(r.real_name ? wdEscape(r.real_name) : '<span class="text-muted">未填写</span>')+'</td>'+
                         '<td><strong style="color:#d9534f;">¥'+parseFloat(r.amount).toFixed(2)+'</strong></td>'+
                         '<td>'+(r.withdraw_type_text||r.withdraw_type||'-')+'</td>'+
                         '<td>'+qrBtn+'</td>'+
@@ -83,10 +85,22 @@ function wdLoadList(page) {
             document.getElementById('tableBody').innerHTML = html;
             wdRenderPage(d.total||0, wdPage, 20);
         } catch(e){
-            document.getElementById('tableBody').innerHTML='<tr><td colspan="11" style="color:red;">解析错误: '+e.message+'</td></tr>';
+            document.getElementById('tableBody').innerHTML='<tr><td colspan="12" style="color:red;">解析错误: '+wdEscape(e.message)+'</td></tr>';
         }
     };
     xhr.send();
+}
+
+function wdEscape(value){
+    return String(value == null ? '' : value).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];});
+}
+
+function wdOpenChat(userId){
+    var path = window.location.pathname, match = path.match(/(\/[^\/]*\.php)/i);
+    var url = (match ? match[1] : '/index.php') + '/lottery/kefu?channel=general&user_id=' + encodeURIComponent(userId);
+    var dialog = window.parent && window.parent.layer ? window.parent.layer : window.layer;
+    if(dialog) dialog.open({type:2,title:'<i class="fa fa-comments"></i> 用户在线会话',shadeClose:true,maxmin:true,area:['900px','750px'],content:url});
+    else window.open(url, '_blank');
 }
 
 function wdAudit(id, action){
@@ -130,6 +144,7 @@ window.wdLoadList = wdLoadList;
 window.wdAudit = wdAudit;
 window.wdShowQR = wdShowQR;
 window.wdRenderPage = wdRenderPage;
+window.wdOpenChat = wdOpenChat;
 
 wdLoadList();
 </script>

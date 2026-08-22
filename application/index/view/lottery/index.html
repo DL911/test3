@@ -79,6 +79,19 @@
 
         <!-- MAIN CONTENT -->
         <main class="lottery-main" id="mainContent">
+            {if $announcement}
+            <div class="home-announcement" role="status" aria-label="平台公告">
+                <i class="fa-solid fa-bullhorn"></i>
+                <div class="home-announcement-window"><span>{$announcement|htmlentities}</span></div>
+            </div>
+            <style>
+                .home-announcement{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:#fff8e8;border:1px solid #ffe0a3;border-radius:8px;color:#9a6400;overflow:hidden}
+                .home-announcement-window{flex:1;overflow:hidden;white-space:nowrap}
+                .home-announcement-window span{display:inline-block;min-width:100%;padding-left:100%;animation:homeAnnouncementScroll 18s linear infinite}
+                @keyframes homeAnnouncementScroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+                @media (prefers-reduced-motion:reduce){.home-announcement-window span{padding-left:0;animation:none}}
+            </style>
+            {/if}
             <!-- 彩种分类Tab -->
             <div class="lottery-type-tabs" id="typeTabBar">
                 <div class="type-tab active" data-type="all">
