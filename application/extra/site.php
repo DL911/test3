@@ -4,7 +4,7 @@ return array (
   'name' => '3d',
   'beian' => '',
   'cdnurl' => '',
-  'version' => '1.0.9',
+  'version' => '1.0.10',
   'timezone' => 'Asia/Shanghai',
   'forbiddenip' => '',
   'languages' => 
