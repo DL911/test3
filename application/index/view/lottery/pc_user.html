@@ -135,7 +135,7 @@
     <div class="uc-wrap">
 
         <!-- 顶部横幅 - 未登录 -->
-        <div class="uc-banner uc-banner-guest" id="guestBanner">
+        <div class="uc-banner uc-banner-guest" id="guestBanner" style="display:none;">
             <div class="uc-banner-info">
                 <i class="fa-solid fa-user-lock" style="font-size:36px; opacity:0.4; margin-bottom:12px;"></i>
                 <div class="uc-banner-name">欢迎来到好运北彩</div>
@@ -678,6 +678,9 @@
 
             LotteryAuth.fetchUserInfo(function(info) {
                 if(info) {
+                    document.getElementById('guestBanner').style.display = 'none';
+                    document.getElementById('userBanner').style.display = '';
+                    document.getElementById('mainBody').style.display = '';
                     document.getElementById('pcUserName').textContent = info.nickname || info.username || '用户';
                     document.getElementById('pcUserId').textContent = 'ID: ' + (info.id || info.user_id || '--');
                     if(info.avatar) setAvatar(info.avatar);
