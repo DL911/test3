@@ -2819,7 +2819,7 @@ var BetPage = (function() {
             }
         }
 
-        var exceedsSanxingZhixuanLimit = isSanxingZhixuanFushiPerBetOverLimit();
+        var exceedsSanxingZhixuanLimit = isSanxingZhixuanPerBetOverLimit();
         if (b) b.disabled = count === 0 || exceedsSanxingZhixuanLimit;
 
         // 更新底部栏
@@ -2860,9 +2860,9 @@ var BetPage = (function() {
         updateGlobalOddsDisplay();
     }
 
-    function isSanxingZhixuanFushiPerBetOverLimit() {
+    function isSanxingZhixuanPerBetOverLimit() {
         return state.panelType === 'biaozhun' &&
-            state.playType === 'sx_zx_fushi' &&
+            (state.playType === 'sx_zx_fushi' || state.playType === 'sx_zx_danshi') &&
             state.bzpUnit * state.bzpMultiple > 500;
     }
 
@@ -2956,8 +2956,8 @@ var BetPage = (function() {
                 total = betCount * state.betAmount;
             }
         }
-        if (isSanxingZhixuanFushiPerBetOverLimit()) {
-            showToast('三星直选复式每注金额不能超过500元', 'error');
+        if (isSanxingZhixuanPerBetOverLimit()) {
+            showToast('三星直选每注金额不能超过500元', 'error');
             return;
         }
         var name=state.lotteryType==='fc3d'?'福彩3D':'排列三';
@@ -2985,8 +2985,8 @@ var BetPage = (function() {
     function submitBet() {
         hideConfirm();
 
-        if (isSanxingZhixuanFushiPerBetOverLimit()) {
-            showToast('三星直选复式每注金额不能超过500元', 'error');
+        if (isSanxingZhixuanPerBetOverLimit()) {
+            showToast('三星直选每注金额不能超过500元', 'error');
             return;
         }
 

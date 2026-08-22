@@ -321,3 +321,72 @@ var LotteryAuth = (function() {
         usdtRate: usdtRate
     };
 })();
+
+/** 用户中心安全问题密码重置（PC/手机共用）。 */
+(function () {
+    var mask = document.getElementById('userResetMask');
+    if (!mask) return;
+    var feedback = document.getElementById('userResetFeedback');
+    var submit = document.getElementById('userResetSubmit');
+
+    function setFeedback(message, type) {
+        feedback.textContent = message || '';
+        feedback.className = 'user-reset-feedback' + (message ? ' show ' + (type || 'error') : '');
+    }
+
+    window.openUserPasswordReset = function () {
+        var user = LotteryAuth.getCachedUser();
+        document.getElementById('userResetAccount').value = user ? (user.username || user.mobile || '') : '';
+        setFeedback('');
+        mask.classList.add('show');
+    };
+    window.closeUserPasswordReset = function () { mask.classList.remove('show'); };
+
+    mask.addEventListener('click', function (event) {
+        if (event.target === mask) window.closeUserPasswordReset();
+    });
+    document.getElementById('userResetClose').addEventListener('click', window.closeUserPasswordReset);
+
+    submit.addEventListener('click', function () {
+        var account = document.getElementById('userResetAccount').value.trim();
+        var teacher = document.getElementById('userResetTeacher').value.trim();
+        var hometown = document.getElementById('userResetHometown').value.trim();
+        var friend = document.getElementById('userResetFriend').value.trim();
+        var password = document.getElementById('userResetPassword').value;
+        var password2 = document.getElementById('userResetPassword2').value;
+        setFeedback('');
+        if (!account || teacher.length < 2 || hometown.length < 2 || friend.length < 2) {
+            setFeedback('请完整填写账号和三项安全问题答案', 'error'); return;
+        }
+        if (password.length < 6 || password.length > 30) {
+            setFeedback('新密码长度需要6-30位', 'error'); return;
+        }
+        if (password !== password2) {
+            setFeedback('两次输入的密码不一致', 'error'); return;
+        }
+
+        var data = new FormData();
+        data.append('account', account);
+        data.append('security_teacher', teacher);
+        data.append('security_hometown', hometown);
+        data.append('security_friend', friend);
+        data.append('newpassword', password);
+        submit.disabled = true;
+        submit.textContent = '正在重置...';
+        fetch('/index.php/api/user/resetBySecurity', {method: 'POST', body: data})
+            .then(function (response) {
+                return response.text().then(function (text) {
+                    try { return JSON.parse(text); }
+                    catch (e) { throw new Error('服务器返回异常，请稍后重试'); }
+                });
+            })
+            .then(function (result) {
+                if (result.code !== 1) { setFeedback(result.msg || '密码重置失败', 'error'); return; }
+                setFeedback('密码重置成功，请使用新密码重新登录', 'success');
+                LotteryAuth.clearLogin();
+                setTimeout(function () { location.href = '/index.php/index/lottery/login'; }, 1200);
+            })
+            .catch(function (error) { setFeedback(error.message || '网络错误，请稍后重试', 'error'); })
+            .then(function () { submit.disabled = false; submit.textContent = '确认重置密码'; });
+    });
+})();

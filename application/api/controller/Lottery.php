@@ -690,11 +690,11 @@ class Lottery extends Api
             $totalAmount = $betCount * $amount;
         }
 
-        // 福彩3D/排列三标准盘的三星直选复式，每注金额最高500元。
+        // 福彩3D/排列三标准盘的三星直选复式/单式，每注金额最高500元。
         // 必须在服务端重新计算后校验，防止绕过页面直接提交。
         $perBetAmount = $bzpUnit * $bzpMultiple;
-        if ($panelType === 'biaozhun' && $playType === 'sx_zx_fushi' && $perBetAmount > 500) {
-            $this->error('三星直选复式每注金额不能超过500元');
+        if ($panelType === 'biaozhun' && in_array($playType, ['sx_zx_fushi', 'sx_zx_danshi']) && $perBetAmount > 500) {
+            $this->error('三星直选每注金额不能超过500元');
         }
 
         // 标准盘验证总金额，双面盘/行式验证单注金额
