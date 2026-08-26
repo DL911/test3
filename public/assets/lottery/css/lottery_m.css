@@ -719,6 +719,13 @@ body.m-bet-page { padding-bottom: calc(70px + var(--safe-bottom)); padding-top: 
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
 }
+.m-bet-page .m-bet-bar .bzp-unit-btn.active {
+    color: #fff;
+    background: linear-gradient(135deg, #1890ff, #096dd9);
+    border-color: #168fea;
+    box-shadow: 0 2px 7px rgba(24, 144, 255, 0.32);
+    font-weight: 700;
+}
 .m-bet-page .m-bet-bar .bzp-multi-minus,
 .m-bet-page .m-bet-bar .bzp-multi-plus {
     width: 36px !important;

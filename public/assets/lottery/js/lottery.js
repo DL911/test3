@@ -934,6 +934,8 @@ var BetPage = (function() {
         // 倍数快捷
         document.querySelectorAll('.bzp-unit-btn[data-multi]').forEach(function(btn) {
             btn.addEventListener('click', function() {
+                document.querySelectorAll('.bzp-unit-btn[data-multi]').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
                 state.bzpMultiple = parseInt(btn.dataset.multi);
                 var inp = document.getElementById('bzpMultiInput');
                 if (inp) inp.value = state.bzpMultiple;
@@ -944,17 +946,23 @@ var BetPage = (function() {
         var multiInp = document.getElementById('bzpMultiInput');
         var minusBtn = document.getElementById('bzpMultiMinus');
         var plusBtn = document.getElementById('bzpMultiPlus');
+        function clearMultiActive() {
+            document.querySelectorAll('.bzp-unit-btn[data-multi]').forEach(function(b) { b.classList.remove('active'); });
+        }
         if (minusBtn) minusBtn.addEventListener('click', function() {
+            clearMultiActive();
             state.bzpMultiple = Math.max(1, state.bzpMultiple - 1);
             if (multiInp) multiInp.value = state.bzpMultiple;
             updateBetCount();
         });
         if (plusBtn) plusBtn.addEventListener('click', function() {
+            clearMultiActive();
             state.bzpMultiple++;
             if (multiInp) multiInp.value = state.bzpMultiple;
             updateBetCount();
         });
         if (multiInp) multiInp.addEventListener('change', function() {
+            clearMultiActive();
             var v = parseInt(multiInp.value);
             if (v > 0) state.bzpMultiple = v; else { state.bzpMultiple = 1; multiInp.value = 1; }
             updateBetCount();
