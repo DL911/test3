@@ -2819,8 +2819,7 @@ var BetPage = (function() {
             }
         }
 
-        var exceedsSanxingZhixuanLimit = isSanxingZhixuanPerBetOverLimit();
-        if (b) b.disabled = count === 0 || exceedsSanxingZhixuanLimit;
+        if (b) b.disabled = count === 0;
 
         // 更新底部栏
         var countEl = document.getElementById('mBetCount');
@@ -2828,8 +2827,8 @@ var BetPage = (function() {
         if (state.panelType === 'biaozhun') {
             if (countEl) countEl.textContent = '';
             if (totalEl) {
-                totalEl.textContent = count > 0 ? '您选择了' + count + '注，共计' + total.toFixed(4).replace(/\.?0+$/, '') + '元' + (exceedsSanxingZhixuanLimit ? '（每注不能超过500元）' : '') : '';
-                totalEl.style.color = exceedsSanxingZhixuanLimit ? '#e53935' : '';
+                totalEl.textContent = count > 0 ? '您选择了' + count + '注，共计' + total.toFixed(4).replace(/\.?0+$/, '') + '元' : '';
+                totalEl.style.color = '';
             }
         } else {
             if (countEl) countEl.textContent = count + ' 单';
@@ -2849,21 +2848,13 @@ var BetPage = (function() {
         }
 
         // 更新投注按钮文字
-        if (b && exceedsSanxingZhixuanLimit) {
-            b.textContent = '每注不能超过500元';
-        } else if (b && count > 0) {
+        if (b && count > 0) {
             b.textContent = '投注(' + count + '注)';
         } else if (b) {
             b.textContent = '投注';
         }
 
         updateGlobalOddsDisplay();
-    }
-
-    function isSanxingZhixuanPerBetOverLimit() {
-        return state.panelType === 'biaozhun' &&
-            (state.playType === 'sx_zx_fushi' || state.playType === 'sx_zx_danshi') &&
-            state.bzpUnit * state.bzpMultiple > 500;
     }
 
     /* ===============================================================
@@ -2956,10 +2947,6 @@ var BetPage = (function() {
                 total = betCount * state.betAmount;
             }
         }
-        if (isSanxingZhixuanPerBetOverLimit()) {
-            showToast('三星直选每注金额不能超过500元', 'error');
-            return;
-        }
         var name=state.lotteryType==='fc3d'?'福彩3D':'排列三';
         
         // 玩法中文名
@@ -2984,11 +2971,6 @@ var BetPage = (function() {
 
     function submitBet() {
         hideConfirm();
-
-        if (isSanxingZhixuanPerBetOverLimit()) {
-            showToast('三星直选每注金额不能超过500元', 'error');
-            return;
-        }
 
         // 获取当前期号
         var period = apiData.next ? apiData.next.period : '';

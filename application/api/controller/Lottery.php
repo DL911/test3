@@ -690,12 +690,11 @@ class Lottery extends Api
             $totalAmount = $betCount * $amount;
         }
 
-        // 福彩3D/排列三标准盘的三星直选复式/单式，每注金额最高500元。
-        // 必须在服务端重新计算后校验，防止绕过页面直接提交。
-        $perBetAmount = $bzpUnit * $bzpMultiple;
-        if ($panelType === 'biaozhun' && in_array($playType, ['sx_zx_fushi', 'sx_zx_danshi']) && $perBetAmount > 500) {
-            $this->error('三星直选每注金额不能超过500元');
-        }
+        // 福彩3D/排列三标准盘的三星直选复式/单式按用户、彩种、期号、玩法分别累计校验。
+        // 具体累计校验放在事务和用户行锁内执行，防止通过拆单或并发请求绕过。
+        $needsSanxingAverageLimit = in_array($type, ['fc3d', 'pl3'])
+            && $panelType === 'biaozhun'
+            && in_array($playType, ['sx_zx_fushi', 'sx_zx_danshi']);
 
         // 标准盘验证总金额，双面盘/行式验证单注金额
         $checkAmount = ($panelType === 'biaozhun' && $bzpUnit > 0 && $bzpMultiple > 0) ? $totalAmount : $amount;
@@ -808,6 +807,33 @@ class Lottery extends Api
         // 创建投注记录
         Db::startTrans();
         try {
+            // 串行化同一用户的投注，确保累计均注金额与余额校验都不会被并发绕过。
+            $lockedUser = Db::name('user')->where('id', $userId)->lock(true)->field('money')->find();
+            if (!$lockedUser || floatval($lockedUser['money']) < $totalAmount) {
+                Db::rollback();
+                $this->error('余额不足，当前余额: ¥' . ($lockedUser ? $lockedUser['money'] : 0));
+            }
+
+            if ($needsSanxingAverageLimit) {
+                $periodTotals = Db::name('lottery_bet')
+                    ->where('user_id', $userId)
+                    ->where('lottery_type', $lotteryType)
+                    ->where('period', $period)
+                    ->where('panel_type', 'biaozhun')
+                    ->where('play_type', $playType)
+                    ->where('status', '<>', 3)
+                    ->field('COALESCE(SUM(bet_count), 0) AS bet_count, COALESCE(SUM(total_amount), 0) AS total_amount')
+                    ->find();
+                $periodBetCount = intval(isset($periodTotals['bet_count']) ? $periodTotals['bet_count'] : 0) + $betCount;
+                $periodTotalAmount = floatval(isset($periodTotals['total_amount']) ? $periodTotals['total_amount'] : 0) + $totalAmount;
+                $periodAverage = $periodBetCount > 0 ? $periodTotalAmount / $periodBetCount : 0;
+                if ($periodAverage > 500.000001) {
+                    Db::rollback();
+                    $limitPlayName = $playType === 'sx_zx_danshi' ? '三星直选单式' : '三星直选复式';
+                    $this->error('本期' . $limitPlayName . '累计投注平均每注不能超过500元；提交后平均每注为¥' . number_format($periodAverage, 2));
+                }
+            }
+
             $orderNo = date('YmdHis') . str_pad($userId, 6, '0', STR_PAD_LEFT) . mt_rand(1000, 9999);
 
             Db::name('lottery_bet')->insert([

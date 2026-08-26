@@ -669,6 +669,77 @@ body.m-bet-page { padding-bottom: calc(70px + var(--safe-bottom)); padding-top: 
     height: 24px;
     font-size: 11px;
 }
+
+/* 标准盘手机触控优化：快捷选号另起一行，扩大有效点击区域。 */
+.m-bet-page .bzp-ball-row .bzp-quick-btns {
+    width: calc(100% - 37px);
+    margin: 6px 0 0 37px;
+    gap: 5px;
+    justify-content: flex-end;
+}
+.m-bet-page .bzp-ball-row .bzp-quick-btn {
+    width: 40px;
+    height: 36px;
+    border: 1px solid #e8e8e8;
+    border-radius: 7px;
+    font-size: 13px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* 标准盘手机底部的每注金额和倍数控件。使用 !important 覆盖模板旧的行内小尺寸。 */
+.m-bet-page .m-bet-bar .bzp-unit-bar {
+    width: 100%;
+    padding: 4px 0 !important;
+    gap: 7px !important;
+}
+.m-bet-page .m-bet-bar .bzp-unit-group,
+.m-bet-page .m-bet-bar .bzp-multi-group {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px !important;
+}
+.m-bet-page .m-bet-bar .bzp-unit-label {
+    min-width: 34px;
+    font-size: 13px !important;
+}
+.m-bet-page .m-bet-bar .bzp-unit-btn {
+    min-width: 40px;
+    min-height: 36px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 9px !important;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 13px !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+.m-bet-page .m-bet-bar .bzp-multi-minus,
+.m-bet-page .m-bet-bar .bzp-multi-plus {
+    width: 36px !important;
+    height: 36px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    font-size: 18px !important;
+    touch-action: manipulation;
+}
+.m-bet-page .m-bet-bar .bzp-multi-input {
+    width: 52px !important;
+    height: 36px;
+    box-sizing: border-box;
+    font-size: 14px !important;
+    text-align: center;
+}
+.m-bet-page .m-bet-area {
+    padding-bottom: 230px;
+}
 .m-bet-page .bzp-hz-grid {
     grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
     gap: 4px;
