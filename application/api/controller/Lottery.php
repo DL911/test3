@@ -594,6 +594,41 @@ class Lottery extends Api
     }
 
     /**
+     * 将三星直选复式/单式展开为实际三位数投注组合。
+     * 单式保留重复号码，以便同一订单内重复组合也能正确累计金额。
+     */
+    private function expandSanxingZhixuanTickets($betsArr, $playType)
+    {
+        if ($playType === 'sx_zx_danshi') {
+            $tickets = [];
+            foreach ($betsArr as $bet) {
+                $number = isset($bet['key']) ? trim(strval($bet['key'])) : '';
+                if (preg_match('/^\d{3}$/', $number)) $tickets[] = $number;
+            }
+            return $tickets;
+        }
+
+        if ($playType !== 'sx_zx_fushi') return [];
+        $positions = [0 => [], 1 => [], 2 => []];
+        foreach ($betsArr as $bet) {
+            if (!isset($bet['pos'])) continue;
+            $pos = intval($bet['pos']);
+            if (!array_key_exists($pos, $positions)) continue;
+            $number = isset($bet['num']) ? strval($bet['num']) : (isset($bet['key']) ? strval($bet['key']) : '');
+            if (preg_match('/(\d)$/', $number, $match)) $positions[$pos][$match[1]] = true;
+        }
+        if (!$positions[0] || !$positions[1] || !$positions[2]) return [];
+
+        $tickets = [];
+        foreach (array_keys($positions[0]) as $bai) {
+            foreach (array_keys($positions[1]) as $shi) {
+                foreach (array_keys($positions[2]) as $ge) $tickets[] = $bai . $shi . $ge;
+            }
+        }
+        return $tickets;
+    }
+
+    /**
      * 组合数 C(n, r)
      */
     private function comb($n, $r)
@@ -693,9 +728,9 @@ class Lottery extends Api
             $totalAmount = $betCount * $amount;
         }
 
-        // 福彩3D/排列三标准盘的三星直选复式/单式按用户、彩种、期号、玩法分别累计校验。
-        // 具体累计校验放在事务和用户行锁内执行，防止通过拆单或并发请求绕过。
-        $needsSanxingAverageLimit = in_array($type, ['fc3d', 'pl3'])
+        // 福彩3D/排列三标准盘的三星直选复式/单式按具体组合分别累计校验。
+        // 具体组合限额校验放在事务和用户行锁内执行，防止通过拆单或并发请求绕过。
+        $needsSanxingComboLimit = in_array($type, ['fc3d', 'pl3'])
             && $panelType === 'biaozhun'
             && in_array($playType, ['sx_zx_fushi', 'sx_zx_danshi']);
         $periodLimitData = null;
@@ -821,35 +856,58 @@ class Lottery extends Api
                 $this->error('余额不足，当前余额: ¥' . ($lockedUser ? $lockedUser['money'] : 0));
             }
 
-            if ($needsSanxingAverageLimit) {
-                // 两项汇总必须使用独立Query对象；旧版ThinkPHP/PDO克隆查询会丢失预处理绑定参数。
-                $historyBetCount = intval(Db::name('lottery_bet')
-                    ->where('user_id', $userId)
-                    ->where('lottery_type', $lotteryType)
-                    ->where('period', $period)
-                    ->where('panel_type', 'biaozhun')
-                    ->where('play_type', $playType)
-                    ->where('status', '<>', 3)
-                    ->sum('bet_count'));
-                $historyTotalAmount = floatval(Db::name('lottery_bet')
-                    ->where('user_id', $userId)
-                    ->where('lottery_type', $lotteryType)
-                    ->where('period', $period)
-                    ->where('panel_type', 'biaozhun')
-                    ->where('play_type', $playType)
-                    ->where('status', '<>', 3)
-                    ->sum('total_amount'));
-                $periodBetCount = $historyBetCount + $betCount;
-                $periodTotalAmount = $historyTotalAmount + $totalAmount;
-                $periodMaxAmount = $periodBetCount * 500;
-                if ($periodTotalAmount > $periodMaxAmount + 0.000001) {
+            if ($needsSanxingComboLimit) {
+                $currentTickets = $this->expandSanxingZhixuanTickets($betsArr, $playType);
+                if (count($currentTickets) !== $betCount) {
                     Db::rollback();
-                    $limitPlayName = $playType === 'sx_zx_danshi' ? '三星直选单式' : '三星直选复式';
-                    $this->error('本期' . $limitPlayName . '最多可投注¥' . number_format($periodMaxAmount, 2)
-                        . '（累计' . $periodBetCount . '注 × 500元），当前累计提交将达到¥' . number_format($periodTotalAmount, 2));
+                    $this->error('投注组合解析异常，请重新选择号码后提交');
                 }
+
+                $historyBets = Db::name('lottery_bet')
+                    ->where('user_id', $userId)
+                    ->where('lottery_type', $lotteryType)
+                    ->where('period', $period)
+                    ->where('panel_type', 'biaozhun')
+                    ->where('play_type', $playType)
+                    ->where('status', '<>', 3)
+                    ->field('id, order_no, bet_content, bet_count, total_amount')
+                    ->select();
+
+                $comboAmounts = [];
+                $periodTotalAmount = $totalAmount;
+                foreach ($historyBets as $historyBet) {
+                    $historyContent = json_decode($historyBet['bet_content'], true);
+                    $historyTickets = is_array($historyContent)
+                        ? $this->expandSanxingZhixuanTickets($historyContent, $playType)
+                        : [];
+                    $historyCount = intval($historyBet['bet_count']);
+                    if ($historyCount <= 0 || count($historyTickets) !== $historyCount) {
+                        Db::rollback();
+                        $this->error('本期存在无法识别投注数量的历史订单，请联系管理员核查订单' . $historyBet['order_no']);
+                    }
+                    $historyUnitAmount = floatval($historyBet['total_amount']) / $historyCount;
+                    $periodTotalAmount += floatval($historyBet['total_amount']);
+                    foreach ($historyTickets as $ticket) {
+                        if (!isset($comboAmounts[$ticket])) $comboAmounts[$ticket] = 0;
+                        $comboAmounts[$ticket] += $historyUnitAmount;
+                    }
+                }
+
+                $currentUnitAmount = $totalAmount / $betCount;
+                foreach ($currentTickets as $ticket) {
+                    if (!isset($comboAmounts[$ticket])) $comboAmounts[$ticket] = 0;
+                    $comboAmounts[$ticket] += $currentUnitAmount;
+                    if ($comboAmounts[$ticket] > 500.000001) {
+                        Db::rollback();
+                        $limitPlayName = $playType === 'sx_zx_danshi' ? '三星直选单式' : '三星直选复式';
+                        $this->error('本期' . $limitPlayName . '组合' . $ticket . '累计投注金额为¥'
+                            . number_format($comboAmounts[$ticket], 2) . '，每个组合最多500元');
+                    }
+                }
+
+                $periodMaxAmount = count($comboAmounts) * 500;
                 $periodLimitData = [
-                    'bet_count' => $periodBetCount,
+                    'bet_count' => count($comboAmounts),
                     'total_amount' => round($periodTotalAmount, 2),
                     'max_amount' => round($periodMaxAmount, 2),
                     'remaining_amount' => round($periodMaxAmount - $periodTotalAmount, 2),
