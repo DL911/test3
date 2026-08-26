@@ -615,9 +615,9 @@ class Lottery extends Api
     {
         $userId = $this->auth->id;
 
-        $type      = $this->request->post('type', 'fc3d');
-        $period    = $this->request->post('period', '');
-        $playType  = $this->request->post('play_type', '');
+        $type      = strtolower(trim($this->request->post('type', 'fc3d')));
+        $period    = trim($this->request->post('period', ''));
+        $playType  = trim($this->request->post('play_type', ''));
         $playSub   = $this->request->post('play_sub', '');
         $panelType = $this->request->post('panel_type', 'shuangmian');
         $bets      = isset($_POST['bets']) ? $_POST['bets'] : '';
@@ -666,6 +666,9 @@ class Lottery extends Api
 
         // 注数计算（与前端 calcRealBetCount 保持一致）
         $betCount = $this->calcBetCount($betsArr, $playType, $panelType);
+        if ($betCount <= 0) {
+            $this->error('未识别到有效投注注数');
+        }
 
         // 总金额计算
         // 检测是否为行式amount（每个bet自带amount字段）
@@ -695,6 +698,10 @@ class Lottery extends Api
         $needsSanxingAverageLimit = in_array($type, ['fc3d', 'pl3'])
             && $panelType === 'biaozhun'
             && in_array($playType, ['sx_zx_fushi', 'sx_zx_danshi']);
+        $periodLimitData = null;
+        if ($panelType === 'biaozhun' && ($bzpUnit <= 0 || $bzpMultiple <= 0)) {
+            $this->error('标准盘投注金额或倍数无效');
+        }
 
         // 标准盘验证总金额，双面盘/行式验证单注金额
         $checkAmount = ($panelType === 'biaozhun' && $bzpUnit > 0 && $bzpMultiple > 0) ? $totalAmount : $amount;
@@ -841,6 +848,12 @@ class Lottery extends Api
                     $this->error('本期' . $limitPlayName . '最多可投注¥' . number_format($periodMaxAmount, 2)
                         . '（累计' . $periodBetCount . '注 × 500元），当前累计提交将达到¥' . number_format($periodTotalAmount, 2));
                 }
+                $periodLimitData = [
+                    'bet_count' => $periodBetCount,
+                    'total_amount' => round($periodTotalAmount, 2),
+                    'max_amount' => round($periodMaxAmount, 2),
+                    'remaining_amount' => round($periodMaxAmount - $periodTotalAmount, 2),
+                ];
             }
 
             $orderNo = date('YmdHis') . str_pad($userId, 6, '0', STR_PAD_LEFT) . mt_rand(1000, 9999);
@@ -976,7 +989,8 @@ class Lottery extends Api
             'order_no'     => $orderNo,
             'bet_count'    => $betCount,
             'total_amount' => $totalAmount,
-            'balance'      => $newBalance
+            'balance'      => $newBalance,
+            'period_limit' => $periodLimitData
         ]);
     }
 

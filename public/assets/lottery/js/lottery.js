@@ -432,7 +432,7 @@ var BetPage = (function() {
     var state = {
         lotteryType: 'fc3d', panelType: 'shuangmian', playType: '', subTab: '',
         betAmount: 1, selectedBets: [], countdownSeconds: 0, countdownTimer: null,
-        bzpMode: 'remen', bzpCat: 'sanxing', bzpMultiple: 1, bzpUnit: 1,
+        bzpMode: 'remen', bzpCat: 'sanxing', bzpMultiple: 1, bzpUnit: 2,
         userBalance: 0,          // 用户余额（CNY）
         coldHotMode: null,       // null=关闭 'hot'=冷热 'missing'=遗漏
         coldHotPeriods: 100,     // 期数
@@ -922,8 +922,16 @@ var BetPage = (function() {
 
     /* 标准盘 每注/倍数 事件绑定 */
     function initBzpUnitBar() {
+        // 以页面当前选中态为准初始化，保证高亮档位、显示金额和提交参数完全一致。
+        var activeUnit = document.querySelector('.bzp-unit-btn[data-unit].active');
+        if (activeUnit) state.bzpUnit = parseFloat(activeUnit.dataset.unit) || 2;
+        var initialMultiInp = document.getElementById('bzpMultiInput');
+        if (initialMultiInp) state.bzpMultiple = Math.max(1, parseInt(initialMultiInp.value) || 1);
+
         // 每注单价
         document.querySelectorAll('.bzp-unit-btn[data-unit]').forEach(function(btn) {
+            if (btn.dataset.bzpBound === '1') return;
+            btn.dataset.bzpBound = '1';
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.bzp-unit-btn[data-unit]').forEach(function(b) { b.classList.remove('active'); });
                 btn.classList.add('active');
@@ -933,6 +941,8 @@ var BetPage = (function() {
         });
         // 倍数快捷
         document.querySelectorAll('.bzp-unit-btn[data-multi]').forEach(function(btn) {
+            if (btn.dataset.bzpBound === '1') return;
+            btn.dataset.bzpBound = '1';
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.bzp-unit-btn[data-multi]').forEach(function(b) { b.classList.remove('active'); });
                 btn.classList.add('active');
@@ -949,24 +959,34 @@ var BetPage = (function() {
         function clearMultiActive() {
             document.querySelectorAll('.bzp-unit-btn[data-multi]').forEach(function(b) { b.classList.remove('active'); });
         }
-        if (minusBtn) minusBtn.addEventListener('click', function() {
+        if (minusBtn && minusBtn.dataset.bzpBound !== '1') {
+            minusBtn.dataset.bzpBound = '1';
+            minusBtn.addEventListener('click', function() {
             clearMultiActive();
             state.bzpMultiple = Math.max(1, state.bzpMultiple - 1);
             if (multiInp) multiInp.value = state.bzpMultiple;
             updateBetCount();
-        });
-        if (plusBtn) plusBtn.addEventListener('click', function() {
+            });
+        }
+        if (plusBtn && plusBtn.dataset.bzpBound !== '1') {
+            plusBtn.dataset.bzpBound = '1';
+            plusBtn.addEventListener('click', function() {
             clearMultiActive();
             state.bzpMultiple++;
             if (multiInp) multiInp.value = state.bzpMultiple;
             updateBetCount();
-        });
-        if (multiInp) multiInp.addEventListener('change', function() {
+            });
+        }
+        if (multiInp && multiInp.dataset.bzpBound !== '1') {
+            multiInp.dataset.bzpBound = '1';
+            multiInp.addEventListener('change', function() {
             clearMultiActive();
             var v = parseInt(multiInp.value);
             if (v > 0) state.bzpMultiple = v; else { state.bzpMultiple = 1; multiInp.value = 1; }
             updateBetCount();
-        });
+            });
+        }
+        updateBetCount();
     }
 
     /* --------------------------------------------------------------- 标准盘Tab渲染 --------------------------------------------------------------- */
@@ -2967,9 +2987,13 @@ var BetPage = (function() {
 
         var dTotal = '¥ ' + total.toFixed(2);
 
+        var standardAmountDetail = state.panelType === 'biaozhun'
+            ? '<p><strong>金额档位:</strong> ' + state.bzpUnit + '元 × ' + state.bzpMultiple + '倍</p>'
+            : '';
         c.innerHTML='<div style="font-size:14px;line-height:2;">'+
             '<p><strong>彩种:</strong> '+name+'</p>'+
             '<p><strong>玩法:</strong> '+playLabel+'</p>'+
+            standardAmountDetail+
             '<p><strong>注数:</strong> <span style="color:var(--danger);font-weight:700;">'+betCount+'</span></p>'+
             '<p><strong>总金额:</strong> <span style="color:var(--danger);font-weight:700;font-size:18px;">'+dTotal+'</span></p></div>';
         m.classList.add('show');
@@ -3018,7 +3042,12 @@ var BetPage = (function() {
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (res.code === 1) {
-                showToast('投注成功！扣款 ¥' + parseFloat(res.data.total_amount).toFixed(2), 'success');
+                var successMessage = '投注成功！扣款 ¥' + parseFloat(res.data.total_amount).toFixed(2);
+                if (res.data.period_limit) {
+                    successMessage += '；本期累计 ¥' + parseFloat(res.data.period_limit.total_amount).toFixed(2)
+                        + ' / ¥' + parseFloat(res.data.period_limit.max_amount).toFixed(2);
+                }
+                showToast(successMessage, 'success');
                 // 更新余额显示
                 var balEl = document.getElementById('userBalance');
                 if (balEl && typeof LotteryAuth !== 'undefined') {
