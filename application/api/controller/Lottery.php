@@ -815,16 +815,23 @@ class Lottery extends Api
             }
 
             if ($needsSanxingAverageLimit) {
-                $periodBetQuery = Db::name('lottery_bet')
+                // 两项汇总必须使用独立Query对象；旧版ThinkPHP/PDO克隆查询会丢失预处理绑定参数。
+                $historyBetCount = intval(Db::name('lottery_bet')
                     ->where('user_id', $userId)
                     ->where('lottery_type', $lotteryType)
                     ->where('period', $period)
                     ->where('panel_type', 'biaozhun')
                     ->where('play_type', $playType)
-                    ->where('status', '<>', 3);
-                // 分开执行SUM，避免部分线上MySQL/ThinkPHP组合对聚合别名解析不一致。
-                $historyBetCount = intval((clone $periodBetQuery)->sum('bet_count'));
-                $historyTotalAmount = floatval((clone $periodBetQuery)->sum('total_amount'));
+                    ->where('status', '<>', 3)
+                    ->sum('bet_count'));
+                $historyTotalAmount = floatval(Db::name('lottery_bet')
+                    ->where('user_id', $userId)
+                    ->where('lottery_type', $lotteryType)
+                    ->where('period', $period)
+                    ->where('panel_type', 'biaozhun')
+                    ->where('play_type', $playType)
+                    ->where('status', '<>', 3)
+                    ->sum('total_amount'));
                 $periodBetCount = $historyBetCount + $betCount;
                 $periodTotalAmount = $historyTotalAmount + $totalAmount;
                 $periodMaxAmount = $periodBetCount * 500;
