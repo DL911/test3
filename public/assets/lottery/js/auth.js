@@ -118,6 +118,8 @@ var LotteryAuth = (function() {
 
         var balEl = document.getElementById('userBalance');
         if (balEl && u) balEl.textContent = money.toFixed(2);
+
+        // 投注区域的预计剩余余额由 lottery.js 根据当前投注金额统一计算。
         
         var headerBalEl = document.getElementById('headerBalance');
         if (headerBalEl && u) headerBalEl.textContent = formatted;

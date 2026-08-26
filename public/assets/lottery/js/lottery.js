@@ -2866,14 +2866,15 @@ var BetPage = (function() {
             }
         }
 
-        // 余额 = 当前余额 - 本次消费
-        var balEl = document.getElementById('betBalanceShow');
-        if (balEl) {
-            var cnyTotal = (typeof LotteryAuth !== 'undefined') ? LotteryAuth.toCny(total) : total;
-            var remain = state.userBalance - cnyTotal;
-            balEl.textContent = remain < 0 ? '0.00' : remain.toFixed(2);
-            balEl.style.color = remain < 0 ? '#e53935' : 'var(--danger)';
-        }
+        // 投注区域显示可用余额预估：账户真实余额减去当前尚未提交的投注金额。
+        var cnyTotal = (typeof LotteryAuth !== 'undefined') ? LotteryAuth.toCny(total) : total;
+        var remainingBalance = state.userBalance - cnyTotal;
+        ['betBalanceShow', 'mBetBalanceShow'].forEach(function(id) {
+            var balEl = document.getElementById(id);
+            if (!balEl) return;
+            balEl.textContent = remainingBalance < 0 ? '0.00' : remainingBalance.toFixed(2);
+            balEl.style.color = remainingBalance < 0 ? '#e53935' : 'var(--danger)';
+        });
 
         // 更新投注按钮文字
         if (b && count > 0) {
@@ -3048,14 +3049,18 @@ var BetPage = (function() {
                         + ' / ¥' + parseFloat(res.data.period_limit.max_amount).toFixed(2);
                 }
                 showToast(successMessage, 'success');
-                // 更新余额显示
+                // 立即用服务端返回值同步顶部、底部和页面状态，随后再刷新用户缓存。
+                state.userBalance = parseFloat(res.data.balance) || 0;
                 var balEl = document.getElementById('userBalance');
-                if (balEl && typeof LotteryAuth !== 'undefined') {
-                    // Update UI format directly manually since fetchUserInfo is async
-                    balEl.textContent = LotteryAuth.formatMoney(res.data.balance).replace(/^[^0-9]+/, ''); 
-                }
+                if (balEl) balEl.textContent = state.userBalance.toFixed(2);
                 // 同步auth缓存
-                if (typeof LotteryAuth !== 'undefined') LotteryAuth.fetchUserInfo(function(u){ if(u) LotteryAuth.updateUI(u); });
+                if (typeof LotteryAuth !== 'undefined') LotteryAuth.fetchUserInfo(function(u){
+                    if (u) {
+                        state.userBalance = parseFloat(u.money) || 0;
+                        LotteryAuth.updateUI(u);
+                        updateBetCount();
+                    }
+                });
                 // 清除选中
                 document.getElementById('betArea').querySelectorAll('.selected').forEach(function(e){e.classList.remove('selected');});
                 state.selectedBets = []; updateBetCount();
