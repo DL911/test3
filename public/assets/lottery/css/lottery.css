@@ -2470,6 +2470,61 @@ a:hover { color: var(--primary-dark); }
     border-color: var(--primary);
 }
 
+/* PC 标准盘底部操作栏：各功能区保持完整，空间不足时整组换行 */
+@media (min-width: 993px) {
+    .bet-bottom-bar {
+        justify-content: flex-start;
+        gap: 18px;
+        flex-wrap: wrap;
+    }
+
+    .bet-count-info {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    .bzp-unit-bar {
+        flex: 1 1 500px;
+        min-width: 500px;
+        max-width: 620px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 0;
+    }
+
+    .bzp-unit-group,
+    .bzp-multi-group {
+        flex-wrap: nowrap;
+        width: max-content;
+        max-width: 100%;
+    }
+
+    .bzp-unit-label {
+        min-width: 36px;
+        margin-right: 2px;
+    }
+
+    .bzp-unit-btn,
+    .bzp-multi-minus,
+    .bzp-multi-plus,
+    .bzp-multi-input {
+        flex: 0 0 auto;
+    }
+
+    .bet-action-group {
+        flex: 0 0 auto;
+        margin-left: auto;
+    }
+
+    .btn-bet-submit,
+    .btn-bet-secondary,
+    .btn-bet-clear {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+}
+
 /* ===== 冷热 / 遗漏 工具栏 ===== */
 .cold-hot-toolbar {
     display: flex;
