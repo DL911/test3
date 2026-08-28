@@ -1603,8 +1603,8 @@ var BetPage = (function() {
 
     // 文本输入 (单式/混合)
     function renderBzpText(play) {
-        var ph = '请输入号码，多注用逗号或换行分隔';
-        if (play.key.indexOf('sx_') === 0 || play.key === 'sx_hunhe') ph = '请输入3位数号码，如 123,456,789';
+        var ph = '请输入号码，多注用逗号或空格分隔';
+        if (play.key.indexOf('sx_') === 0 || play.key === 'sx_hunhe') ph = '请输入3位数号码（用逗号或空格分隔），如 123,456,789或123 456 789';
         else if (play.key.indexOf('qe_') === 0) ph = '请输入2位数号码，如 12,34,56';
         else if (play.key.indexOf('he_') === 0) ph = '请输入2位数号码，如 12,34,56';
         return '<div class="bzp-text-input">' +
@@ -2226,7 +2226,7 @@ var BetPage = (function() {
     // 单式输入
     function renderDanshiInput() {
         return '<div class="direct-input-area">' +
-            '<textarea class="direct-input-field" id="danshiInput" rows="5" placeholder="请输入3位数号码，如 123,456,789，多注用逗号或换行分隔" style="resize:vertical;"></textarea>' +
+            '<textarea class="direct-input-field" id="danshiInput" rows="5" placeholder="请输入3位数号码，如 123,456,789或123 456 789，多注用逗号或空格分隔" style="resize:vertical;"></textarea>' +
             '<div style="display:flex;gap:8px;margin-top:12px;">' +
             '<div class="quick-tool-btn" onclick="BetPage.parseDanshi()">解析号码</div>' +
             '<div class="quick-tool-btn" onclick="document.getElementById(\'danshiInput\').value=\'\'">清空</div>' +
