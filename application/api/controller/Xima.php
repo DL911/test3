@@ -85,29 +85,35 @@ class Xima extends Api
         $userId = $this->auth->id;
         $todayStart = strtotime('today');
 
-        // 只领取隔天及之前的记录（当天投注次日才能领）
-        $records = Db::name('xima_record')
-            ->where('user_id', $userId)
-            ->where('status', 0)
-            ->where('createtime', '<', $todayStart)
-            ->select();
-
-        if (empty($records)) {
-            $this->error('暂无可领取的洗码');
-        }
-
-        $totalAmount = 0;
-        foreach ($records as $r) {
-            $totalAmount += $r['xima_amount'];
-        }
-        $totalAmount = round($totalAmount, 2);
-
-        if ($totalAmount <= 0) {
-            $this->error('洗码金额为0');
-        }
-
         Db::startTrans();
         try {
+            // 锁定用户后再查询待领取记录，防止并发请求重复入账
+            Db::name('user')->where('id', $userId)->lock(true)->field('id')->find();
+
+            // 只领取隔天及之前的记录（当天投注次日才能领）
+            $records = Db::name('xima_record')
+                ->where('user_id', $userId)
+                ->where('status', 0)
+                ->where('createtime', '<', $todayStart)
+                ->lock(true)
+                ->select();
+
+            if (empty($records)) {
+                Db::rollback();
+                $this->error('暂无可领取的洗码');
+            }
+
+            $totalAmount = 0;
+            foreach ($records as $r) {
+                $totalAmount += $r['xima_amount'];
+            }
+            $totalAmount = round($totalAmount, 2);
+
+            if ($totalAmount <= 0) {
+                Db::rollback();
+                $this->error('洗码金额为0');
+            }
+
             // 批量更新状态
             $ids = array_column($records, 'id');
             Db::name('xima_record')
@@ -123,6 +129,8 @@ class Xima extends Api
 
             $newBalance = Db::name('user')->where('id', $userId)->value('money');
             Db::commit();
+        } catch (\think\exception\HttpResponseException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Db::rollback();
             $this->error('领取失败: ' . $e->getMessage());

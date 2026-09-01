@@ -937,41 +937,15 @@ class Lottery extends Api
             // 扣减余额
             Db::name('user')->where('id', $userId)->setDec('money', $totalAmount);
 
-            // 代理佣金（不影响主流程）
-            try {
-                $betId = Db::name('lottery_bet')->getLastInsID();
-                $userRow = Db::name('user')->where('id', $userId)->field('pid, invite_rebate_rate')->find();
-
-                // 邀请人返佣（洗码已处理自身返水，这里只处理邀请人佣金）
-                $parentId = isset($userRow['pid']) ? intval($userRow['pid']) : 0;
-                if ($parentId && $parentId > 0) {
-                    $parentRow = Db::name('user')->where('id', $parentId)->field('invite_rebate_rate')->find();
-                    $commissionRate = isset($parentRow['invite_rebate_rate']) ? floatval($parentRow['invite_rebate_rate']) : 0.02;
-                    $commissionAmount = round($totalAmount * $commissionRate, 2);
-                    if ($commissionAmount > 0) {
-                        Db::name('lottery_commission')->insert([
-                            'user_id'    => $parentId,
-                            'sub_id'     => $userId,
-                            'bet_id'     => $betId,
-                            'type'       => 'bet_commission',
-                            'amount'     => $commissionAmount,
-                            'remark'     => "下级投注返佣 (订单: {$orderNo})",
-                            'createtime' => time()
-                        ]);
-                        Db::name('user')->where('id', $parentId)->setInc('money', $commissionAmount);
-                    }
-                }
-            } catch (\Exception $ce) {
-                // 佣金失败不中断投注
-            }
-
-            // 洗码处理（不影响主流程）
+            // 洗码处理（邀请奖励只生成待领取记录，次日才能领取）
             try {
                 $ximaConfig = Db::name('xima_config')
                     ->where('status', 1)
                     ->where(function($q) use ($lotteryType) {
                         $q->where('lottery_type', 0)->whereOr('lottery_type', $lotteryType);
                     })
+                    // 彩种专用配置优先于全部彩种配置
+                    ->order('lottery_type', 'desc')
                     ->order('id', 'asc')
                     ->find();
 
@@ -1006,11 +980,8 @@ class Lottery extends Api
                     // 2. 邀请人洗码（给上级）
                     $pId = isset($userRates['pid']) ? intval($userRates['pid']) : 0;
                     if ($pId > 0) {
-                        // 邀请人洗码费率：优先上级个人“下级洗码”费率(invite_rebate_rate)，否则用后台配置 parent_rate
-                        $parentUser = Db::name('user')->where('id', $pId)->field('invite_rebate_rate')->find();
-                        $parentRate = (!empty($parentUser['invite_rebate_rate']) && floatval($parentUser['invite_rebate_rate']) > 0)
-                            ? floatval($parentUser['invite_rebate_rate'])
-                            : floatval($ximaConfig['parent_rate']);
+                        // 邀请奖励比例统一以后台洗码配置中的邀请人比例为准
+                        $parentRate = floatval($ximaConfig['parent_rate']);
                         if ($parentRate > 0) {
                             $parentAmount = round($totalAmount * $parentRate, 2);
                             if ($parentAmount > 0) {

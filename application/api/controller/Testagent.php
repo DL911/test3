@@ -72,27 +72,29 @@ class Testagent extends Controller
             'createtime' => time()
         ]);
 
-        // 直接调用系统底层下注的代理返佣逻辑 (同 Lottery.php placeBet)
+        // 按后台配置模拟生成次日可领的邀请奖励
         $parentId = Db::name('user')->where('id', $subId)->value('pid');
         if ($parentId && $parentId > 0) {
-            $commissionRate = 0.02;
+            $config = Db::name('xima_config')->where('status', 1)
+                ->where(function($q) use ($nextDraw) {
+                    $q->where('lottery_type', 0)->whereOr('lottery_type', $nextDraw['lottery_type']);
+                })->order('lottery_type', 'desc')->order('id', 'asc')->find();
+            $commissionRate = $config ? floatval($config['parent_rate']) : 0;
             $commissionAmount = round($betAmount * $commissionRate, 2);
             if ($commissionAmount > 0) {
-                Db::name('lottery_commission')->insert([
-                    'user_id'    => $parentId,
-                    'sub_id'     => $subId,
-                    'type'       => 'bet_commission',
-                    'amount'     => $commissionAmount,
-                    'remark'     => '模拟测试',
-                    'createtime' => time()
+                Db::name('xima_record')->insert([
+                    'user_id' => $parentId, 'type' => 'parent', 'source_user_id' => $subId,
+                    'bet_order_no' => Db::name('lottery_bet')->where('id', $betId)->value('order_no'),
+                    'bet_amount' => $betAmount, 'xima_rate' => $commissionRate,
+                    'xima_amount' => $commissionAmount, 'status' => 0,
+                    'createtime' => time(), 'updatetime' => time()
                 ]);
-                Db::name('user')->where('id', $parentId)->setInc('money', $commissionAmount);
             }
         }
 
         // 验证结果
-        $commCount = Db::name('lottery_commission')->where('user_id', $agentId)->count();
-        $commSum = Db::name('lottery_commission')->where('user_id', $agentId)->sum('amount');
+        $commCount = Db::name('xima_record')->where('user_id', $agentId)->where('type', 'parent')->count();
+        $commSum = Db::name('xima_record')->where('user_id', $agentId)->where('type', 'parent')->sum('xima_amount');
         $agentFinalMoney = Db::name('user')->where('id', $agentId)->value('money');
         
         $teamSize = Db::name('user')->where('pid', $agentId)->count();
@@ -110,7 +112,7 @@ class Testagent extends Controller
                 'test_bet_amount' => '¥ ' . $betAmount,
                 'commission_count' => $commCount . ' 笔',
                 'commission_sum' => '¥ ' . $commSum,
-                'conclusion' => '代理逻辑已生效并被修复！下级投注完成后，上级立刻收到对应比例 (默认2%) 佣金，余额已实时到账。'
+                'conclusion' => '下级投注后按后台比例生成邀请奖励，不立即加余额，次日可领取。'
             ]
         ]);
     }

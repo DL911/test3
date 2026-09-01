@@ -27,12 +27,14 @@ class Agent extends Api
         // 直推人数
         $team_size = Db::name('user')->where('pid', $user_id)->count();
         
-        // 累计佣金
-        $total_commission = Db::name('lottery_commission')->where('user_id', $user_id)->sum('amount');
+        // 累计已领取的邀请奖励
+        $total_commission = Db::name('xima_record')->where('user_id', $user_id)
+            ->where('type', 'parent')->where('status', 1)->sum('xima_amount');
         
-        // 用户邀请佣金比例
-        $user = Db::name('user')->where('id', $user_id)->field('invite_rebate_rate')->find();
-        $rate = isset($user['invite_rebate_rate']) ? floatval($user['invite_rebate_rate']) : 0.015;
+        // 邀请奖励比例以后台启用的洗码配置为准
+        $config = Db::name('xima_config')->where('status', 1)
+            ->order('lottery_type', 'asc')->order('id', 'asc')->field('parent_rate')->find();
+        $rate = $config ? floatval($config['parent_rate']) : 0;
         $rateStr = rtrim(rtrim(number_format($rate * 100, 2), '0'), '.') . '%';
         
         $this->success('success', [
@@ -73,15 +75,18 @@ class Agent extends Api
     {
         $user_id = $this->auth->id;
         
-        $list = Db::name('lottery_commission')
+        $list = Db::name('xima_record')
             ->where('user_id', $user_id)
+            ->where('type', 'parent')
             ->order('createtime desc')
             ->limit(50)
             ->select();
             
         foreach ($list as &$v) {
             $v['date'] = date('Y-m-d H:i:s', $v['createtime']);
-            $sub = Db::name('user')->where('id', $v['sub_id'])->field('username')->find();
+            $v['amount'] = $v['xima_amount'];
+            $v['remark'] = $v['status'] == 1 ? '邀请奖励（已领取）' : '邀请奖励（次日可领）';
+            $sub = Db::name('user')->where('id', $v['source_user_id'])->field('username')->find();
             $v['sub_name'] = $sub ? $sub['username'] : '--';
         }
         
