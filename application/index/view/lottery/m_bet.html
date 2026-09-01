@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title id="pageTitle">投注 - 好运北彩</title>
-    <link rel="stylesheet" href="/assets/lottery/css/lottery_m.css?v=2026082602">
+    <link rel="stylesheet" href="/assets/lottery/css/lottery_m.css?v=2026090101">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="m-lottery m-bet-page">
@@ -86,11 +86,16 @@
             <span class="m-bar-bet-info"><span id="mBetCount"></span> <span id="mBetTotal"></span></span>
         </div>
         <div class="m-bar-chips" id="betAmountGroup">
+            <button type="button" class="m-amount-edit" id="amountEditBtn" aria-label="输入自定义投注金额">
+                <i class="fa-solid fa-pen"></i>
+            </button>
             <div class="m-chip active" data-amount="1">1</div>
             <div class="m-chip" data-amount="5">5</div>
             <div class="m-chip" data-amount="10">10</div>
             <div class="m-chip" data-amount="50">50</div>
             <div class="m-chip" data-amount="100">100</div>
+            <input type="number" class="m-amount-custom" id="customAmountInput" placeholder="自定义" min="1" step="1"
+                   inputmode="numeric" autocomplete="off" aria-label="自定义投注金额" style="display:none;">
         </div>
         <!-- 标准盘：每注/倍数 -->
         <div class="bzp-unit-bar" id="bzpUnitBar" style="display:none;flex-wrap:wrap;gap:4px;padding:4px 0;">

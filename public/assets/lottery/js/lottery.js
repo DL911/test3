@@ -2910,13 +2910,21 @@ var BetPage = (function() {
         var eb=document.getElementById('amountEditBtn');
         if(eb) eb.addEventListener('click',function(){
             var ci=document.getElementById('customAmountInput');
-            if(ci){ci.style.display=ci.style.display==='none'?'inline-block':'none';if(ci.style.display!=='none')ci.focus();}
+            if(ci){
+                ci.style.display=ci.style.display==='none'?'inline-block':'none';
+                if(ci.style.display!=='none'){
+                    ci.value=state.betAmount;
+                    ci.focus();
+                    ci.select();
+                }
+            }
         });
         var ci=document.getElementById('customAmountInput');
-        if(ci) ci.addEventListener('change',function(){
+        function applyCustomAmount(){
             var v=parseInt(ci.value);
             if(v>0){
                 state.betAmount=v;
+                ci.value=v;
                 document.querySelectorAll('.amount-chip, .m-chip').forEach(function(c){c.classList.remove('active');});
                 // 同步更新已选行
                 var area = document.getElementById('betArea');
@@ -2927,8 +2935,21 @@ var BetPage = (function() {
                     });
                 }
                 updateSel();
+                return true;
             }
-        });
+            ci.value=state.betAmount;
+            showToast('请输入大于0的整数金额','warning');
+            return false;
+        }
+        if(ci) {
+            ci.addEventListener('change', applyCustomAmount);
+            ci.addEventListener('keydown', function(e){
+                if(e.key==='Enter'){
+                    e.preventDefault();
+                    if(applyCustomAmount()) ci.blur();
+                }
+            });
+        }
     }
 
     function initBottomActions() {

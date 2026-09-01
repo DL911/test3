@@ -358,7 +358,19 @@ body.m-bet-page { padding-bottom: calc(70px + var(--safe-bottom)); padding-top: 
     color: var(--danger);
     font-size: 15px;
 }
-.m-bar-chips { display: flex; gap: 3px; }
+.m-bar-chips { display: flex; align-items: center; gap: 3px; min-width: 0; }
+.m-amount-edit {
+    width: 30px; height: 30px; flex: 0 0 30px; padding: 0; border: 1px solid #e5e7eb;
+    border-radius: 6px; background: #fff; color: #6b7280; font-size: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.m-amount-edit:active { transform: scale(0.92); background: #f3f4f6; }
+.m-amount-custom {
+    width: 72px; height: 30px; flex: 0 0 72px; box-sizing: border-box; padding: 0 7px;
+    border: 1px solid var(--primary); border-radius: 6px; outline: none; background: #fff;
+    color: #111827; font-size: 12px; text-align: center;
+}
+.m-amount-custom:focus { box-shadow: 0 0 0 2px rgba(28,158,255,.15); }
 .m-chip {
     width: 32px; height: 26px; border-radius: 13px;
     display: flex; align-items: center; justify-content: center;
@@ -459,6 +471,8 @@ body.m-bet-page { padding-bottom: calc(70px + var(--safe-bottom)); padding-top: 
     .bet-category-grid { grid-template-columns: repeat(2, 1fr) !important; }
     .bet-number-grid { grid-template-columns: repeat(4, 1fr); }
     .m-chip { width: 30px; font-size: 11px; }
+    .m-amount-edit { width: 28px; flex-basis: 28px; }
+    .m-amount-custom { width: 62px; flex-basis: 62px; padding: 0 4px; }
     .m-bar-chips { gap: 3px; }
 }
 
