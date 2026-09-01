@@ -387,8 +387,7 @@ class DrawService
                 $loseCount++;
             }
 
-            // 代理佣金已在投注时(placeBet)发放，结算时不再重复发放
-            // self::distributeCommission($bet);
+            // 奖励在投注时生成 xima_record 待领取记录，开奖结算不再发放佣金
         }
 
         return ['win_count' => $winCount, 'lose_count' => $loseCount];
@@ -848,43 +847,6 @@ class DrawService
 
         return $totalWin;
     }
-
-/**
- * 发放代理佣金
- */
-protected static function distributeCommission($bet)
-{
-    try {
-        $user = Db::name('user')->where('id', $bet['user_id'])->find();
-        if ($user && $user['pid'] > 0) {
-            // 读取上级用户的邀请返水比例，默认 1.5%
-            $parent = Db::name('user')->where('id', $user['pid'])->field('id, invite_rebate_rate')->find();
-            $rebate_rate = ($parent && !empty($parent['invite_rebate_rate']) && floatval($parent['invite_rebate_rate']) > 0)
-                ? floatval($parent['invite_rebate_rate'])
-                : 0.015;
-
-            // 基数用总投注额（total_amount），而非单注金额（bet_amount）
-            $betBase = isset($bet['total_amount']) ? $bet['total_amount'] : $bet['bet_amount'];
-            $commission_amount = bcmul($betBase, $rebate_rate, 2);
-
-            if ($commission_amount > 0) {
-                // 记录佣金
-                Db::name('lottery_commission')->insert([
-                    'user_id'    => $user['pid'],
-                    'sub_id'     => $bet['user_id'],
-                    'type'       => 'win_commission',
-                    'amount'     => $commission_amount,
-                    'remark'     => "下级中奖返佣 (订单: {$bet['order_no']})",
-                    'createtime' => time()
-                ]);
-                \app\common\model\User::where('id', $user['pid'])->setInc('money', $commission_amount);
-                Log::info("分发佣金: 给上级代理 {$user['pid']} 发放 {$commission_amount} 元 (比例: {$rebate_rate}, 基数: {$betBase})");
-            }
-        }
-    } catch (\Exception $e) {
-        Log::error("发放佣金异常: " . $e->getMessage());
-    }
-}
 
 /**
  * 判断单注是否中奖

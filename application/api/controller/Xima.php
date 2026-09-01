@@ -116,13 +116,18 @@ class Xima extends Api
 
             // 批量更新状态
             $ids = array_column($records, 'id');
-            Db::name('xima_record')
+            $updatedCount = Db::name('xima_record')
                 ->where('id', 'in', $ids)
+                ->where('user_id', $userId)
+                ->where('status', 0)
                 ->update([
                     'status'     => 1,
                     'claim_time' => time(),
                     'updatetime' => time(),
                 ]);
+            if ($updatedCount !== count($records)) {
+                throw new \RuntimeException('奖励记录状态已变更，请刷新后重试');
+            }
 
             // 加余额
             Db::name('user')->where('id', $userId)->setInc('money', $totalAmount);

@@ -130,10 +130,18 @@ class Xima extends Backend
         $lotteryType = $this->request->post('lottery_type/d', 0);
         $status     = $this->request->post('status/d', 1);
 
+        if ($selfRate < 0 || $selfRate > 100 || $parentRate < 0 || $parentRate > 100) {
+            return json(['code' => 0, 'msg' => '奖励比例必须在 0%~100% 之间']);
+        }
+        if ($minBet < 0 || !in_array($lotteryType, [0, 1, 2], true) || !in_array($status, [0, 1], true)) {
+            return json(['code' => 0, 'msg' => '配置参数不正确']);
+        }
+
         $data = [
             'name'         => $name ?: '默认配置',
-            'self_rate'    => $selfRate,
-            'parent_rate'  => $parentRate,
+            // 后台按百分数填写：3.5 表示 3.5%，数据库保存 0.035
+            'self_rate'    => round($selfRate / 100, 6),
+            'parent_rate'  => round($parentRate / 100, 6),
             'min_bet'      => $minBet,
             'lottery_type' => $lotteryType,
             'status'       => $status,

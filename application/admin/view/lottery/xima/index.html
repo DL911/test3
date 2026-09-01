@@ -148,7 +148,7 @@ function loadConfigs() {
                         '<td>¥'+parseFloat(c.min_bet).toFixed(2)+'</td>'+
                         '<td><span class="label '+(c.status==1?'label-success':'label-default')+'">'+(c.status==1?'启用':'禁用')+'</span></td>'+
                         '<td>'+
-                            '<button class="btn btn-xs btn-primary" onclick="editConfig('+c.id+',\''+c.name+'\','+round4(c.self_rate)+','+round4(c.parent_rate)+','+c.min_bet+','+c.lottery_type+','+c.status+')"><i class="fa fa-edit"></i></button> '+
+                            '<button class="btn btn-xs btn-primary" onclick="editConfig('+c.id+',\''+c.name+'\','+ratePct(c.self_rate)+','+ratePct(c.parent_rate)+','+c.min_bet+','+c.lottery_type+','+c.status+')"><i class="fa fa-edit"></i></button> '+
                             '<button class="btn btn-xs btn-danger" onclick="delConfig('+c.id+')"><i class="fa fa-trash"></i></button>'+
                         '</td></tr>';
                 }
@@ -159,7 +159,7 @@ function loadConfigs() {
     xhr.send();
 }
 
-function round4(v){ return parseFloat(v); }
+function ratePct(v){ return Math.round(parseFloat(v || 0) * 1000000) / 10000; }
 
 function openConfigForm() {
     document.getElementById('cfgId').value = 0;

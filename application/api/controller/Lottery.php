@@ -937,9 +937,8 @@ class Lottery extends Api
             // 扣减余额
             Db::name('user')->where('id', $userId)->setDec('money', $totalAmount);
 
-            // 洗码处理（邀请奖励只生成待领取记录，次日才能领取）
-            try {
-                $ximaConfig = Db::name('xima_config')
+            // 奖励记录与投注共用当前事务，任一写入失败都整体回滚
+            $ximaConfig = Db::name('xima_config')
                     ->where('status', 1)
                     ->where(function($q) use ($lotteryType) {
                         $q->where('lottery_type', 0)->whereOr('lottery_type', $lotteryType);
@@ -949,20 +948,18 @@ class Lottery extends Api
                     ->order('id', 'asc')
                     ->find();
 
-                if ($ximaConfig && $totalAmount >= $ximaConfig['min_bet']) {
-                    // 读取用户个人费率用于自身洗码，邀请人洗码用后台配置
-                    $userRates = Db::name('user')->where('id', $userId)
-                        ->field('self_rebate_rate, pid')
+            if ($ximaConfig && $totalAmount >= $ximaConfig['min_bet']) {
+                    // 个人比例字段不再参与计算，只读取邀请关系
+                    $userRow = Db::name('user')->where('id', $userId)
+                        ->field('pid')
                         ->find();
-                    $selfRate = (!empty($userRates['self_rebate_rate']) && floatval($userRates['self_rebate_rate']) > 0)
-                        ? floatval($userRates['self_rebate_rate'])
-                        : floatval($ximaConfig['self_rate']);
+                    $selfRate = floatval($ximaConfig['self_rate']);
 
                     // 1. 自身洗码
                     if ($selfRate > 0) {
                         $selfAmount = round($totalAmount * $selfRate, 2);
                         if ($selfAmount > 0) {
-                            Db::name('xima_record')->insert([
+                            $selfInserted = Db::name('xima_record')->insert([
                                 'user_id'        => $userId,
                                 'type'           => 'self',
                                 'source_user_id' => $userId,
@@ -974,18 +971,21 @@ class Lottery extends Api
                                 'createtime'     => time(),
                                 'updatetime'     => time(),
                             ]);
+                            if ($selfInserted !== 1) {
+                                throw new \RuntimeException('自身奖励记录生成失败');
+                            }
                         }
                     }
 
                     // 2. 邀请人洗码（给上级）
-                    $pId = isset($userRates['pid']) ? intval($userRates['pid']) : 0;
+                    $pId = isset($userRow['pid']) ? intval($userRow['pid']) : 0;
                     if ($pId > 0) {
                         // 邀请奖励比例统一以后台洗码配置中的邀请人比例为准
                         $parentRate = floatval($ximaConfig['parent_rate']);
                         if ($parentRate > 0) {
                             $parentAmount = round($totalAmount * $parentRate, 2);
                             if ($parentAmount > 0) {
-                                Db::name('xima_record')->insert([
+                                $parentInserted = Db::name('xima_record')->insert([
                                     'user_id'        => $pId,
                                     'type'           => 'parent',
                                     'source_user_id' => $userId,
@@ -997,12 +997,12 @@ class Lottery extends Api
                                     'createtime'     => time(),
                                     'updatetime'     => time(),
                                 ]);
+                                if ($parentInserted !== 1) {
+                                    throw new \RuntimeException('邀请奖励记录生成失败');
+                                }
                             }
                         }
                     }
-                }
-            } catch (\Exception $xe) {
-                // 洗码失败不中断投注
             }
 
             $newBalance = Db::name('user')->where('id', $userId)->value('money');
