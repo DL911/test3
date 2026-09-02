@@ -46,9 +46,33 @@ class User extends Api
             'group_id' => $user->group_id,
             'self_rebate_rate'   => $user->self_rebate_rate,
             'invite_rebate_rate' => $user->invite_rebate_rate,
+            // 个人中心展示使用后台洗码配置，不使用会员个人比例字段。
+            'xima_rates' => $this->getXimaDisplayRates(),
             'verify_status' => $this->getUserVerifyStatus($user->id),
         ];
         $this->success('', $data);
+    }
+
+    /** 与投注一致：启用的彩种专用配置优先，通用配置兜底，同类取最小 ID。 */
+    private function getXimaDisplayRates()
+    {
+        $configs = Db::name('xima_config')->where('status', 1)->order('id', 'asc')->select();
+        $byType = [];
+        foreach ($configs as $config) {
+            $type = intval($config['lottery_type']);
+            if (!isset($byType[$type])) $byType[$type] = $config;
+        }
+        $rates = [];
+        foreach ([1 => '福彩3D', 2 => '排列三'] as $type => $name) {
+            $config = isset($byType[$type]) ? $byType[$type] : (isset($byType[0]) ? $byType[0] : null);
+            $rates[] = [
+                'lottery_type' => $type,
+                'lottery_name' => $name,
+                'self_rate' => $config ? floatval($config['self_rate']) : 0,
+                'parent_rate' => $config ? floatval($config['parent_rate']) : 0,
+            ];
+        }
+        return $rates;
     }
 
     /**

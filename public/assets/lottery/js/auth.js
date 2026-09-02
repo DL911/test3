@@ -58,6 +58,7 @@ var LotteryAuth = (function() {
 
         fetch(API_BASE + '/user/index', {
             method: 'GET',
+            cache: 'no-store',
             headers: { 'token': token }
         })
         .then(function(r) { return r.json(); })
@@ -162,12 +163,21 @@ var LotteryAuth = (function() {
             }
         }
         
-        // 返水比例
+        // 两端个人中心只展示后台洗码配置；旧缓存缺少新字段时显示 --，不回退个人比例。
         if (u) {
-            var selfRate = parseFloat(u.self_rebate_rate) || 0;
-            var inviteRate = parseFloat(u.invite_rebate_rate) || 0;
-            var selfRateStr = (selfRate * 100).toFixed(2).replace(/\.?0+$/, '') + '%';
-            var inviteRateStr = (inviteRate * 100).toFixed(2).replace(/\.?0+$/, '') + '%';
+            var rates = Array.isArray(u.xima_rates) ? u.xima_rates : [];
+            function formatXimaRate(field) {
+                if (!rates.length) return '--';
+                var values = rates.map(function(r) {
+                    var value = Number(r[field]);
+                    return r[field] != null && isFinite(value)
+                        ? (value * 100).toFixed(4).replace(/\.?0+$/, '') + '%' : '--';
+                });
+                if (values.every(function(v) { return v === values[0]; })) return values[0];
+                return rates.map(function(r, i) { return r.lottery_name + ' ' + values[i]; }).join(' / ');
+            }
+            var selfRateStr = formatXimaRate('self_rate');
+            var inviteRateStr = formatXimaRate('parent_rate');
             
             var userSelfRebate = document.getElementById('userSelfRebate');
             if (userSelfRebate) userSelfRebate.textContent = selfRateStr;
