@@ -1,0 +1,17 @@
+IP: 137.220.197.142
+用户名: root
+密码: hMo1H8w0AE:9-z
+新密码:hMo1H8w0AE:5-A
+端口: 22
+
+
+数据库账号资料
+数据库名：haoyunbeicai_com
+用户：haoyunbeicai_com
+密码：cFhNXBXwSAmxBGfR
+
+ 【云服务器】请在安全组放行 24121 端口
+ 外网ipv4面板地址: https://137.220.197.142:24121/8802848a
+ 内网面板地址:     https://137.220.197.142:24121/8802848a
+ username: 5z4cfzlb
+ password: 63fcded8
