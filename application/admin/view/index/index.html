@@ -3,7 +3,7 @@
     <head>
         <!-- 加载样式及META信息 -->
         {include file="common/meta" /}
-        <link href="__CDN__/assets/css/backend-mobile.css?v=2026092002" rel="stylesheet">
+        <link href="__CDN__/assets/css/backend-mobile.css?v=2026092003" rel="stylesheet">
     </head>
     <body class="hold-transition {$Think.config.fastadmin.adminskin|default='skin-black-blue'} sidebar-mini {:$Think.cookie.sidebar_collapse?'sidebar-collapse':''} fixed {:$Think.config.fastadmin.multipletab?'multipletab':''} {:$Think.config.fastadmin.multiplenav?'multiplenav':''}" id="tabs">
 
@@ -120,13 +120,16 @@
                     var entry = match ? match[1] : '/index.php'; // 兼容无 php 尾缀的情况
                     
                     var cUrl = entry + '/lottery/kefu';
+                    var mobileKefu = window.matchMedia('(max-width: 767px)').matches;
                     layer.open({
                         type: 2,
                         title: '<i class="fa fa-comments"></i> 客服工作台',
                         shadeClose: true,
                         shade: 0.3,
-                        maxmin: true,
-                        area: ['900px', '750px'],
+                        skin: 'global-kefu-layer',
+                        maxmin: !mobileKefu,
+                        area: mobileKefu ? [window.innerWidth + 'px', window.innerHeight + 'px'] : ['900px', '750px'],
+                        offset: mobileKefu ? '0px' : 'auto',
                         content: cUrl
                     });
                 }

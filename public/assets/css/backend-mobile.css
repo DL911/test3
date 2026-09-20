@@ -67,4 +67,31 @@
         height: 48px !important;
         font-size: 22px !important;
     }
+    .layui-layer.global-kefu-layer {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-width: none !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+    .global-kefu-layer .layui-layer-title {
+        height: 48px;
+        line-height: 48px;
+        padding-right: 56px;
+    }
+    .global-kefu-layer .layui-layer-setwin { top: 17px; }
+    .global-kefu-layer .layui-layer-content {
+        height: calc(100vh - 48px) !important;
+        height: calc(100dvh - 48px) !important;
+        overflow: hidden !important;
+    }
+    .global-kefu-layer .layui-layer-content iframe {
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+    }
 }

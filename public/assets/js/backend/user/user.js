@@ -15,14 +15,15 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             });
 
             var table = $("#table");
+            var mobileTable = window.matchMedia('(max-width: 767px)').matches;
 
             // 初始化表格
             table.bootstrapTable({
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
                 pk: 'id',
                 sortName: 'user.id',
-                fixedColumns: true,
-                fixedRightNumber: 1,
+                fixedColumns: !mobileTable,
+                fixedRightNumber: mobileTable ? 0 : 1,
                 columns: [
                     [
                         {checkbox: true},
