@@ -1,0 +1,70 @@
+/* 后台外壳的手机端适配；业务页仍复用既有权限与路由。 */
+@media (max-width: 767px) {
+    html, html.ios-fix, body, html.ios-fix body {
+        height: auto;
+        min-height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    body.fixed .wrapper {
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
+    }
+    body.fixed .content-wrapper,
+    body.fixed.multipletab.multiplenav .content-wrapper {
+        height: auto;
+        min-height: calc(100vh - 50px);
+        overflow: visible;
+    }
+    body.fixed .content-wrapper.tab-addtabs .tab-pane {
+        height: auto;
+        min-height: 0;
+    }
+    body.fixed .content-wrapper.tab-addtabs .tab-pane > iframe {
+        display: block;
+        width: 100%;
+        min-height: 600px;
+        border: 0;
+    }
+    body.multipletab.multiplenav #secondnav .nav-addtabs {
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+    body.multipletab.multiplenav #secondnav .nav-addtabs > li {
+        display: inline-block;
+        float: none;
+    }
+    body.fixed .main-sidebar {
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100dvh;
+        box-sizing: border-box;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        z-index: 1050;
+    }
+    body.fixed .main-header { z-index: 1060; }
+    .admin-mobile-menu-overlay {
+        display: none;
+        position: fixed;
+        inset: 50px 0 0;
+        width: 100%;
+        border: 0;
+        padding: 0;
+        background: rgba(0, 0, 0, .35);
+        z-index: 1040;
+    }
+    body.sidebar-open .admin-mobile-menu-overlay { display: block; }
+    .global-kefu-btn {
+        right: 16px !important;
+        bottom: max(16px, env(safe-area-inset-bottom)) !important;
+        width: 48px !important;
+        height: 48px !important;
+        font-size: 22px !important;
+    }
+}

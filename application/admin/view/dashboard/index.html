@@ -70,6 +70,15 @@
     .stat-col .progress-bar { line-height: 2px; height: 2px; }
     #statistics .panel { min-height: 150px; }
     #statistics .panel h5 { font-size: 14px; }
+    @media (max-width: 767px) {
+        .panel-intro > .panel-heading { overflow-x: auto; }
+        .panel-intro > .panel-heading .nav-tabs { min-width: max-content; }
+        .panel-intro .panel-body { padding: 12px; }
+        .report-table { min-width: 560px; }
+        .biz-card { padding: 15px; }
+        #bizChart { height: 280px !important; padding: 8px !important; }
+        #rangeStart, #rangeEnd { max-width: calc(50vw - 38px); }
+    }
 </style>
 
 <div class="panel panel-default panel-intro">
