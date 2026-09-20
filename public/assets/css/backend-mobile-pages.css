@@ -1,0 +1,74 @@
+/* 后台业务页的手机端通用布局；只作用于窄屏，不改变 PC 布局。 */
+@media (max-width: 767px) {
+    html, html.ios-fix, body.inside-header, html.ios-fix body.inside-header {
+        width: 100%;
+        height: auto !important;
+        min-height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    body.inside-header #main,
+    body.inside-header #main > .tab-content,
+    body.inside-header #main > .tab-content > #content {
+        width: 100%;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+    }
+    body.inside-header #content > .row { margin-left: 0; margin-right: 0; }
+    body.inside-header #content > .row > [class*="col-"] { padding-left: 0; padding-right: 0; }
+    body.inside-header .content { min-width: 0; padding: 10px !important; overflow: visible !important; }
+    body.inside-header .panel,
+    body.inside-header .panel-body,
+    body.inside-header .box,
+    body.inside-header .box-body { min-width: 0; max-width: 100%; }
+    body.inside-header .panel-body { padding-left: 10px; padding-right: 10px; }
+
+    /* 普通 table 由 mobile-pages.js 包裹；Bootstrap Table 使用自带滚动层。 */
+    body.inside-header .admin-mobile-table-scroll,
+    body.inside-header .table-responsive,
+    body.inside-header .fixed-table-container,
+    body.inside-header .fixed-table-body {
+        max-width: 100%;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x pan-y;
+    }
+    body.inside-header .admin-mobile-table-scroll > table,
+    body.inside-header .table-responsive > table,
+    body.inside-header .fixed-table-body > table {
+        width: max-content;
+        min-width: 100%;
+    }
+    body.inside-header .admin-mobile-table-scroll th,
+    body.inside-header .admin-mobile-table-scroll td,
+    body.inside-header .fixed-table-body th,
+    body.inside-header .fixed-table-body td { white-space: nowrap; }
+
+    body.inside-header .fixed-table-toolbar,
+    body.inside-header .toolbar,
+    body.inside-header .form-inline { max-width: 100%; }
+    body.inside-header .fixed-table-toolbar .search,
+    body.inside-header .fixed-table-toolbar .columns,
+    body.inside-header .fixed-table-toolbar .toolbar { float: none !important; max-width: 100%; margin: 5px 0; }
+    body.inside-header .panel-body > div > .form-control,
+    body.inside-header .form-inline .form-control {
+        max-width: 100%;
+        margin-bottom: 6px;
+    }
+    body.inside-header .form-horizontal .form-group { margin-left: 0; margin-right: 0; }
+    body.inside-header .form-horizontal .control-label { text-align: left; }
+    body.inside-header .form-horizontal .form-control,
+    body.inside-header textarea,
+    body.inside-header select { max-width: 100%; }
+
+    body.inside-header .modal-dialog,
+    body.inside-header .layui-layer-fast {
+        max-width: calc(100vw - 20px) !important;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    body.inside-header .modal-body,
+    body.inside-header .layui-layer-content { max-height: calc(100dvh - 120px); overflow: auto; -webkit-overflow-scrolling: touch; }
+}
