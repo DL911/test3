@@ -124,6 +124,72 @@
 .channel-tab { border:1px solid #ddd; background:#fafafa; padding:6px 12px; border-radius:4px; cursor:pointer; }
 .channel-tab.active { color:#fff; border-color:transparent; background:#18bc9c; }
 .channel-unread-dot { display:inline-block; min-width:17px; height:17px; line-height:17px; margin-left:5px; padding:0 4px; border-radius:9px; background:#ff4d4f; color:#fff; font-size:11px; text-align:center; vertical-align:1px; }
+.kefu-back-btn { display: none; }
+.kefu-chat-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 767px) {
+    .channel-bar {
+        gap: 8px;
+        padding: 8px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .channel-bar::-webkit-scrollbar { display: none; }
+    .channel-tab {
+        flex: 0 0 auto;
+        min-height: 44px;
+        padding: 9px 12px;
+        white-space: nowrap;
+    }
+    .kefu-container {
+        display: block;
+        height: var(--kefu-mobile-height, 580px);
+        min-height: 360px;
+        overflow: hidden;
+        border-radius: 0 0 6px 6px;
+    }
+    .kefu-sidebar {
+        width: 100%;
+        height: 100%;
+        border-right: 0;
+        background: #fff;
+        -webkit-overflow-scrolling: touch;
+    }
+    .kefu-main { display: none; width: 100%; height: 100%; min-width: 0; }
+    .kefu-container.mobile-chat-open .kefu-sidebar { display: none; }
+    .kefu-container.mobile-chat-open .kefu-main { display: flex; }
+    .user-item { min-height: 72px; padding: 10px 12px; }
+    .user-item .avatar { width: 42px; height: 42px; margin-right: 12px; }
+    .user-info { min-width: 0; }
+    .user-time { margin-top: 3px; }
+    .user-remark { margin-top: 3px; }
+    .kefu-chat-header { height: 56px; flex: 0 0 56px; gap: 8px; padding: 0 10px; font-size: 14px; }
+    .kefu-back-btn {
+        display: inline-flex;
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 6px;
+        background: #f1f5f8;
+        color: #34495e;
+        font-size: 19px;
+    }
+    .kefu-chat-header #editRemark { flex: 0 0 auto; margin-left: auto !important; min-height: 36px; }
+    .kefu-chat-area { min-height: 0; padding: 12px 10px; -webkit-overflow-scrolling: touch; }
+    .msg-content-wrap { max-width: calc(100% - 52px); }
+    .msg-bubble img { max-width: 100%; height: auto; }
+    #inputArea { flex: 0 0 auto; }
+    .kefu-toolbar { min-height: 42px; padding: 5px 10px; }
+    .kefu-toolbar .btn-img { min-height: 32px; padding: 6px 12px; }
+    .kefu-toolbar .send-hint { display: none; }
+    .kefu-input-area { padding: 8px; align-items: stretch; }
+    .kefu-input-area textarea { min-width: 0; height: 50px; font-size: 16px; }
+    .kefu-btn-send { width: 68px; min-height: 50px; margin-left: 8px; }
+}
 </style>
 
 <div class="channel-bar" id="channelBar"><span style="color:#999">加载通道...</span></div>
@@ -177,6 +243,24 @@
     var requestedUserId = parseInt(new URLSearchParams(window.location.search).get('user_id') || 0, 10);
     var Dialog = window.Layer || window.layer || (window.parent && (window.parent.Layer || window.parent.layer));
 
+    function updateMobileHeight() {
+        if (!window.matchMedia('(max-width: 767px)').matches) return;
+        var viewportHeight = window.parent && window.parent !== window ? window.parent.innerHeight : window.innerHeight;
+        var frameTop = window.frameElement ? window.frameElement.getBoundingClientRect().top : 0;
+        var top = frameTop + $('.kefu-container').offset().top;
+        $('.kefu-container').css('--kefu-mobile-height', Math.max(360, viewportHeight - top - 16) + 'px');
+    }
+
+    function showMobileConversation() {
+        $('.kefu-container').addClass('mobile-chat-open');
+        updateMobileHeight();
+    }
+
+    function showMobileUserList() {
+        $('.kefu-container').removeClass('mobile-chat-open');
+        $('#chatInput').trigger('blur');
+    }
+
     function kefuUrl(action) {
         return kefuBasePath + '/lottery/kefu/' + action;
     }
@@ -221,7 +305,8 @@
                             + unreadHtml
                             + '</div>';
                     });
-                    $("#userList").html(html);
+                    var listScrollTop = $("#userList").scrollTop();
+                    $("#userList").html(html).scrollTop(listScrollTop);
 
                     $(".user-item").on('click', function() {
                         var uid = $(this).data('id');
@@ -231,7 +316,7 @@
                         $("#chatArea").empty();
                         $("#chatPlaceholder").remove();
                         var cname = channelMap[currentChannel] ? channelMap[currentChannel].name : currentChannel;
-                        $("#chatHeader").html('<i class="fa fa-user" style="margin-right:8px;color:#1890ff;"></i> [' + cname + '] 正在与 ' + uname + ' 交谈 <button class="btn btn-xs btn-default" id="editRemark" style="margin-left:auto"><i class="fa fa-pencil"></i> 设置备注</button>');
+                        $("#chatHeader").html('<button type="button" class="kefu-back-btn" id="kefuBackToList" aria-label="返回会话列表"><i class="fa fa-angle-left"></i></button><span class="kefu-chat-title"><i class="fa fa-user" style="margin-right:8px;color:#1890ff;"></i> [' + cname + '] ' + uname + '</span><button class="btn btn-xs btn-default" id="editRemark" style="margin-left:auto"><i class="fa fa-pencil"></i> 设置备注</button>');
                         $('#editRemark').on('click', function(){
                             Dialog.prompt({title:'设置当前咨询用户备注',value:$('.user-item.active').data('remark')||''},function(value,idx){
                                 $.post(kefuUrl('save_user_remark'),{user_id:currentUserId,channel:currentChannel,remark:value},function(r){if(r.code==1){Dialog.close(idx);Dialog.msg('备注已保存');loadUserList();}else Dialog.alert(r.msg||'保存失败');});
@@ -241,6 +326,7 @@
                         $(".user-item").removeClass('active');
                         $(this).addClass('active');
                         $(this).find('.user-unread').remove();
+                        showMobileConversation();
                         loadChatHistory();
                     });
                     if (requestedUserId) {
@@ -331,7 +417,7 @@
                 currentChannel=$(this).data('code'); currentUserId=0; lastMsgId=0;
                 $('.channel-tab').removeClass('active'); $(this).addClass('active');
                 $('#chatArea').html('<div class="kefu-placeholder"><i class="fa fa-comment-dots"></i><span>请从左侧选择一个用户开始会话</span></div>');
-                $('#inputArea').hide(); loadUserList();
+                $('#inputArea').hide(); showMobileUserList(); loadUserList();
             });
             loadUserList();
             loadChannelUnread();
@@ -352,6 +438,10 @@
 
     // 初始化
     loadChannels();
+    $(document).on('click', '#kefuBackToList', showMobileUserList);
+    $(window).on('resize', updateMobileHeight);
+    if (window.parent && window.parent !== window) $(window.parent).on('resize', updateMobileHeight);
+    updateMobileHeight();
     $("#btnSend").on('click', sendMessage);
     $("#chatInput").on('keydown', function(e) {
         if(e.keyCode == 13 && !e.shiftKey) {
