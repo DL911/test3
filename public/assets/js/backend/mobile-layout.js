@@ -30,7 +30,8 @@
         try {
             var doc = frame.contentDocument;
             if (!doc || !doc.body) return;
-            var height = Math.max(600, doc.body.scrollHeight, doc.documentElement.scrollHeight);
+            var content = doc.getElementById('main') || doc.body;
+            var height = Math.max(600, content.scrollHeight, doc.body.scrollHeight, doc.documentElement.scrollHeight);
             if (Math.abs(frame.offsetHeight - height) > 4) frame.style.height = height + 'px';
         } catch (e) {
             // 非同源的扩展页保留原本的 iframe 内部滚动。
@@ -43,6 +44,8 @@
         observed.add(frame);
         var scheduled = false;
         var watchedDocument = null;
+        var resizeObserver = null;
+        var mutationObserver = null;
         function schedule() {
             if (scheduled) return;
             scheduled = true;
@@ -54,9 +57,18 @@
         function watchDocument() {
             try {
                 var doc = frame.contentDocument;
-                if (doc && doc.body && doc !== watchedDocument && window.ResizeObserver) {
+                if (doc && doc.body && doc !== watchedDocument) {
+                    if (resizeObserver) resizeObserver.disconnect();
+                    if (mutationObserver) mutationObserver.disconnect();
                     watchedDocument = doc;
-                    new ResizeObserver(schedule).observe(doc.body);
+                    if (window.ResizeObserver) {
+                        resizeObserver = new ResizeObserver(schedule);
+                        resizeObserver.observe(doc.body);
+                        var content = doc.getElementById('main');
+                        if (content) resizeObserver.observe(content);
+                    }
+                    mutationObserver = new MutationObserver(schedule);
+                    mutationObserver.observe(doc.body, {childList: true, subtree: true, attributes: true, characterData: true});
                 }
             } catch (e) { /* 非同源页由 iframe 自行滚动 */ }
         }
