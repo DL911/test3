@@ -1,3 +1,31 @@
+<style>
+@media (max-width: 767px) {
+    /* 会员操作列在窄屏改为两行图标按钮，固定列插件存在时也保持同样宽度。 */
+    #table th:last-child, #table td:last-child,
+    .fixed-table-fixed-right table th:last-child,
+    .fixed-table-fixed-right table td:last-child {
+        width: 104px !important;
+        min-width: 104px !important;
+        max-width: 104px !important;
+        white-space: normal !important;
+        text-align: center;
+    }
+    #table td:last-child a.btn,
+    .fixed-table-fixed-right table td:last-child a.btn {
+        display: inline-flex;
+        width: 36px;
+        height: 36px;
+        margin: 2px 1px;
+        padding: 0;
+        align-items: center;
+        justify-content: center;
+        vertical-align: middle;
+        font-size: 0;
+    }
+    #table td:last-child a.btn i,
+    .fixed-table-fixed-right table td:last-child a.btn i { font-size: 15px; }
+}
+</style>
 <div class="panel panel-default panel-intro">
     {:build_heading()}
 
