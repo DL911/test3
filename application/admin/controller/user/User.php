@@ -171,10 +171,10 @@ class User extends Backend
 
         // 返佣比例：会员已单独设置（大于 0）则用会员值，否则跟随洗码管理配置（第一条启用的配置）
         $defaultRates = $this->getDefaultXimaRates();
-        $user['self_rebate_rate_show'] = floatval($user['self_rebate_rate']) > 0
-            ? floatval($user['self_rebate_rate']) : $defaultRates['self_rate'];
-        $user['invite_rebate_rate_show'] = floatval($user['invite_rebate_rate']) > 0
-            ? floatval($user['invite_rebate_rate']) : $defaultRates['parent_rate'];
+        $selfRate   = isset($user['self_rebate_rate']) ? floatval($user['self_rebate_rate']) : 0;
+        $inviteRate = isset($user['invite_rebate_rate']) ? floatval($user['invite_rebate_rate']) : 0;
+        $user['self_rebate_rate_show']   = $selfRate > 0 ? $selfRate : $defaultRates['self_rate'];
+        $user['invite_rebate_rate_show'] = $inviteRate > 0 ? $inviteRate : $defaultRates['parent_rate'];
 
         // 统计汇总
         $stats = [];
@@ -202,6 +202,7 @@ class User extends Backend
         $this->view->assign('user', $user);
         $this->view->assign('stats', $stats);
         $this->view->assign('parent', $parent);
+        $this->view->assign('defaultRates', $defaultRates);
         return $this->view->fetch();
     }
 
@@ -210,7 +211,11 @@ class User extends Backend
      */
     private function getDefaultXimaRates()
     {
-        $config = \think\Db::name('xima_config')->where('status', 1)->order('id', 'asc')->find();
+        try {
+            $config = \think\Db::name('xima_config')->where('status', 1)->order('id', 'asc')->find();
+        } catch (\Exception $e) {
+            $config = null;
+        }
         return [
             'self_rate'   => $config ? floatval($config['self_rate']) : 0,
             'parent_rate' => $config ? floatval($config['parent_rate']) : 0,
