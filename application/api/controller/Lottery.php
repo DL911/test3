@@ -949,11 +949,13 @@ class Lottery extends Api
                     ->find();
 
             if ($ximaConfig && $totalAmount >= $ximaConfig['min_bet']) {
-                    // 个人比例字段不再参与计算，只读取邀请关系
+                    // 会员单独设置了比例则优先用会员比例，未设置（0）则跟随洗码配置
                     $userRow = Db::name('user')->where('id', $userId)
-                        ->field('pid')
+                        ->field('pid,self_rebate_rate')
                         ->find();
-                    $selfRate = floatval($ximaConfig['self_rate']);
+                    $selfRate = floatval($userRow['self_rebate_rate']) > 0
+                        ? floatval($userRow['self_rebate_rate'])
+                        : floatval($ximaConfig['self_rate']);
 
                     // 1. 自身洗码
                     if ($selfRate > 0) {
@@ -980,8 +982,11 @@ class Lottery extends Api
                     // 2. 邀请人洗码（给上级）
                     $pId = isset($userRow['pid']) ? intval($userRow['pid']) : 0;
                     if ($pId > 0) {
-                        // 邀请奖励比例统一以后台洗码配置中的邀请人比例为准
-                        $parentRate = floatval($ximaConfig['parent_rate']);
+                        // 邀请奖励比例：邀请人单独设置了则用邀请人的比例，未设置（0）则跟随后台洗码配置
+                        $parentOverride = Db::name('user')->where('id', $pId)->value('invite_rebate_rate');
+                        $parentRate = floatval($parentOverride) > 0
+                            ? floatval($parentOverride)
+                            : floatval($ximaConfig['parent_rate']);
                         if ($parentRate > 0) {
                             $parentAmount = round($totalAmount * $parentRate, 2);
                             if ($parentAmount > 0) {

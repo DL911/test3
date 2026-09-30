@@ -99,25 +99,27 @@
                     <label
                         style="font-size:13px;color:#666;font-weight:600;display:block;margin-bottom:6px;">自身返佣比例</label>
                     <div style="display:flex;align-items:center;gap:8px;">
-                        <input type="number" id="selfRebateRate" value="{$user.self_rebate_rate|default=0}"
+                        <input type="number" id="selfRebateRate" value="{$user.self_rebate_rate_show}"
                             step="0.0001" min="0" max="1"
                             style="flex:1;padding:8px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;">
                         <span style="font-size:13px;color:#999;">= <b
-                                id="selfPct">{:round(($user['self_rebate_rate']??0)*100,2)}%</b></span>
+                                id="selfPct">{:round($user['self_rebate_rate_show']*100,2)}%</b></span>
                     </div>
-                    <div style="font-size:11px;color:#aaa;margin-top:4px;">用户自身每次投注 × 该比例 = 自身返佣</div>
+                    <div style="font-size:11px;color:#aaa;margin-top:4px;">用户自身每次投注 × 该比例 = 自身返佣，填 0
+                        时跟随洗码管理配置（{$defaultRates.self_rate}）</div>
                 </div>
                 <div style="flex:1;min-width:200px;">
                     <label
                         style="font-size:13px;color:#666;font-weight:600;display:block;margin-bottom:6px;">邀请返佣比例</label>
                     <div style="display:flex;align-items:center;gap:8px;">
-                        <input type="number" id="inviteRebateRate" value="{$user.invite_rebate_rate|default=0.02}"
+                        <input type="number" id="inviteRebateRate" value="{$user.invite_rebate_rate_show}"
                             step="0.0001" min="0" max="1"
                             style="flex:1;padding:8px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;">
                         <span style="font-size:13px;color:#999;">= <b
-                                id="invitePct">{:round(($user['invite_rebate_rate']??0.02)*100,2)}%</b></span>
+                                id="invitePct">{:round($user['invite_rebate_rate_show']*100,2)}%</b></span>
                     </div>
-                    <div style="font-size:11px;color:#aaa;margin-top:4px;">下级每次投注 × 该比例 = 邀请人获得佣金</div>
+                    <div style="font-size:11px;color:#aaa;margin-top:4px;">下级每次投注 × 该比例 = 邀请人获得佣金，填 0
+                        时跟随洗码管理配置（{$defaultRates.parent_rate}）</div>
                 </div>
                 <div>
                     <button class="btn btn-sm btn-success" onclick="saveRebateRates()" id="saveRateBtn"

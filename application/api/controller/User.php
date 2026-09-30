@@ -46,16 +46,18 @@ class User extends Api
             'group_id' => $user->group_id,
             'self_rebate_rate'   => $user->self_rebate_rate,
             'invite_rebate_rate' => $user->invite_rebate_rate,
-            // 个人中心展示使用后台洗码配置，不使用会员个人比例字段。
-            'xima_rates' => $this->getXimaDisplayRates(),
+            // 会员单独设置了比例则展示会员比例，未设置则展示后台洗码配置
+            'xima_rates' => $this->getXimaDisplayRates($user),
             'verify_status' => $this->getUserVerifyStatus($user->id),
         ];
         $this->success('', $data);
     }
 
-    /** 与投注一致：启用的彩种专用配置优先，通用配置兜底，同类取最小 ID。 */
-    private function getXimaDisplayRates()
+    /** 与投注一致：会员单独设置了比例则优先，否则用启用的彩种专用配置优先、通用配置兜底，同类取最小 ID。 */
+    private function getXimaDisplayRates($user)
     {
+        $selfOverride   = floatval($user['self_rebate_rate']);
+        $parentOverride = floatval($user['invite_rebate_rate']);
         $configs = Db::name('xima_config')->where('status', 1)->order('id', 'asc')->select();
         $byType = [];
         foreach ($configs as $config) {
@@ -68,8 +70,12 @@ class User extends Api
             $rates[] = [
                 'lottery_type' => $type,
                 'lottery_name' => $name,
-                'self_rate' => $config ? floatval($config['self_rate']) : 0,
-                'parent_rate' => $config ? floatval($config['parent_rate']) : 0,
+                'self_rate' => $selfOverride > 0
+                    ? $selfOverride
+                    : ($config ? floatval($config['self_rate']) : 0),
+                'parent_rate' => $parentOverride > 0
+                    ? $parentOverride
+                    : ($config ? floatval($config['parent_rate']) : 0),
             ];
         }
         return $rates;
@@ -232,8 +238,7 @@ class User extends Api
         //     $this->error(__('Captcha is incorrect'));
         // }
         $extend = $this->request->post('extend/a', []);
-        if (!isset($extend['self_rebate_rate'])) $extend['self_rebate_rate'] = 0.05;
-        if (!isset($extend['invite_rebate_rate'])) $extend['invite_rebate_rate'] = 0.015;
+        // 不再写死默认返佣比例：未单独指定时，会员统一跟随后台洗码管理配置
         $ret = $this->auth->register($username, $password, $email, $mobile, $extend);
         if ($ret) {
             $newUserId = $this->auth->id;

@@ -169,6 +169,13 @@ class User extends Backend
         $user['jointime_fmt'] = $user['jointime'] ? date('Y-m-d H:i:s', $user['jointime']) : '--';
         $user['logintime_fmt'] = $user['logintime'] ? date('Y-m-d H:i:s', $user['logintime']) : '--';
 
+        // 返佣比例：会员已单独设置（大于 0）则用会员值，否则跟随洗码管理配置（第一条启用的配置）
+        $defaultRates = $this->getDefaultXimaRates();
+        $user['self_rebate_rate_show'] = floatval($user['self_rebate_rate']) > 0
+            ? floatval($user['self_rebate_rate']) : $defaultRates['self_rate'];
+        $user['invite_rebate_rate_show'] = floatval($user['invite_rebate_rate']) > 0
+            ? floatval($user['invite_rebate_rate']) : $defaultRates['parent_rate'];
+
         // 统计汇总
         $stats = [];
         try { $stats['recharge_total'] = \think\Db::name('recharge_order')->where('user_id', $id)->where('status', 1)->sum('amount'); } catch (\Exception $e) { $stats['recharge_total'] = 0; }
@@ -196,6 +203,18 @@ class User extends Backend
         $this->view->assign('stats', $stats);
         $this->view->assign('parent', $parent);
         return $this->view->fetch();
+    }
+
+    /**
+     * 洗码管理配置里的默认比例（取第一条启用的配置）
+     */
+    private function getDefaultXimaRates()
+    {
+        $config = \think\Db::name('xima_config')->where('status', 1)->order('id', 'asc')->find();
+        return [
+            'self_rate'   => $config ? floatval($config['self_rate']) : 0,
+            'parent_rate' => $config ? floatval($config['parent_rate']) : 0,
+        ];
     }
 
     /**
