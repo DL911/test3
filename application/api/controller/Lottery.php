@@ -200,6 +200,13 @@ class Lottery extends Api
         $type = $this->request->param('type', 'fc3d');
         $lotteryType = isset($this->typeMap[$type]) ? $this->typeMap[$type] : 1;
 
+        // 超时兜底：节假日/休市官方未开奖时，把过期期号顺延到下一个开奖日，避免卡在"开奖中"
+        try {
+            \app\common\service\DrawService::postponeExpiredPeriods();
+        } catch (\Exception $e) {
+            // 兜底失败不影响正常读取
+        }
+
         // 最新已开奖
         $latest = Db::name('lottery_draw')
             ->where('lottery_type', $lotteryType)

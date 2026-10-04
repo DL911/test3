@@ -827,7 +827,8 @@ var BetPage = (function() {
 
     function startRefreshPolling() {
         var attempts = 0;
-        var maxAttempts = 40; // 最多轮询20分钟 (40 × 30秒)
+        // 覆盖服务端超时兜底窗口(开奖时间 + 2h 顺延)，之后仍无结果才停下
+        var maxAttempts = 260; // 最多轮询约2小时10分 (260 × 30秒)
         var pollTimer = setInterval(function() {
             attempts++;
             fetch('/index.php/api/lottery/getLatestDraw?type=' + state.lotteryType)

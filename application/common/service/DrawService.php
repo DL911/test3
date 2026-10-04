@@ -23,6 +23,9 @@ class DrawService
         'pl3'  => 'pls',
     ];
 
+    // 开奖时间过后允许等待的小时数，超过仍未开奖则视为官方当日未开奖并顺延（节假日兜底）
+    const POSTPONE_GRACE_HOURS = 2;
+
     /**
      * 从 huiniao API 获取最新开奖
      * @param string $type fc3d / pl3
@@ -187,6 +190,9 @@ class DrawService
 
         Log::info("===== 开始自动开奖: {$typeInfo['name']} =====");
 
+        // 超时兜底：先把已过期仍未开奖的期号顺延，避免节假日/休市一直卡在"开奖中"
+        self::postponeExpiredPeriods();
+
         // 1. 获取远程开奖数据
         $drawData = self::fetchLatestDraw($type);
         if (!$drawData) {
@@ -310,6 +316,47 @@ class DrawService
     protected static function calcNextPeriod($period)
     {
         return (string)(intval($period) + 1);
+    }
+
+    /**
+     * 超时兜底：待开奖期号超过开奖时间 N 小时仍未开奖（如官方节假日休市、停售），
+     * 视为官方当日未开奖，把该期开奖时间顺延到下一个开奖日。
+     * 期号保持不变（官方下一期也是顺序递增，休市不消耗期号），避免页面一直卡在"开奖中"。
+     *
+     * @param float $graceHours 开奖时间过后允许等待的小时数
+     * @return int 顺延的期数
+     */
+    public static function postponeExpiredPeriods($graceHours = self::POSTPONE_GRACE_HOURS)
+    {
+        $now = time();
+        $deadline = $now - intval($graceHours * 3600);
+
+        $list = Db::name('lottery_draw')
+            ->where('status', 0)
+            ->where('draw_time', '<', date('Y-m-d H:i:s', $deadline))
+            ->select();
+
+        $postponed = 0;
+        foreach ($list as $row) {
+            $drawTs = strtotime($row['draw_time']);
+            if (!$drawTs) continue;
+
+            // 保留原开奖时刻，顺延到将来的最近一天
+            $clock = date('H:i:s', $drawTs);
+            $newTs = strtotime(date('Y-m-d', $now) . ' ' . $clock);
+            while ($newTs <= $now) {
+                $newTs = strtotime('+1 day', $newTs);
+            }
+
+            Db::name('lottery_draw')->where('id', $row['id'])->update([
+                'draw_time'  => date('Y-m-d H:i:s', $newTs),
+                'updatetime' => $now,
+            ]);
+            Log::info("超时兜底: [彩种{$row['lottery_type']}] 期号 {$row['period']} 官方未开奖，开奖时间由 {$row['draw_time']} 顺延至 " . date('Y-m-d H:i:s', $newTs));
+            $postponed++;
+        }
+
+        return $postponed;
     }
 
     /**
