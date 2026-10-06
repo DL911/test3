@@ -298,7 +298,7 @@ var BetPage = (function() {
     /* ---------------------------------------------------------------
        排列三 玩法配置
        号码范围: 0-9, 三位（但排列五有5位）
-       开奖号码: 000 ~ 999, 每天20:30开奖
+       开奖号码: 000 ~ 999, 每天21:25开奖
        ---------------------------------------------------------------
        官方玩法:
        - 直选: 按位精确匹配, 奖金1040元
@@ -769,7 +769,7 @@ var BetPage = (function() {
             if (el.icon && !isMobile) { el.icon.className = 'bet-lottery-icon pl3'; el.icon.innerHTML = logoImg; }
             else if (el.icon && isMobile) { el.icon.className = 'm-card-icon pl3'; el.icon.style.overflow = 'hidden'; el.icon.innerHTML = logoImg; }
             if (el.title) el.title.textContent = '排列三 投注 - DB彩票';
-            if (el.meta) el.meta.innerHTML = '<span class="meta-tag official">官方彩</span><span class="meta-tag freq">每天一期 20:30开奖</span>';
+            if (el.meta) el.meta.innerHTML = '<span class="meta-tag official">官方彩</span><span class="meta-tag freq">每天一期 21:25开奖</span>';
         }
 
         // 最新开奖号码(从API)
