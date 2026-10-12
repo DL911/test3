@@ -19,21 +19,21 @@ class Xima extends Api
     public function summary()
     {
         $userId = $this->auth->id;
-        $todayStart = strtotime('today'); // 今天00:00:00
+        $today = date('Y-m-d');
 
         // 可领取洗码（隔天：createtime < 今天00:00）
         $claimableSelf = Db::name('xima_record')
             ->where('user_id', $userId)
             ->where('type', 'self')
             ->where('status', 0)
-            ->where('createtime', '<', $todayStart)
+            ->where('unlock_date', '<=', $today)
             ->sum('xima_amount');
 
         $claimableParent = Db::name('xima_record')
             ->where('user_id', $userId)
             ->where('type', 'parent')
             ->where('status', 0)
-            ->where('createtime', '<', $todayStart)
+            ->where('unlock_date', '<=', $today)
             ->sum('xima_amount');
 
         // 今日新增（不可领，展示用）
@@ -41,14 +41,14 @@ class Xima extends Api
             ->where('user_id', $userId)
             ->where('type', 'self')
             ->where('status', 0)
-            ->where('createtime', '>=', $todayStart)
+            ->where('unlock_date', '>', $today)
             ->sum('xima_amount');
 
         $todayParent = Db::name('xima_record')
             ->where('user_id', $userId)
             ->where('type', 'parent')
             ->where('status', 0)
-            ->where('createtime', '>=', $todayStart)
+            ->where('unlock_date', '>', $today)
             ->sum('xima_amount');
 
         // 已领取总额
@@ -61,7 +61,7 @@ class Xima extends Api
         $claimableCount = Db::name('xima_record')
             ->where('user_id', $userId)
             ->where('status', 0)
-            ->where('createtime', '<', $todayStart)
+            ->where('unlock_date', '<=', $today)
             ->count();
 
         $this->success('OK', [
@@ -83,18 +83,18 @@ class Xima extends Api
     public function claim()
     {
         $userId = $this->auth->id;
-        $todayStart = strtotime('today');
+        $today = date('Y-m-d');
 
         Db::startTrans();
         try {
             // 锁定用户后再查询待领取记录，防止并发请求重复入账
-            Db::name('user')->where('id', $userId)->lock(true)->field('id')->find();
+            $lockedUser = Db::name('user')->where('id', $userId)->lock(true)->field('id,money')->find();
 
             // 只领取隔天及之前的记录（当天投注次日才能领）
             $records = Db::name('xima_record')
                 ->where('user_id', $userId)
                 ->where('status', 0)
-                ->where('createtime', '<', $todayStart)
+                ->where('unlock_date', '<=', $today)
                 ->lock(true)
                 ->select();
 
@@ -114,6 +114,7 @@ class Xima extends Api
                 $this->error('洗码金额为0');
             }
 
+            $batchNo = 'XR' . date('YmdHis') . str_pad($userId, 6, '0', STR_PAD_LEFT) . mt_rand(1000, 9999);
             // 批量更新状态
             $ids = array_column($records, 'id');
             $updatedCount = Db::name('xima_record')
@@ -122,6 +123,7 @@ class Xima extends Api
                 ->where('status', 0)
                 ->update([
                     'status'     => 1,
+                    'claim_batch_no' => $batchNo,
                     'claim_time' => time(),
                     'updatetime' => time(),
                 ]);
@@ -129,10 +131,27 @@ class Xima extends Api
                 throw new \RuntimeException('奖励记录状态已变更，请刷新后重试');
             }
 
-            // 加余额
+            $balanceBefore = floatval($lockedUser['money']);
             Db::name('user')->where('id', $userId)->setInc('money', $totalAmount);
-
             $newBalance = Db::name('user')->where('id', $userId)->value('money');
+            Db::name('money_log')->insert([
+                'user_id' => $userId,
+                'money' => $totalAmount,
+                'before' => $balanceBefore,
+                'after' => $newBalance,
+                'memo' => '领取返水：' . $batchNo,
+                'createtime' => time(),
+            ]);
+            Db::name('xima_claim_batch')->insert([
+                'batch_no' => $batchNo,
+                'user_id' => $userId,
+                'record_count' => count($records),
+                'claim_amount' => $totalAmount,
+                'balance_before' => $balanceBefore,
+                'balance_after' => $newBalance,
+                'client_ip' => $this->request->ip(),
+                'createtime' => time(),
+            ]);
             Db::commit();
         } catch (\think\exception\HttpResponseException $e) {
             throw $e;
@@ -144,6 +163,7 @@ class Xima extends Api
             'claimed_amount' => $totalAmount,
             'claimed_count'  => count($records),
             'balance'        => $newBalance,
+            'batch_no'       => $batchNo,
         ]);
     }
 
@@ -170,8 +190,8 @@ class Xima extends Api
         foreach ($list as &$item) {
             $item['create_date'] = date('Y-m-d H:i', $item['createtime']);
             $item['claim_date'] = $item['claim_time'] ? date('Y-m-d H:i', $item['claim_time']) : '--';
-            $item['type_text'] = $item['type'] === 'self' ? '自身洗码' : '邀请人洗码';
-            $item['status_text'] = ['待领取', '已领取', '已过期'][$item['status']] ?? '未知';
+            $item['type_text'] = $item['type'] === 'self' ? '自身返水' : '团队级差';
+            $item['status_text'] = $item['status'] == 1 ? '已领取' : ($item['status'] == 2 ? '已作废' : ($item['unlock_date'] <= date('Y-m-d') ? '可领取' : '今日待解锁'));
             // 来源用户名
             $sourceUserId = isset($item['source_user_id']) ? $item['source_user_id'] : 0;
             if ($sourceUserId && $sourceUserId != $userId) {

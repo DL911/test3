@@ -122,8 +122,20 @@
         </div>
     </div>
 
+    <div class="invite-box" id="openAccountBox" style="display:none;text-align:left;">
+        <div style="font-size:17px;font-weight:800;margin-bottom:14px;">新增开户</div>
+        <div style="font-size:13px;color:#666;margin-bottom:12px;">我的比例：<b id="myRateText">--</b>　可设置范围：0%～<b id="maxSubRate">--</b></div>
+        <input id="oaUsername" placeholder="登录账号（4-20位字母、数字或下划线）" style="width:100%;box-sizing:border-box;padding:12px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;">
+        <input id="oaMobile" placeholder="手机号（选填）" maxlength="11" style="width:100%;box-sizing:border-box;padding:12px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;">
+        <input id="oaPassword" type="password" placeholder="初始密码（6-30位）" style="width:100%;box-sizing:border-box;padding:12px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;">
+        <select id="oaType" style="width:100%;padding:12px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;background:#fff;"><option value="user">普通用户</option><option value="agent">代理用户（允许继续开户）</option></select>
+        <input id="oaRate" type="number" min="0" step="0.01" placeholder="下级返水比例（%）" style="width:100%;box-sizing:border-box;padding:12px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;">
+        <div id="ratePreview" style="font-size:13px;color:#666;margin-bottom:12px;">输入比例后显示每投注100元的收益预览</div>
+        <button class="lm-btn lm-btn-primary" id="btnOpenAccount" style="width:100%;">确认开户</button>
+    </div>
+
     <!-- 邀请链接区 -->
-    <div class="invite-box">
+    <div class="invite-box" style="display:none;">
         <div style="font-size:15px;font-weight:700;margin-bottom:16px;">推广二维码 / 邀请链接</div>
 
         <!-- Hidden QR generator -->
@@ -198,6 +210,10 @@
                 if(res.code == 1) {
                     document.getElementById('stTeamSize').innerText = res.data.team_size;
                     document.getElementById('stCommission').innerText = res.data.total_commission;
+                    document.getElementById('myRateText').innerText = res.data.my_rate_text;
+                    document.getElementById('maxSubRate').innerText = res.data.my_rate_text;
+                    document.getElementById('oaRate').max = parseFloat(res.data.my_rate || 0) * 100;
+                    if (res.data.can_open_account == 1) document.getElementById('openAccountBox').style.display = 'block';
                     if (res.data.commission_rate) {
                         document.getElementById('stRate').innerText = res.data.commission_rate.replace('%','');
                         document.getElementById('stRateVal').innerText = res.data.commission_rate;
@@ -296,6 +312,32 @@
                 }
             });
 
+        var rateInput = document.getElementById('oaRate');
+        rateInput.addEventListener('input', function(){
+            var mine = parseFloat(rateInput.max || 0), sub = parseFloat(rateInput.value || 0), gap = Math.max(0, mine-sub);
+            document.getElementById('ratePreview').innerText = '每投注100元：下级约得 ¥'+sub.toFixed(2)+'，您约得级差 ¥'+gap.toFixed(2);
+        });
+        document.getElementById('btnOpenAccount').addEventListener('click', function(){
+            var fd = new FormData();
+            fd.append('username', document.getElementById('oaUsername').value.trim());
+            fd.append('mobile', document.getElementById('oaMobile').value.trim());
+            fd.append('password', document.getElementById('oaPassword').value);
+            fd.append('account_type', document.getElementById('oaType').value);
+            fd.append('rebate_rate', rateInput.value);
+            fetch('/index.php/api/agent/createAccount',{method:'POST',headers:headers,body:fd}).then(function(r){return r.json();}).then(function(res){
+                showToast(res.msg || '操作完成');
+                if(res.code===1) setTimeout(function(){location.reload();},800);
+            });
+        });
+        window.adjustRate = function(userId,current){
+            var rate = prompt('请输入新的返水比例（%）。只影响之后的新投注：', Number(current).toFixed(2));
+            if(rate === null) return;
+            var fd = new FormData(); fd.append('user_id', userId); fd.append('rebate_rate', rate);
+            fetch('/index.php/api/agent/updateRate',{method:'POST',headers:headers,body:fd}).then(function(r){return r.json();}).then(function(res){
+                showToast(res.msg || '操作完成'); if(res.code===1) setTimeout(function(){location.reload();},800);
+            });
+        };
+
         // 获取团队
         fetch('/index.php/api/agent/subordinates', {headers: headers})
             .then(res => res.json())
@@ -304,8 +346,8 @@
                 if(res.code == 1 && res.data.length > 0) {
                     res.data.forEach(function(item) {
                         html += '<div class="list-item">' +
-                                '<div><div class="list-title">' + item.name + '</div><div class="list-time">注册: ' + item.date + '</div></div>' +
-                                '<div class="list-val" style="color:var(--m-text-sub);font-size:13px;">已绑定</div>' +
+                                '<div><div class="list-title">' + item.name + ' · ' + item.account_type_text + '</div><div class="list-time">注册: ' + item.date + ' · 下级 '+item.sub_count+' 人</div></div>' +
+                                '<div style="text-align:right;"><div class="list-val" style="font-size:14px;">'+item.rebate_rate_text+'</div><div class="list-time">我的级差 '+item.rate_gap_text+'</div><button onclick="adjustRate('+item.id+','+(item.rebate_rate*100)+')" style="margin-top:5px;border:0;background:#eef4ff;color:#1677ff;border-radius:10px;padding:3px 8px;">调比例</button></div>' +
                                 '</div>';
                     });
                 } else {

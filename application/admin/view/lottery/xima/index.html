@@ -4,7 +4,7 @@
         <!-- Tab 切换 -->
         <ul class="nav nav-tabs" style="margin-bottom:15px;">
             <li class="active"><a href="javascript:;" onclick="switchTab('config')">洗码配置</a></li>
-            <li><a href="javascript:;" onclick="switchTab('record')">洗码记录</a></li>
+            <li><a href="javascript:;" onclick="switchTab('record')">返水记录</a></li>
         </ul>
 
         <!-- ======== 配置 Tab ======== -->
@@ -14,7 +14,7 @@
             </div>
             <table class="table table-bordered table-hover" style="font-size:13px;">
                 <thead><tr style="background:#f5f5f5;">
-                    <th width="40">ID</th><th>名称</th><th>彩种</th><th>自身洗码比例</th><th>邀请人洗码比例</th><th>最低日投注</th><th>状态</th><th width="120">操作</th>
+                    <th width="40">ID</th><th>名称</th><th>彩种</th><th>旧自身比例</th><th>旧邀请比例</th><th>单笔最低投注</th><th>状态</th><th width="120">操作</th>
                 </tr></thead>
                 <tbody id="configBody"><tr><td colspan="8" style="text-align:center;color:#999;">加载中...</td></tr></tbody>
             </table>
@@ -29,17 +29,17 @@
                         <input type="text" class="form-control" id="cfgName" placeholder="如：默认洗码">
                     </div>
                     <div class="col-sm-4 form-group">
-                        <label>自身洗码比例 (%)</label>
+                        <label>旧自身比例（仅兼容历史数据）</label>
                         <input type="number" class="form-control" id="cfgSelfRate" step="0.01" placeholder="0.80 表示 0.8%">
                     </div>
                     <div class="col-sm-4 form-group">
-                        <label>邀请人洗码比例 (%)</label>
+                        <label>旧邀请比例（新级差模式不使用）</label>
                         <input type="number" class="form-control" id="cfgParentRate" step="0.01" placeholder="0.30 表示 0.3%">
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-sm-4 form-group">
-                        <label>最低日投注额 (¥)</label>
+                        <label>单笔最低有效投注额 (¥)</label>
                         <input type="number" class="form-control" id="cfgMinBet" value="0">
                     </div>
                     <div class="col-sm-4 form-group">
@@ -84,13 +84,14 @@
             <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <select id="recType" class="form-control" style="width:130px;">
                     <option value="">全部类型</option>
-                    <option value="self">自身洗码</option>
-                    <option value="parent">邀请人洗码</option>
+                    <option value="self">自身返水</option>
+                    <option value="parent">团队级差</option>
                 </select>
                 <select id="recStatus" class="form-control" style="width:120px;">
                     <option value="">全部状态</option>
                     <option value="0">待领取</option>
                     <option value="1">已领取</option>
+                    <option value="2">已作废</option>
                 </select>
                 <input type="text" id="recKeyword" class="form-control" placeholder="用户名/昵称" style="width:180px;">
                 <button class="btn btn-primary btn-sm" onclick="loadRecords()"><i class="fa fa-search"></i> 搜索</button>

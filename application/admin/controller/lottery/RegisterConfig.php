@@ -1,47 +1,93 @@
 <?php
+
 namespace app\admin\controller\lottery;
 
 use app\common\controller\Backend;
+use app\common\library\Auth as UserAuth;
+use app\common\model\User as UserModel;
+use fast\Random;
 use think\Db;
 
-/**
- * 注册配置信息（只读展示）
- * 仅用于查看当前注册相关的系统设置，不提供编辑
- */
+/** 代理开户与返水系统设置。 */
 class RegisterConfig extends Backend
 {
     protected $noNeedRight = ['*'];
 
-    /**
-     * 展示页
-     */
     public function index()
     {
         if ($this->request->isAjax()) {
-            // 默认邀请返水比例：与前台注册逻辑保持一致（User.php 中默认 0.015）
-            $defaultRebate = 0.015;
-
-            // 统计注册相关数据
-            $totalUsers = Db::name('user')->count();
+            $config = Db::name('agent_config')->where('id', 1)->find();
             $todayStart = strtotime(date('Y-m-d 00:00:00'));
-            $todayUsers = Db::name('user')->where('createtime', '>=', $todayStart)->count();
-            $invitedUsers = Db::name('user')->where('pid', '>', 0)->count();
-
-            $data = [
-                'items' => [
-                    ['name' => '注册功能', 'value' => '已开放', 'desc' => '允许新用户通过前台注册'],
-                    ['name' => '邀请码绑定', 'value' => '支持（选填）', 'desc' => '注册时可填写邀请码绑定上级'],
-                    ['name' => '默认邀请返水比例', 'value' => ($defaultRebate * 100) . '%', 'desc' => '未指定时新用户的默认 invite_rebate_rate'],
-                    ['name' => '手机号注册', 'value' => '启用', 'desc' => '以手机号作为登录账号'],
-                ],
+            return json(['code' => 1, 'msg' => 'ok', 'data' => [
+                'config' => $config,
                 'stats' => [
-                    'total_users'   => $totalUsers,
-                    'today_users'   => $todayUsers,
-                    'invited_users' => $invitedUsers,
+                    'total_users' => Db::name('user')->count(),
+                    'today_users' => Db::name('user')->where('createtime', '>=', $todayStart)->count(),
+                    'agent_users' => Db::name('user')->where('is_agent', 1)->count(),
+                    'invited_users' => Db::name('user')->where('pid', '>', 0)->count(),
                 ],
-            ];
-            return json(['code' => 1, 'msg' => 'ok', 'data' => $data]);
+                'top_agents' => Db::name('user')->where('pid', 0)->where('is_agent', 1)
+                    ->field('id,username,nickname,mobile,self_rebate_rate,can_open_account,status,createtime')
+                    ->order('id', 'desc')->limit(100)->select(),
+            ]]);
         }
         return $this->view->fetch();
+    }
+
+    public function saveConfig()
+    {
+        $maxPercent = $this->request->post('max_rebate_rate/f', -1);
+        $gapPercent = $this->request->post('min_rate_gap/f', 0);
+        if ($maxPercent < 0 || $maxPercent > 100 || $gapPercent < 0 || $gapPercent > $maxPercent) {
+            return json(['code' => 0, 'msg' => '比例配置不正确']);
+        }
+        $maxRate = round($maxPercent / 100, 6);
+        $gapRate = round($gapPercent / 100, 6);
+        $highestTopRate = floatval(Db::name('user')->where('pid', 0)->where('is_agent', 1)->max('self_rebate_rate'));
+        if ($maxRate + 0.0000001 < $highestTopRate) {
+            return json(['code' => 0, 'msg' => '系统最高比例不能低于现有顶级代理比例']);
+        }
+        Db::name('agent_config')->where('id', 1)->update([
+            'registration_mode' => 'agent_only',
+            'max_rebate_rate' => $maxRate,
+            'min_rate_gap' => $gapRate,
+            'unlock_mode' => 'next_day',
+            'claim_mode' => 'manual',
+            'status' => 1,
+            'updatetime' => time(),
+        ]);
+        return json(['code' => 1, 'msg' => '代理返水配置已保存']);
+    }
+
+    public function createTopAgent()
+    {
+        $username = trim($this->request->post('username', ''));
+        $mobile = trim($this->request->post('mobile', ''));
+        $password = (string)$this->request->post('password', '');
+        $ratePercent = $this->request->post('rebate_rate/f', -1);
+        if (!preg_match('/^[A-Za-z0-9_]{4,20}$/', $username)) return json(['code' => 0, 'msg' => '用户名需为4-20位字母、数字或下划线']);
+        if ($mobile !== '' && !preg_match('/^1[3-9]\d{9}$/', $mobile)) return json(['code' => 0, 'msg' => '手机号格式不正确']);
+        if (strlen($password) < 6 || strlen($password) > 30) return json(['code' => 0, 'msg' => '密码长度需为6-30位']);
+        $maxRate = floatval(Db::name('agent_config')->where('id', 1)->value('max_rebate_rate'));
+        $rate = round($ratePercent / 100, 6);
+        if ($rate < 0 || $rate > $maxRate + 0.0000001) return json(['code' => 0, 'msg' => '顶级代理比例不能超过系统最高比例']);
+        if (UserModel::getByUsername($username) || ($mobile && UserModel::getByMobile($mobile))) return json(['code' => 0, 'msg' => '用户名或手机号已存在']);
+
+        $salt = Random::alnum();
+        $now = time();
+        try {
+            $user = UserModel::create([
+                'pid' => 0, 'is_agent' => 1, 'can_open_account' => 1, 'agent_level' => 1,
+                'username' => $username, 'nickname' => $username,
+                'password' => (new UserAuth())->getEncryptPassword($password, $salt), 'salt' => $salt,
+                'email' => '', 'mobile' => $mobile, 'avatar' => '', 'level' => 1, 'score' => 0, 'money' => 0,
+                'self_rebate_rate' => $rate, 'invite_rebate_rate' => 0,
+                'jointime' => $now, 'joinip' => $this->request->ip(), 'logintime' => 0, 'loginip' => '', 'prevtime' => 0,
+                'status' => 'normal', 'createtime' => $now, 'updatetime' => $now,
+            ], true);
+            return json(['code' => 1, 'msg' => '顶级代理创建成功', 'data' => ['id' => $user->id]]);
+        } catch (\Exception $e) {
+            return json(['code' => 0, 'msg' => '创建失败：' . $e->getMessage()]);
+        }
     }
 }

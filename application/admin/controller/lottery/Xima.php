@@ -104,8 +104,8 @@ class Xima extends Backend
         foreach ($list as &$item) {
             $item['create_date'] = date('Y-m-d H:i:s', $item['createtime']);
             $item['claim_date'] = $item['claim_time'] ? date('Y-m-d H:i:s', $item['claim_time']) : '--';
-            $item['type_text'] = $item['type'] === 'self' ? '自身洗码' : '邀请人洗码';
-            $item['status_text'] = ['待领取', '已领取', '已过期'][$item['status']] ?? '未知';
+            $item['type_text'] = $item['type'] === 'self' ? '自身返水' : '团队级差';
+            $item['status_text'] = $item['status'] == 1 ? '已领取' : ($item['status'] == 2 ? '已作废' : ($item['unlock_date'] <= date('Y-m-d') ? '可领取' : '今日待解锁'));
             $item['source_name'] = $item['source_nickname'] ?: $item['source_username'] ?: '--';
         }
 

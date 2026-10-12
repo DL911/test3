@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>洗码中心 - 好运北彩</title>
+    <title>返水中心 - 好运北彩</title>
     <link rel="stylesheet" href="/assets/lottery/css/mobile_light.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -41,12 +41,12 @@
 
     <div class="lm-topbar" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
         <a href="javascript:history.back();" class="back"><i class="fa-solid fa-chevron-left"></i></a>
-        <h2>洗码中心</h2>
+        <h2>返水中心</h2>
     </div>
 
     <div class="xm-header">
-        <h2><i class="fa-solid fa-recycle"></i> 洗码中心</h2>
-        <p>每笔投注自动产生洗码，隔天有效投注后可领取</p>
+        <h2><i class="fa-solid fa-recycle"></i> 返水中心</h2>
+        <p>每笔有效投注自动产生返水，当天冻结，次日可领取</p>
     </div>
 
     <!-- 概况卡片 -->
@@ -70,22 +70,22 @@
         <div style="font-size:13px; color:#999;">当前可领取洗码金额</div>
         <div class="xm-claim-amount" id="claimAmount">¥0.00</div>
         <div class="xm-claim-hint" id="claimDetail">
-            自身洗码: ¥<span id="selfAmount">0.00</span> | 邀请人洗码: ¥<span id="parentAmount">0.00</span>
+            自身返水: ¥<span id="selfAmount">0.00</span> | 团队级差: ¥<span id="parentAmount">0.00</span>
         </div>
         <div id="todayHint" style="display:none; font-size:12px; color:#e67e22; margin-bottom:12px; padding:8px 16px; background:#fff8f0; border-radius:8px;">
-            <i class="fa-solid fa-clock"></i> 今日新增: ¥<span id="todayTotal">0.00</span>（明日可领）
+            <i class="fa-solid fa-clock"></i> 今日待解锁: ¥<span id="todayTotal">0.00</span>（明日可领）
         </div>
         <button class="xm-claim-btn" id="claimBtn" disabled onclick="claimAll()">一键领取</button>
     </div>
 
     <!-- 洗码记录 -->
     <div class="xm-section">
-        <div class="xm-section-title">洗码记录</div>
+        <div class="xm-section-title">返水记录</div>
 
         <div class="lm-tabs" style="margin-bottom:12px;">
             <div class="lm-tab active" onclick="switchTab('all',this)">全部</div>
-            <div class="lm-tab" onclick="switchTab('self',this)">自身洗码</div>
-            <div class="lm-tab" onclick="switchTab('parent',this)">邀请人洗码</div>
+            <div class="lm-tab" onclick="switchTab('self',this)">自身返水</div>
+            <div class="lm-tab" onclick="switchTab('parent',this)">团队级差</div>
         </div>
 
         <div id="recordList"></div>
@@ -139,7 +139,7 @@
                         btn.textContent = '一键领取 ¥' + total.toFixed(2);
                     } else {
                         btn.disabled = true;
-                        btn.textContent = todayTotal > 0 ? '今日洗码明日可领' : '暂无可领取';
+                        btn.textContent = todayTotal > 0 ? '今日返水明日可领' : '暂无可领取';
                     }
                 }
             });
@@ -197,7 +197,7 @@
                             var statusIcon = r.status == 1 ? '✓' : '○';
                             html += '<div class="xm-record">' +
                                 '<div class="left">' +
-                                '<div class="type">' + (r.type_text || '洗码') + ' ' +
+                                '<div class="type">' + (r.type_text || '返水') + ' ' +
                                 '<span style="font-size:11px;padding:1px 6px;border-radius:8px;background:' + (r.status == 0 ? '#fff3e0' : '#e8f5e9') + ';color:' + (r.status == 0 ? '#e65100' : '#2e7d32') + ';">' + statusIcon + ' ' + (r.status_text || '') + '</span>' +
                                 '</div>' +
                                 '<div class="meta">投注: ¥' + parseFloat(r.bet_amount || 0).toFixed(2) + ' × ' + (parseFloat(r.xima_rate || 0) * 100).toFixed(2) + '%</div>' +

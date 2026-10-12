@@ -46,6 +46,8 @@ class User extends Api
             'group_id' => $user->group_id,
             'self_rebate_rate'   => $user->self_rebate_rate,
             'invite_rebate_rate' => $user->invite_rebate_rate,
+            'is_agent' => isset($user->is_agent) ? intval($user->is_agent) : 0,
+            'can_open_account' => isset($user->can_open_account) ? intval($user->can_open_account) : 0,
             // 会员单独设置了比例则展示会员比例，未设置则展示后台洗码配置
             'xima_rates' => $this->getXimaDisplayRates($user),
             'verify_status' => $this->getUserVerifyStatus($user->id),
@@ -56,26 +58,14 @@ class User extends Api
     /** 与投注一致：会员单独设置了比例则优先，否则用启用的彩种专用配置优先、通用配置兜底，同类取最小 ID。 */
     private function getXimaDisplayRates($user)
     {
-        $selfOverride   = floatval($user['self_rebate_rate']);
-        $parentOverride = floatval($user['invite_rebate_rate']);
-        $configs = Db::name('xima_config')->where('status', 1)->order('id', 'asc')->select();
-        $byType = [];
-        foreach ($configs as $config) {
-            $type = intval($config['lottery_type']);
-            if (!isset($byType[$type])) $byType[$type] = $config;
-        }
+        $userRate = floatval($user['self_rebate_rate']);
         $rates = [];
         foreach ([1 => '福彩3D', 2 => '排列三'] as $type => $name) {
-            $config = isset($byType[$type]) ? $byType[$type] : (isset($byType[0]) ? $byType[0] : null);
             $rates[] = [
                 'lottery_type' => $type,
                 'lottery_name' => $name,
-                'self_rate' => $selfOverride > 0
-                    ? $selfOverride
-                    : ($config ? floatval($config['self_rate']) : 0),
-                'parent_rate' => $parentOverride > 0
-                    ? $parentOverride
-                    : ($config ? floatval($config['parent_rate']) : 0),
+                'self_rate' => $userRate,
+                'parent_rate' => 0,
             ];
         }
         return $rates;

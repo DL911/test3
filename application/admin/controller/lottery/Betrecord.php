@@ -389,15 +389,27 @@ class Betrecord extends Backend
                 }
             } catch (\Exception $e) {}
 
-            // 撤销关联洗码记录
+            // 撤销关联返水记录：已领取的冲正，所有记录保留用于审计。
             try {
                 $ximaRecords = Db::name('xima_record')->where('bet_order_no', $bet['order_no'])->select();
                 foreach ($ximaRecords as $xr) {
                     if ($xr['status'] == 1 && $xr['xima_amount'] > 0) {
-                        Db::name('user')->where('id', $xr['user_id'])->setDec('money', $xr['xima_amount']);
+                        $user = Db::name('user')->where('id', $xr['user_id'])->lock(true)->field('id,money')->find();
+                        if ($user) {
+                            $before = floatval($user['money']);
+                            $after = round($before - floatval($xr['xima_amount']), 2);
+                            Db::name('user')->where('id', $xr['user_id'])->update(['money' => $after]);
+                            Db::name('money_log')->insert([
+                                'user_id' => $xr['user_id'], 'money' => -floatval($xr['xima_amount']),
+                                'before' => $before, 'after' => $after,
+                                'memo' => '后台撤单返水冲正：' . $bet['order_no'], 'createtime' => time(),
+                            ]);
+                        }
                     }
                 }
-                Db::name('xima_record')->where('bet_order_no', $bet['order_no'])->delete();
+                Db::name('xima_record')->where('bet_order_no', $bet['order_no'])->update([
+                    'status' => 2, 'cancel_time' => time(), 'cancel_reason' => '管理员撤销投注', 'updatetime' => time(),
+                ]);
             } catch (\Exception $e) {}
 
             Db::commit();

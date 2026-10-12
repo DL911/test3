@@ -59,13 +59,17 @@
                 </div>
             </div>
 
-            <!-- 邀请链接 -->
-            <div class="pc-invite-box">
-                <label><i class="fa-solid fa-link"></i> 我的邀请链接</label>
-                <div class="pc-invite-row">
-                    <input type="text" id="inviteUrl" readonly placeholder="登录后显示">
-                    <button onclick="copyInvite()"><i class="fa-solid fa-copy"></i> 复制</button>
+            <div class="pc-invite-box" id="openAccountBox" style="display:none;">
+                <label><i class="fa-solid fa-user-plus"></i> 新增开户　我的比例：<b id="myRateText">--</b></label>
+                <div class="pc-invite-row" style="flex-wrap:wrap;">
+                    <input id="oaUsername" placeholder="登录账号" style="min-width:180px;">
+                    <input id="oaMobile" placeholder="手机号（选填）" style="min-width:160px;">
+                    <input id="oaPassword" type="password" placeholder="初始密码" style="min-width:160px;">
+                    <select id="oaType" style="padding:12px;border-radius:10px;border:0;"><option value="user">普通用户</option><option value="agent">代理用户</option></select>
+                    <input id="oaRate" type="number" min="0" step="0.01" placeholder="返水比例(%)" style="max-width:150px;">
+                    <button id="btnOpenAccount"><i class="fa-solid fa-check"></i> 确认开户</button>
                 </div>
+                <div id="ratePreview" style="color:rgba(255,255,255,.8);font-size:12px;margin-top:10px;">输入比例后显示每投注100元的收益预览</div>
             </div>
         </div>
 
@@ -78,8 +82,8 @@
 
             <div id="agTeamPanel">
                 <table class="pc-table">
-                    <thead><tr><th>用户名</th><th>昵称</th><th>注册时间</th></tr></thead>
-                    <tbody id="agTeamBody"><tr><td colspan="3" class="pc-empty">加载中...</td></tr></tbody>
+                    <thead><tr><th>用户 / 类型</th><th>返水比例 / 我的级差</th><th>开户时间</th><th>操作</th></tr></thead>
+                    <tbody id="agTeamBody"><tr><td colspan="4" class="pc-empty">加载中...</td></tr></tbody>
                 </table>
             </div>
 
@@ -100,13 +104,6 @@
         document.querySelectorAll('.pc-tab').forEach(function(el,i){ el.classList.toggle('active', (i===0&&t==='team')||(i===1&&t==='logs')); });
     }
 
-    function copyInvite() {
-        var inp = document.getElementById('inviteUrl');
-        inp.select();
-        document.execCommand('copy');
-        alert('邀请链接已复制');
-    }
-
     document.addEventListener('DOMContentLoaded', function(){
         LotteryAuth.initHeader && LotteryAuth.initHeader();
         if(!LotteryAuth.isLoggedIn()) return;
@@ -117,7 +114,9 @@
                 var d = res.data;
                 document.getElementById('agTeamSize').textContent = d.team_size;
                 document.getElementById('agCommission').textContent = '¥ ' + d.total_commission;
-                document.getElementById('inviteUrl').value = d.invite_url;
+                document.getElementById('myRateText').textContent = d.my_rate_text;
+                document.getElementById('oaRate').max = parseFloat(d.my_rate||0)*100;
+                if(d.can_open_account==1) document.getElementById('openAccountBox').style.display='block';
                 if (d.commission_rate) document.getElementById('agRate').textContent = d.commission_rate;
             }
         });
@@ -126,9 +125,9 @@
         LotteryAuth.request('/index.php/api/agent/subordinates',{method:'GET'}).then(function(res){
             if(res.code===1) {
                 var list = res.data||[];
-                if(!list.length) { document.getElementById('agTeamBody').innerHTML = '<tr><td colspan="3" class="pc-empty">暂无下级用户</td></tr>'; return; }
+                if(!list.length) { document.getElementById('agTeamBody').innerHTML = '<tr><td colspan="4" class="pc-empty">暂无下级用户</td></tr>'; return; }
                 var h = '';
-                list.forEach(function(u){ h += '<tr><td>'+u.username+'</td><td>'+(u.nickname||'--')+'</td><td>'+u.date+'</td></tr>'; });
+                list.forEach(function(u){ h += '<tr><td>'+u.username+'<br><small>'+u.account_type_text+' · '+u.status+'</small></td><td>'+u.rebate_rate_text+'<br><small>级差 '+u.rate_gap_text+'</small></td><td>'+u.date+'</td><td><button class="btn btn-xs btn-default" onclick="adjustRate('+u.id+','+(u.rebate_rate*100)+')">调比例</button> <button class="btn btn-xs btn-warning" onclick="resetPassword('+u.id+')">重置密码</button> <button class="btn btn-xs btn-danger" onclick="toggleStatus('+u.id+')">启停</button></td></tr>'; });
                 document.getElementById('agTeamBody').innerHTML = h;
             }
         });
@@ -143,6 +142,16 @@
                 document.getElementById('agLogsBody').innerHTML = h;
             }
         });
+
+        var rateInput=document.getElementById('oaRate');
+        rateInput.addEventListener('input',function(){var mine=parseFloat(rateInput.max||0),sub=parseFloat(rateInput.value||0),gap=Math.max(0,mine-sub);document.getElementById('ratePreview').textContent='每投注100元：下级约得 ¥'+sub.toFixed(2)+'，您约得级差 ¥'+gap.toFixed(2);});
+        document.getElementById('btnOpenAccount').addEventListener('click',function(){
+            var fd=new FormData();fd.append('username',document.getElementById('oaUsername').value.trim());fd.append('mobile',document.getElementById('oaMobile').value.trim());fd.append('password',document.getElementById('oaPassword').value);fd.append('account_type',document.getElementById('oaType').value);fd.append('rebate_rate',rateInput.value);
+            LotteryAuth.request('/index.php/api/agent/createAccount',{method:'POST',body:fd}).then(function(res){alert(res.msg||'操作完成');if(res.code===1)location.reload();});
+        });
+        window.adjustRate=function(userId,current){var rate=prompt('请输入新的返水比例（%）。只影响之后的新投注：',Number(current).toFixed(2));if(rate===null)return;var fd=new FormData();fd.append('user_id',userId);fd.append('rebate_rate',rate);LotteryAuth.request('/index.php/api/agent/updateRate',{method:'POST',body:fd}).then(function(res){alert(res.msg||'操作完成');if(res.code===1)location.reload();});};
+        window.resetPassword=function(userId){var password=prompt('请输入6-30位新密码：');if(password===null)return;var fd=new FormData();fd.append('user_id',userId);fd.append('password',password);LotteryAuth.request('/index.php/api/agent/resetPassword',{method:'POST',body:fd}).then(function(res){alert(res.msg||'操作完成');});};
+        window.toggleStatus=function(userId){if(!confirm('确认切换该直属用户的启用状态？'))return;var fd=new FormData();fd.append('user_id',userId);LotteryAuth.request('/index.php/api/agent/toggleStatus',{method:'POST',body:fd}).then(function(res){alert(res.msg||'操作完成');if(res.code===1)location.reload();});};
     });
     </script>
 </body>

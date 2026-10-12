@@ -1,80 +1,58 @@
 <div class="panel panel-default panel-intro">
-    <div class="panel-heading"><h3 class="panel-title">注册配置信息</h3></div>
+    <div class="panel-heading"><h3 class="panel-title">代理开户与返水设置</h3></div>
     <div class="panel-body">
-        <!-- 统计卡片 -->
-        <div style="display:flex;gap:15px;margin-bottom:20px;flex-wrap:wrap;">
-            <div style="flex:1;min-width:160px;background:#e3f2fd;border-radius:8px;padding:14px 18px;">
-                <div style="font-size:12px;color:#666;">注册用户总数</div>
-                <div style="font-size:22px;font-weight:700;color:#1565c0;" id="statTotal">-</div>
+        <div class="alert alert-info"><i class="fa fa-info-circle"></i> 前台公开注册已关闭。每笔有效投注生成返水，奖励次日可由用户主动领取。</div>
+        <div class="row" style="margin-bottom:18px;">
+            <div class="col-sm-3"><div class="well"><small>用户总数</small><h3 id="statTotal">-</h3></div></div>
+            <div class="col-sm-3"><div class="well"><small>今日开户</small><h3 id="statToday">-</h3></div></div>
+            <div class="col-sm-3"><div class="well"><small>代理数量</small><h3 id="statAgents">-</h3></div></div>
+            <div class="col-sm-3"><div class="well"><small>已绑定上级</small><h3 id="statInvited">-</h3></div></div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">系统规则</div>
+                    <div class="panel-body">
+                        <div class="form-group"><label>注册模式</label><input class="form-control" value="仅代理开户" disabled></div>
+                        <div class="form-group"><label>系统最高返水比例 (%)</label><input type="number" min="0" max="100" step="0.01" class="form-control" id="maxRate"></div>
+                        <div class="form-group"><label>最小代理级差 (%)</label><input type="number" min="0" max="100" step="0.01" class="form-control" id="minGap"></div>
+                        <div class="form-group"><label>奖励规则</label><input class="form-control" value="每笔投注生成，次日00:00后可领取" disabled></div>
+                        <button class="btn btn-primary" onclick="saveConfig()"><i class="fa fa-save"></i> 保存设置</button>
+                    </div>
+                </div>
             </div>
-            <div style="flex:1;min-width:160px;background:#e8f5e9;border-radius:8px;padding:14px 18px;">
-                <div style="font-size:12px;color:#666;">今日新增</div>
-                <div style="font-size:22px;font-weight:700;color:#2e7d32;" id="statToday">-</div>
-            </div>
-            <div style="flex:1;min-width:160px;background:#fff3e0;border-radius:8px;padding:14px 18px;">
-                <div style="font-size:12px;color:#666;">已绑定邀请人</div>
-                <div style="font-size:22px;font-weight:700;color:#ef6c00;" id="statInvited">-</div>
+            <div class="col-md-6">
+                <div class="panel panel-success">
+                    <div class="panel-heading">创建顶级代理</div>
+                    <div class="panel-body">
+                        <div class="form-group"><label>登录账号</label><input class="form-control" id="agentUsername" maxlength="20"></div>
+                        <div class="form-group"><label>手机号（选填）</label><input class="form-control" id="agentMobile" maxlength="11"></div>
+                        <div class="form-group"><label>初始密码</label><input type="password" class="form-control" id="agentPassword"></div>
+                        <div class="form-group"><label>返水比例 (%)</label><input type="number" min="0" step="0.01" class="form-control" id="agentRate"></div>
+                        <button class="btn btn-success" onclick="createTopAgent()"><i class="fa fa-user-plus"></i> 创建顶级代理</button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- 只读提示 -->
-        <div class="alert alert-info" style="margin-bottom:15px;">
-            <i class="fa fa-info-circle"></i> 本页面用于查看当前注册相关的系统设置，仅供观赏，不提供修改。
-        </div>
-
-        <!-- 配置项表格 -->
-        <table class="table table-bordered table-hover table-striped" style="font-size:13px;">
-            <thead><tr style="background:#f5f5f5;">
-                <th width="200">配置项</th>
-                <th width="180">当前值</th>
-                <th>说明</th>
-            </tr></thead>
-            <tbody id="cfgBody"><tr><td colspan="3" style="text-align:center;color:#999;">加载中...</td></tr></tbody>
+        <h4>顶级代理</h4>
+        <table class="table table-bordered table-striped">
+            <thead><tr><th>ID</th><th>账号</th><th>手机号</th><th>返水比例</th><th>开户权限</th><th>状态</th><th>创建时间</th></tr></thead>
+            <tbody id="agentBody"><tr><td colspan="7" class="text-center text-muted">加载中...</td></tr></tbody>
         </table>
     </div>
 </div>
 
 <script>
 (function(){
-    var entry = (function(){ var m = location.pathname.match(/^(\/[^\/]+\.php)/); return m ? m[1] : ''; })();
-    var baseUrl = entry + '/lottery/register_config/index';
-
-    function esc(s){ if(s==null) return ''; return String(s).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];}); }
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', baseUrl, true);
-    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-    xhr.onload = function(){
-        try {
-            var res = JSON.parse(xhr.responseText);
-            if(res.code !== 1){ document.getElementById('cfgBody').innerHTML='<tr><td colspan="3" style="color:red;">'+esc(res.msg)+'</td></tr>'; return; }
-            var d = res.data || {};
-            var s = d.stats || {};
-            document.getElementById('statTotal').textContent = s.total_users != null ? s.total_users : 0;
-            document.getElementById('statToday').textContent = s.today_users != null ? s.today_users : 0;
-            document.getElementById('statInvited').textContent = s.invited_users != null ? s.invited_users : 0;
-
-            var items = d.items || [], html = '';
-            if(!items.length){
-                html = '<tr><td colspan="3" style="text-align:center;color:#999;">暂无配置项</td></tr>';
-            } else {
-                for(var i=0;i<items.length;i++){
-                    var it = items[i];
-                    html += '<tr>'+
-                        '<td><strong>'+esc(it.name)+'</strong></td>'+
-                        '<td><span class="label label-success" style="font-size:13px;">'+esc(it.value)+'</span></td>'+
-                        '<td><small style="color:#666;">'+esc(it.desc)+'</small></td>'+
-                        '</tr>';
-                }
-            }
-            document.getElementById('cfgBody').innerHTML = html;
-        } catch(e){
-            document.getElementById('cfgBody').innerHTML='<tr><td colspan="3" style="color:red;">解析错误: '+esc(e.message)+'</td></tr>';
-        }
-    };
-    xhr.onerror = function(){
-        document.getElementById('cfgBody').innerHTML='<tr><td colspan="3" style="color:red;">请求失败</td></tr>';
-    };
-    xhr.send();
+    var entry=(function(){var m=location.pathname.match(/^(\/[^\/]+\.php)/);return m?m[1]:'';})();
+    var base=entry+'/lottery/register_config/';
+    function esc(s){return String(s==null?'':s).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});}
+    function post(action,data,done){var fd=new FormData();Object.keys(data).forEach(function(k){fd.append(k,data[k]);});var x=new XMLHttpRequest();x.open('POST',base+action,true);x.setRequestHeader('X-Requested-With','XMLHttpRequest');x.onload=function(){try{done(JSON.parse(x.responseText));}catch(e){alert('响应解析失败');}};x.send(fd);}
+    window.loadAgentConfig=function(){var x=new XMLHttpRequest();x.open('GET',base+'index',true);x.setRequestHeader('X-Requested-With','XMLHttpRequest');x.onload=function(){var r=JSON.parse(x.responseText),d=r.data||{},s=d.stats||{},c=d.config||{};statTotal.textContent=s.total_users||0;statToday.textContent=s.today_users||0;statAgents.textContent=s.agent_users||0;statInvited.textContent=s.invited_users||0;maxRate.value=(parseFloat(c.max_rebate_rate||0)*100).toFixed(2);minGap.value=(parseFloat(c.min_rate_gap||0)*100).toFixed(2);var h='';(d.top_agents||[]).forEach(function(a){h+='<tr><td>'+a.id+'</td><td>'+esc(a.nickname||a.username)+'</td><td>'+esc(a.mobile||'--')+'</td><td><b>'+(parseFloat(a.self_rebate_rate||0)*100).toFixed(2)+'%</b></td><td>'+(a.can_open_account==1?'允许':'禁止')+'</td><td>'+esc(a.status)+'</td><td>'+new Date(a.createtime*1000).toLocaleString()+'</td></tr>';});agentBody.innerHTML=h||'<tr><td colspan="7" class="text-center text-muted">暂无顶级代理</td></tr>';};x.send();};
+    window.saveConfig=function(){post('saveConfig',{max_rebate_rate:maxRate.value,min_rate_gap:minGap.value},function(r){alert(r.msg);if(r.code===1)loadAgentConfig();});};
+    window.createTopAgent=function(){if(!confirm('确认创建该顶级代理？'))return;post('createTopAgent',{username:agentUsername.value,mobile:agentMobile.value,password:agentPassword.value,rebate_rate:agentRate.value},function(r){alert(r.msg);if(r.code===1){agentUsername.value='';agentMobile.value='';agentPassword.value='';agentRate.value='';loadAgentConfig();}});};
+    loadAgentConfig();
 })();
 </script>

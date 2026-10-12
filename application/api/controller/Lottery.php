@@ -3,6 +3,7 @@
 namespace app\api\controller;
 
 use app\common\controller\Api;
+use app\common\service\AgentRebateService;
 use think\Db;
 
 /**
@@ -944,78 +945,8 @@ class Lottery extends Api
             // 扣减余额
             Db::name('user')->where('id', $userId)->setDec('money', $totalAmount);
 
-            // 奖励记录与投注共用当前事务，任一写入失败都整体回滚
-            $ximaConfig = Db::name('xima_config')
-                    ->where('status', 1)
-                    ->where(function($q) use ($lotteryType) {
-                        $q->where('lottery_type', 0)->whereOr('lottery_type', $lotteryType);
-                    })
-                    // 彩种专用配置优先于全部彩种配置
-                    ->order('lottery_type', 'desc')
-                    ->order('id', 'asc')
-                    ->find();
-
-            if ($ximaConfig && $totalAmount >= $ximaConfig['min_bet']) {
-                    // 会员单独设置了比例则优先用会员比例，未设置（0）则跟随洗码配置
-                    $userRow = Db::name('user')->where('id', $userId)
-                        ->field('pid,self_rebate_rate')
-                        ->find();
-                    $selfRate = floatval($userRow['self_rebate_rate']) > 0
-                        ? floatval($userRow['self_rebate_rate'])
-                        : floatval($ximaConfig['self_rate']);
-
-                    // 1. 自身洗码
-                    if ($selfRate > 0) {
-                        $selfAmount = round($totalAmount * $selfRate, 2);
-                        if ($selfAmount > 0) {
-                            $selfInserted = Db::name('xima_record')->insert([
-                                'user_id'        => $userId,
-                                'type'           => 'self',
-                                'source_user_id' => $userId,
-                                'bet_order_no'   => $orderNo,
-                                'bet_amount'     => $totalAmount,
-                                'xima_rate'      => $selfRate,
-                                'xima_amount'    => $selfAmount,
-                                'status'         => 0,
-                                'createtime'     => time(),
-                                'updatetime'     => time(),
-                            ]);
-                            if ($selfInserted !== 1) {
-                                throw new \RuntimeException('自身奖励记录生成失败');
-                            }
-                        }
-                    }
-
-                    // 2. 邀请人洗码（给上级）
-                    $pId = isset($userRow['pid']) ? intval($userRow['pid']) : 0;
-                    if ($pId > 0) {
-                        // 邀请奖励比例：邀请人单独设置了则用邀请人的比例，未设置（0）则跟随后台洗码配置
-                        $parentOverride = Db::name('user')->where('id', $pId)->value('invite_rebate_rate');
-                        $parentRate = floatval($parentOverride) > 0
-                            ? floatval($parentOverride)
-                            : floatval($ximaConfig['parent_rate']);
-                        if ($parentRate > 0) {
-                            $parentAmount = round($totalAmount * $parentRate, 2);
-                            if ($parentAmount > 0) {
-                                $parentInserted = Db::name('xima_record')->insert([
-                                    'user_id'        => $pId,
-                                    'type'           => 'parent',
-                                    'source_user_id' => $userId,
-                                    'bet_order_no'   => $orderNo,
-                                    'bet_amount'     => $totalAmount,
-                                    'xima_rate'      => $parentRate,
-                                    'xima_amount'    => $parentAmount,
-                                    'status'         => 0,
-                                    'createtime'     => time(),
-                                    'updatetime'     => time(),
-                                ]);
-                                if ($parentInserted !== 1) {
-                                    throw new \RuntimeException('邀请奖励记录生成失败');
-                                }
-                            }
-                        }
-                    }
-            }
+            // 每笔有效投注按投注时代理链比例快照生成自身返水与全部上级级差奖励。
+            AgentRebateService::createForBet($userId, $orderNo, $totalAmount, $lotteryType);
 
             $newBalance = Db::name('user')->where('id', $userId)->value('money');
             Db::commit();
@@ -1157,16 +1088,33 @@ class Lottery extends Api
             // 如有代理佣金记录，也需撤销（忽略表不存在）
             try { Db::name('lottery_commission')->where('bet_id', $betId)->delete(); } catch (\Exception $ce) {}
 
-            // 撤销关联洗码记录
+            // 撤销关联返水记录：未领取直接作废；已领取则冲正余额并保留审计记录。
             try {
                 $ximaRecords = Db::name('xima_record')->where('bet_order_no', $bet['order_no'])->select();
                 foreach ($ximaRecords as $xr) {
-                    // 已领取的扣回余额
                     if ($xr['status'] == 1 && $xr['xima_amount'] > 0) {
-                        Db::name('user')->where('id', $xr['user_id'])->setDec('money', $xr['xima_amount']);
+                        $beneficiary = Db::name('user')->where('id', $xr['user_id'])->lock(true)->field('id,money')->find();
+                        if ($beneficiary) {
+                            $before = floatval($beneficiary['money']);
+                            $after = round($before - floatval($xr['xima_amount']), 2);
+                            Db::name('user')->where('id', $xr['user_id'])->update(['money' => $after]);
+                            Db::name('money_log')->insert([
+                                'user_id' => $xr['user_id'],
+                                'money' => -floatval($xr['xima_amount']),
+                                'before' => $before,
+                                'after' => $after,
+                                'memo' => '投注撤单返水冲正：' . $bet['order_no'],
+                                'createtime' => time(),
+                            ]);
+                        }
                     }
                 }
-                Db::name('xima_record')->where('bet_order_no', $bet['order_no'])->delete();
+                Db::name('xima_record')->where('bet_order_no', $bet['order_no'])->update([
+                    'status' => 2,
+                    'cancel_time' => time(),
+                    'cancel_reason' => '投注订单撤销',
+                    'updatetime' => time(),
+                ]);
             } catch (\Exception $xe) {}
 
             Db::commit();

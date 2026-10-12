@@ -26,7 +26,7 @@ class Auth
     //默认配置
     protected $config = [];
     protected $options = [];
-    protected $allowFields = ['id', 'username', 'nickname', 'mobile', 'avatar', 'score', 'self_rebate_rate', 'invite_rebate_rate'];
+    protected $allowFields = ['id', 'username', 'nickname', 'mobile', 'avatar', 'score', 'self_rebate_rate', 'invite_rebate_rate', 'is_agent', 'can_open_account', 'agent_level'];
 
     public function __construct($options = [])
     {
