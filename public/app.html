@@ -826,8 +826,6 @@
         // 解析URL参数
         var urlParams = new URLSearchParams(window.location.search);
         var inviteCode = urlParams.get('invite') || '';
-        // 标记是否已注册完成（本次会话）
-        var registered = false;
 
         // ===== Toast =====
         function showToast(msg, type) {
@@ -869,15 +867,7 @@
                 document.getElementById('wxOverlay').classList.add('show');
             }
 
-            // 有邀请码 → 弹出注册弹窗
-            if (inviteCode) {
-                document.getElementById('regInviteCode').value = inviteCode;
-                document.getElementById('inviteTag').style.display = '';
-                // 延迟一点弹出，让用户先看到落地页
-                setTimeout(function() {
-                    document.getElementById('regOverlay').classList.add('show');
-                }, 800);
-            }
+            // 公开注册已关闭，邀请码仅保留为来源参数，不再弹出注册入口。
         }
 
         // ===== 下载 =====
@@ -885,13 +875,6 @@
             // 微信内拦截
             if (isWechat || isQQ || isAlipay) {
                 document.getElementById('wxOverlay').classList.add('show');
-                return;
-            }
-
-            // 有邀请码但还没注册 → 弹注册
-            if (inviteCode && !registered) {
-                document.getElementById('regOverlay').classList.add('show');
-                showToast('\u8BF7\u5148\u6CE8\u518C\u8D26\u53F7\uFF0C\u5373\u53EF\u4E0B\u8F7D', 'error');
                 return;
             }
 

@@ -156,7 +156,7 @@ class User extends Api
             //如果已经有账号则直接登录
             $ret = $this->auth->direct($user->id);
         } else {
-            $ret = $this->auth->register($mobile, Random::alnum(), '', $mobile, []);
+            $this->error('账号不存在，请联系代理开户');
         }
         if ($ret) {
             Sms::flush($mobile, 'mobilelogin');
@@ -180,6 +180,8 @@ class User extends Api
      */
     public function register()
     {
+        $this->error('系统已关闭公开注册，请联系代理开户');
+
         $username = $this->request->post('username');
         $password = $this->request->post('password');
         $email = $this->request->post('email');

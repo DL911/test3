@@ -112,7 +112,7 @@ class Lottery extends Frontend
      */
     public function register()
     {
-        return $this->view->fetch('lottery/register');
+        $this->error('系统已关闭公开注册，请联系代理开户', url('lottery/login'));
     }
 
     /**

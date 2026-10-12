@@ -65,6 +65,8 @@ class User extends Frontend
      */
     public function register()
     {
+        $this->error('系统已关闭公开注册，请联系代理开户');
+
         $url = $this->request->request('url', '', 'url_clean');
         if ($this->auth->id) {
             $this->success(__('You\'ve logged in, do not login again'), $url ? $url : url('user/index'));
