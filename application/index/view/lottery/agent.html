@@ -127,7 +127,8 @@
         <div style="font-size:13px;color:#666;margin-bottom:12px;">我的比例：<b id="myRateText">--</b>　可设置范围：0%～<b id="maxSubRate">--</b></div>
         <input id="oaUsername" placeholder="登录账号（4-20位字母、数字或下划线）" style="width:100%;box-sizing:border-box;padding:12px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;">
         <input id="oaMobile" placeholder="手机号（选填）" maxlength="11" style="width:100%;box-sizing:border-box;padding:12px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;">
-        <input id="oaPassword" type="password" placeholder="初始密码（6-30位）" style="width:100%;box-sizing:border-box;padding:12px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;">
+        <input id="oaPassword" type="text" value="88888888" maxlength="30" placeholder="初始密码（6-30位）" style="width:100%;box-sizing:border-box;padding:12px;margin-bottom:4px;border:1px solid #ddd;border-radius:8px;">
+        <div style="font-size:12px;color:#999;margin-bottom:10px;">默认密码为 8 个 8，开户前可直接修改</div>
         <select id="oaType" style="width:100%;padding:12px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;background:#fff;"><option value="user">普通用户</option><option value="agent">代理用户（允许继续开户）</option></select>
         <input id="oaRate" type="number" min="0" step="0.01" placeholder="下级返水比例（%）" style="width:100%;box-sizing:border-box;padding:12px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;">
         <div id="ratePreview" style="font-size:13px;color:#666;margin-bottom:12px;">输入比例后显示每投注100元的收益预览</div>
