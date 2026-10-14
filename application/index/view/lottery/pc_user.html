@@ -189,7 +189,7 @@
                 <a class="uc-nav-item" data-p="records" onclick="showPanel('records')">
                     <i class="fa-solid fa-receipt"></i> 投注记录 <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
-                <a class="uc-nav-item" href="/index.php/index/lottery/xima">
+                <a class="uc-nav-item new-agent-only" href="/index.php/index/lottery/xima" style="display:none;">
                     <i class="fa-solid fa-recycle" style="color:#43e97b;"></i> 返水中心 <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
 
@@ -197,7 +197,7 @@
                     <i class="fa-solid fa-list" style="color:#764ba2;"></i> 交易明细 <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
                 <div class="uc-nav-divider"></div>
-                <a class="uc-nav-item" href="/index.php/index/lottery/agent">
+                <a class="uc-nav-item new-agent-only" href="/index.php/index/lottery/agent" style="display:none;">
                     <i class="fa-solid fa-users"></i> 代理开户 <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
                 <a class="uc-nav-item" href="/index.php/index/lottery/kefu">
@@ -243,7 +243,7 @@
                                 <div class="uc-grid-icon" style="background:linear-gradient(135deg,#f472b6,#db2777);"><i class="fa-solid fa-chart-line"></i></div>
                                 <div class="uc-grid-label">走势分析</div><div class="uc-grid-desc">走势 · 路子 · 长龙</div>
                             </a>
-                            <a href="/index.php/index/lottery/agent" class="uc-grid-item">
+                            <a href="/index.php/index/lottery/agent" class="uc-grid-item new-agent-only" style="display:none;">
                                 <div class="uc-grid-icon" style="background:linear-gradient(135deg,#f87171,#dc2626);"><i class="fa-solid fa-users"></i></div>
                                 <div class="uc-grid-label">代理开户</div><div class="uc-grid-desc">直属账号与级差返水</div>
                             </a>
@@ -684,6 +684,7 @@
                     if(info.avatar) setAvatar(info.avatar);
                     refreshBalance();
                     window._verifyStatus = (info.verify_status !== undefined) ? info.verify_status : -1;
+                    document.querySelectorAll('.new-agent-only').forEach(function(el){ el.style.display = parseInt(info.agent_level || 0) > 0 ? '' : 'none'; });
                 }
             });
 

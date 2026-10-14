@@ -72,6 +72,7 @@ class Xima extends Backend
             ->alias('r')
             ->join('user u', 'u.id = r.user_id', 'LEFT')
             ->join('user su', 'su.id = r.source_user_id', 'LEFT')
+            ->where('u.agent_level', '>', 0)
             ->where($where)
             ->field('r.*, u.username, u.nickname, su.username as source_username, su.nickname as source_nickname')
             ->order('r.createtime', 'desc')
@@ -82,6 +83,7 @@ class Xima extends Backend
             ->alias('r')
             ->join('user u', 'u.id = r.user_id', 'LEFT')
             ->join('user su', 'su.id = r.source_user_id', 'LEFT')
+            ->where('u.agent_level', '>', 0)
             ->where($where)
             ->count();
 
@@ -90,6 +92,7 @@ class Xima extends Backend
             ->alias('r')
             ->join('user u', 'u.id = r.user_id', 'LEFT')
             ->join('user su', 'su.id = r.source_user_id', 'LEFT')
+            ->where('u.agent_level', '>', 0)
             ->where($where)
             ->sum('r.xima_amount');
 
@@ -97,6 +100,7 @@ class Xima extends Backend
             ->alias('r')
             ->join('user u', 'u.id = r.user_id', 'LEFT')
             ->join('user su', 'su.id = r.source_user_id', 'LEFT')
+            ->where('u.agent_level', '>', 0)
             ->where($where)
             ->where('r.status', 1)
             ->sum('r.xima_amount');

@@ -3,6 +3,7 @@
 namespace app\api\controller;
 
 use app\common\controller\Api;
+use app\common\library\Token;
 use app\common\model\User as UserModel;
 use fast\Random;
 use think\Db;
@@ -151,12 +152,21 @@ class Agent extends Api
         $sub = Db::name('user')->where('id', $subId)->where('pid', $agent['id'])->find();
         if (!$sub) $this->error('直属用户不存在');
         $salt = Random::alnum();
-        Db::name('user')->where('id', $subId)->update([
-            'salt' => $salt,
-            'password' => $this->auth->getEncryptPassword($password, $salt),
-            'updatetime' => time(),
-        ]);
-        Db::name('token')->where('user_id', $subId)->delete();
+        Db::startTrans();
+        try {
+            $updated = Db::name('user')->where('id', $subId)->update([
+                'salt' => $salt,
+                'password' => $this->auth->getEncryptPassword($password, $salt),
+                'updatetime' => time(),
+            ]);
+            if ($updated !== 1) throw new \RuntimeException('密码更新失败');
+            // 通过框架 Token 驱动清理，兼容 MySQL、Redis 等配置。
+            Token::clear($subId);
+            Db::commit();
+        } catch (\Exception $e) {
+            Db::rollback();
+            $this->error('密码重置失败：' . $e->getMessage());
+        }
         $this->success('密码已重置，该用户需要重新登录');
     }
 
@@ -168,7 +178,7 @@ class Agent extends Api
         if (!$sub) $this->error('直属用户不存在');
         $status = $sub['status'] === 'normal' ? 'hidden' : 'normal';
         Db::name('user')->where('id', $subId)->update(['status' => $status, 'updatetime' => time()]);
-        if ($status !== 'normal') Db::name('token')->where('user_id', $subId)->delete();
+        if ($status !== 'normal') Token::clear($subId);
         $this->success($status === 'normal' ? '账号已启用' : '账号已禁用');
     }
 
@@ -192,6 +202,7 @@ class Agent extends Api
     {
         $user = Db::name('user')->where('id', $this->auth->id)->field('id,pid,is_agent,can_open_account,agent_level,self_rebate_rate,status')->find();
         if (!$user || $user['status'] !== 'normal') $this->error('账号不可用');
+        if (intval($user['agent_level']) <= 0) $this->error('历史账号不属于新代理体系');
         if ($requireAgent && (intval($user['is_agent']) !== 1 || intval($user['can_open_account']) !== 1)) $this->error('当前账号没有代理开户权限');
         return $user;
     }

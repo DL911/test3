@@ -4,6 +4,7 @@ namespace app\admin\controller\lottery;
 
 use app\common\controller\Backend;
 use app\common\library\Auth as UserAuth;
+use app\common\library\Token;
 use app\common\model\User as UserModel;
 use fast\Random;
 use think\Db;
@@ -21,12 +22,12 @@ class RegisterConfig extends Backend
             return json(['code' => 1, 'msg' => 'ok', 'data' => [
                 'config' => $config,
                 'stats' => [
-                    'total_users' => Db::name('user')->count(),
-                    'today_users' => Db::name('user')->where('createtime', '>=', $todayStart)->count(),
-                    'agent_users' => Db::name('user')->where('is_agent', 1)->count(),
-                    'invited_users' => Db::name('user')->where('pid', '>', 0)->count(),
+                    'total_users' => Db::name('user')->where('agent_level', '>', 0)->count(),
+                    'today_users' => Db::name('user')->where('agent_level', '>', 0)->where('createtime', '>=', $todayStart)->count(),
+                    'agent_users' => Db::name('user')->where('agent_level', '>', 0)->where('is_agent', 1)->count(),
+                    'invited_users' => Db::name('user')->where('agent_level', '>', 1)->count(),
                 ],
-                'top_agents' => Db::name('user')->where('pid', 0)->where('is_agent', 1)
+                'top_agents' => Db::name('user')->where('agent_level', 1)->where('pid', 0)->where('is_agent', 1)
                     ->field('id,username,nickname,mobile,self_rebate_rate,can_open_account,status,createtime')
                     ->order('id', 'desc')->limit(100)->select(),
             ]]);
@@ -88,6 +89,73 @@ class RegisterConfig extends Backend
             return json(['code' => 1, 'msg' => '顶级代理创建成功', 'data' => ['id' => $user->id]]);
         } catch (\Exception $e) {
             return json(['code' => 0, 'msg' => '创建失败：' . $e->getMessage()]);
+        }
+    }
+
+    /** 后台重置新模式顶级代理密码。 */
+    public function resetTopAgentPassword()
+    {
+        if (!$this->request->isPost()) {
+            return json(['code' => 0, 'msg' => '请求方式不正确']);
+        }
+        $agentId = $this->request->post('agent_id/d', 0);
+        $password = (string)$this->request->post('password', '');
+        if ($agentId <= 0) return json(['code' => 0, 'msg' => '顶级代理参数不正确']);
+        if (strlen($password) < 6 || strlen($password) > 30) {
+            return json(['code' => 0, 'msg' => '密码长度需为6-30位']);
+        }
+
+        $agent = Db::name('user')->where('id', $agentId)
+            ->where('pid', 0)->where('agent_level', 1)->where('is_agent', 1)->find();
+        if (!$agent) return json(['code' => 0, 'msg' => '新模式顶级代理不存在']);
+
+        $salt = Random::alnum();
+        Db::startTrans();
+        try {
+            $updated = Db::name('user')->where('id', $agentId)->update([
+                'salt' => $salt,
+                'password' => (new UserAuth())->getEncryptPassword($password, $salt),
+                'updatetime' => time(),
+            ]);
+            if ($updated !== 1) throw new \RuntimeException('密码更新失败');
+            Token::clear($agentId);
+            Db::commit();
+            return json(['code' => 1, 'msg' => '顶级代理密码已重置，原登录状态已失效']);
+        } catch (\Exception $e) {
+            Db::rollback();
+            return json(['code' => 0, 'msg' => '密码重置失败：' . $e->getMessage()]);
+        }
+    }
+
+    /** 启用或禁用新模式顶级代理。 */
+    public function toggleTopAgentStatus()
+    {
+        if (!$this->request->isPost()) {
+            return json(['code' => 0, 'msg' => '请求方式不正确']);
+        }
+        $agentId = $this->request->post('agent_id/d', 0);
+        $agent = Db::name('user')->where('id', $agentId)
+            ->where('pid', 0)->where('agent_level', 1)->where('is_agent', 1)->find();
+        if (!$agent) return json(['code' => 0, 'msg' => '新模式顶级代理不存在']);
+
+        $newStatus = $agent['status'] === 'normal' ? 'hidden' : 'normal';
+        Db::startTrans();
+        try {
+            $updated = Db::name('user')->where('id', $agentId)->update([
+                'status' => $newStatus,
+                'updatetime' => time(),
+            ]);
+            if ($updated !== 1) throw new \RuntimeException('账号状态更新失败');
+            if ($newStatus !== 'normal') Token::clear($agentId);
+            Db::commit();
+            return json([
+                'code' => 1,
+                'msg' => $newStatus === 'normal' ? '顶级代理已启用' : '顶级代理已禁用，原登录状态已失效',
+                'data' => ['status' => $newStatus],
+            ]);
+        } catch (\Exception $e) {
+            Db::rollback();
+            return json(['code' => 0, 'msg' => '状态切换失败：' . $e->getMessage()]);
         }
     }
 }

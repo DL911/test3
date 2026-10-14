@@ -343,9 +343,9 @@
             var badge = document.getElementById('avatarBadge');
             if (badge) badge.style.display = 'flex';
 
-            // 显示新的逐笔返水入口
+            // 历史用户与新代理体系隔离，仅新开户链账号显示相关入口。
             var rg = document.getElementById('rebateGroup');
-            if (rg) rg.style.display = '';
+            if (rg) rg.style.display = parseInt(u.agent_level || 0) > 0 ? '' : 'none';
 
             // 显示实名认证状态
             var vs = (u.verify_status !== undefined) ? u.verify_status : -1;

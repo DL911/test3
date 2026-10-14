@@ -5,6 +5,7 @@ namespace app\api\controller;
 use app\common\controller\Api;
 use app\common\library\Ems;
 use app\common\library\Sms;
+use app\common\library\Token;
 use fast\Random;
 use think\Config;
 use think\Db;
@@ -48,6 +49,7 @@ class User extends Api
             'invite_rebate_rate' => $user->invite_rebate_rate,
             'is_agent' => isset($user->is_agent) ? intval($user->is_agent) : 0,
             'can_open_account' => isset($user->can_open_account) ? intval($user->can_open_account) : 0,
+            'agent_level' => isset($user->agent_level) ? intval($user->agent_level) : 0,
             // 会员单独设置了比例则展示会员比例，未设置则展示后台洗码配置
             'xima_rates' => $this->getXimaDisplayRates($user),
             'verify_status' => $this->getUserVerifyStatus($user->id),
@@ -473,7 +475,7 @@ class User extends Api
         if (!$this->auth->changepwd($newPassword, $oldPassword)) {
             $this->error($this->auth->getError() ?: '原密码不正确');
         }
-        Db::name('token')->where('user_id', $this->auth->id)->delete();
+        Token::clear($this->auth->id);
         $this->success('密码修改成功，请重新登录');
     }
 

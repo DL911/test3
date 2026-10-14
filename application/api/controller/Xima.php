@@ -19,6 +19,7 @@ class Xima extends Api
     public function summary()
     {
         $userId = $this->auth->id;
+        $this->ensureNewAgentMember($userId);
         $today = date('Y-m-d');
 
         // 可领取返水（每笔投注次日解锁）
@@ -83,6 +84,7 @@ class Xima extends Api
     public function claim()
     {
         $userId = $this->auth->id;
+        $this->ensureNewAgentMember($userId);
         $today = date('Y-m-d');
 
         Db::startTrans();
@@ -174,6 +176,7 @@ class Xima extends Api
     public function history()
     {
         $userId = $this->auth->id;
+        $this->ensureNewAgentMember($userId);
         $page   = $this->request->param('page/d', 1);
         $limit  = $this->request->param('limit/d', 20);
         $type   = $this->request->param('type', '');
@@ -203,5 +206,11 @@ class Xima extends Api
 
         $total = Db::name('xima_record')->where($where)->count();
         $this->success('OK', ['list' => $list, 'total' => $total]);
+    }
+
+    private function ensureNewAgentMember($userId)
+    {
+        $level = intval(Db::name('user')->where('id', $userId)->value('agent_level'));
+        if ($level <= 0) $this->error('当前账号不属于新代理返水体系');
     }
 }
