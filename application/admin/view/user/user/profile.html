@@ -67,15 +67,11 @@
             </div>
             <div class="stat-item">
                 <div class="val" style="color:#43e97b;">¥{$stats.xima_total|number_format=2}</div>
-                <div class="lbl">洗码总额</div>
+                <div class="lbl">返水总额</div>
             </div>
             <div class="stat-item">
                 <div class="val" style="color:#fa709a;">¥{$stats.commission_total|number_format=2}</div>
-                <div class="lbl">推荐反佣</div>
-            </div>
-            <div class="stat-item">
-                <div class="val" style="color:#e67e22;">¥{$stats.rebate_total|number_format=2}</div>
-                <div class="lbl">流水返利</div>
+                <div class="lbl">团队级差返水</div>
             </div>
             <div class="stat-item">
                 <div class="val" style="color:#a18cd1;">¥{$stats.withdraw_total|number_format=2}</div>
@@ -92,12 +88,12 @@
             style="background:#fff;border-radius:12px;padding:20px 24px;margin-bottom:20px;box-shadow:0 1px 6px rgba(0,0,0,0.06);">
             <div
                 style="font-size:15px;font-weight:700;color:#333;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
-                <i class="fa fa-percent" style="color:#fa709a;"></i> 返佣参数设置
+                <i class="fa fa-percent" style="color:#fa709a;"></i> 层级返水比例
             </div>
             <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-end;">
                 <div style="flex:1;min-width:200px;">
                     <label
-                        style="font-size:13px;color:#666;font-weight:600;display:block;margin-bottom:6px;">自身返佣比例</label>
+                        style="font-size:13px;color:#666;font-weight:600;display:block;margin-bottom:6px;">用户层级比例</label>
                     <div style="display:flex;align-items:center;gap:8px;">
                         <input type="number" id="selfRebateRate" value="{$user.self_rebate_rate_show}"
                             step="0.0001" min="0" max="1"
@@ -105,21 +101,7 @@
                         <span style="font-size:13px;color:#999;">= <b
                                 id="selfPct">{:round($user['self_rebate_rate_show']*100,2)}%</b></span>
                     </div>
-                    <div style="font-size:11px;color:#aaa;margin-top:4px;">用户自身每次投注 × 该比例 = 自身返佣，填 0
-                        时跟随洗码管理配置（{$defaultRates.self_rate}）</div>
-                </div>
-                <div style="flex:1;min-width:200px;">
-                    <label
-                        style="font-size:13px;color:#666;font-weight:600;display:block;margin-bottom:6px;">邀请返佣比例</label>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <input type="number" id="inviteRebateRate" value="{$user.invite_rebate_rate_show}"
-                            step="0.0001" min="0" max="1"
-                            style="flex:1;padding:8px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;">
-                        <span style="font-size:13px;color:#999;">= <b
-                                id="invitePct">{:round($user['invite_rebate_rate_show']*100,2)}%</b></span>
-                    </div>
-                    <div style="font-size:11px;color:#aaa;margin-top:4px;">下级每次投注 × 该比例 = 邀请人获得佣金，填 0
-                        时跟随洗码管理配置（{$defaultRates.parent_rate}）</div>
+                    <div style="font-size:11px;color:#aaa;margin-top:4px;">每笔投注按该比例生成用户自身返水；上级获得相邻层级比例差。修改仅影响后续新投注。</div>
                 </div>
                 <div>
                     <button class="btn btn-sm btn-success" onclick="saveRebateRates()" id="saveRateBtn"
@@ -143,7 +125,7 @@
             <button class="btn btn-sm btn-default" onclick="loadRecords('commission',this)"><i
                     class="fa fa-share-alt"></i> 反佣记录</button>
             <button class="btn btn-sm btn-default" onclick="loadRecords('xima',this)"><i class="fa fa-recycle"></i>
-                洗码记录</button>
+                返水记录</button>
             <button class="btn btn-sm btn-default" onclick="loadRecords('rebate',this)"><i class="fa fa-gift"></i>
                 返利记录</button>
         </div>
@@ -224,7 +206,7 @@
             'withdraw': ['ID', '订单号', '金额', '方式', '状态', '时间'],
             'transfer': ['ID', '订单号', '方向', '对方', '金额', '时间'],
             'commission': ['ID', '来源用户', '金额', '备注', '时间'],
-            'xima': ['ID', '类型', '投注额', '洗码率', '洗码额', '状态', '时间'],
+            'xima': ['ID', '类型', '投注额', '返水率', '返水额', '状态', '时间'],
             'rebate': ['ID', '日期', '投注额', '返利率', '返利额', '状态', '时间']
         };
         (headers[type] || []).forEach(function (h) { html += '<th>' + h + '</th>'; });
@@ -309,8 +291,7 @@
     var saveRateUrl = adminEntry + '/user/user/saveRebateRates';
     function saveRebateRates() {
         var selfRate = parseFloat(document.getElementById('selfRebateRate').value) || 0;
-        var inviteRate = parseFloat(document.getElementById('inviteRebateRate').value) || 0;
-        if (selfRate < 0 || selfRate > 1 || inviteRate < 0 || inviteRate > 1) {
+        if (selfRate < 0 || selfRate > 1) {
             alert('比例范围须在 0 ~ 1 之间（如 0.02 = 2%）'); return;
         }
         var btn = document.getElementById('saveRateBtn');
@@ -320,7 +301,7 @@
         $.ajax({
             url: saveRateUrl,
             type: 'POST',
-            data: {id: userId, self_rebate_rate: selfRate, invite_rebate_rate: inviteRate},
+            data: {id: userId, self_rebate_rate: selfRate},
             dataType: 'json',
             timeout: 15000,
             success: function(res) {
@@ -342,7 +323,6 @@
 
     // 输入框联动百分比显示
     document.getElementById('selfRebateRate').addEventListener('input', function () { document.getElementById('selfPct').textContent = (parseFloat(this.value || 0) * 100).toFixed(2) + '%'; });
-    document.getElementById('inviteRebateRate').addEventListener('input', function () { document.getElementById('invitePct').textContent = (parseFloat(this.value || 0) * 100).toFixed(2) + '%'; });
 
     // 全局暴露
     window.loadRecords = loadRecords;

@@ -36,8 +36,6 @@ class Agent extends Api
             'claimable' => number_format($claimable, 2, '.', ''),
             'commission_rate' => $this->rateText($rate),
             'commission_rate_raw' => $rate,
-            'invite_code' => $userId,
-            'invite_url' => '',
         ]);
     }
 

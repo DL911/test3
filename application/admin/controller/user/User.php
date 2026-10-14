@@ -169,12 +169,9 @@ class User extends Backend
         $user['jointime_fmt'] = $user['jointime'] ? date('Y-m-d H:i:s', $user['jointime']) : '--';
         $user['logintime_fmt'] = $user['logintime'] ? date('Y-m-d H:i:s', $user['logintime']) : '--';
 
-        // 返佣比例：会员已单独设置（大于 0）则用会员值，否则跟随洗码管理配置（第一条启用的配置）
-        $defaultRates = $this->getDefaultXimaRates();
+        // v2 仅使用一个层级返水比例；0 也是合法配置，不再回退旧洗码配置。
         $selfRate   = isset($user['self_rebate_rate']) ? floatval($user['self_rebate_rate']) : 0;
-        $inviteRate = isset($user['invite_rebate_rate']) ? floatval($user['invite_rebate_rate']) : 0;
-        $user['self_rebate_rate_show']   = $selfRate > 0 ? $selfRate : $defaultRates['self_rate'];
-        $user['invite_rebate_rate_show'] = $inviteRate > 0 ? $inviteRate : $defaultRates['parent_rate'];
+        $user['self_rebate_rate_show'] = $selfRate;
 
         // 统计汇总
         $stats = [];
@@ -185,8 +182,8 @@ class User extends Backend
         try { $stats['win_total'] = \think\Db::name('lottery_bet')->where('user_id', $id)->where('status', 1)->sum('win_amount'); } catch (\Exception $e) { $stats['win_total'] = 0; }
         try { $stats['withdraw_total'] = \think\Db::name('withdraw_order')->where('user_id', $id)->where('status', 1)->sum('amount'); } catch (\Exception $e) { $stats['withdraw_total'] = 0; }
         try { $stats['xima_total'] = \think\Db::name('xima_record')->where('user_id', $id)->sum('xima_amount'); } catch (\Exception $e) { $stats['xima_total'] = 0; }
-        try { $stats['commission_total'] = \think\Db::name('lottery_commission')->where('user_id', $id)->sum('amount'); } catch (\Exception $e) { $stats['commission_total'] = 0; }
-        try { $stats['rebate_total'] = \think\Db::name('rebate_record')->where('user_id', $id)->where('status', 1)->sum('rebate_amount'); } catch (\Exception $e) { $stats['rebate_total'] = 0; }
+        try { $stats['commission_total'] = \think\Db::name('xima_record')->where('user_id', $id)->where('type', 'parent')->sum('xima_amount'); } catch (\Exception $e) { $stats['commission_total'] = 0; }
+        $stats['rebate_total'] = 0; // 旧流水返利已停用
         try { $stats['transfer_out'] = \think\Db::name('transfer_order')->where('from_user_id', $id)->sum('amount'); } catch (\Exception $e) { $stats['transfer_out'] = 0; }
         try { $stats['transfer_in'] = \think\Db::name('transfer_order')->where('to_user_id', $id)->sum('amount'); } catch (\Exception $e) { $stats['transfer_in'] = 0; }
 
@@ -202,7 +199,6 @@ class User extends Backend
         $this->view->assign('user', $user);
         $this->view->assign('stats', $stats);
         $this->view->assign('parent', $parent);
-        $this->view->assign('defaultRates', $defaultRates);
         return $this->view->fetch();
     }
 
@@ -230,23 +226,37 @@ class User extends Backend
         $id = $this->request->param('id/d', 0);
         if (!$id) return json(['code' => 0, 'msg' => '缺少参数']);
 
-        $selfRate   = $this->request->param('self_rebate_rate/f', 0);
-        $inviteRate = $this->request->param('invite_rebate_rate/f', 0);
-
-        if ($selfRate < 0 || $selfRate > 1 || $inviteRate < 0 || $inviteRate > 1) {
-            return json(['code' => 0, 'msg' => '比例必须在 0~1 之间']);
-        }
+        $selfRate = round($this->request->param('self_rebate_rate/f', -1), 6);
 
         try {
             $user = \think\Db::name('user')->where('id', $id)->find();
             if (!$user) return json(['code' => 0, 'msg' => '用户不存在']);
 
+            $config = \think\Db::name('agent_config')->where('id', 1)->find();
+            $maxRate = $config ? floatval($config['max_rebate_rate']) : 0.09;
+            $minGap = $config ? floatval($config['min_rate_gap']) : 0;
+            $upperRate = $maxRate;
+            if (intval($user['pid']) > 0) {
+                $upperRate = floatval(\think\Db::name('user')->where('id', $user['pid'])->value('self_rebate_rate'));
+            }
+            $maxChildRate = floatval(\think\Db::name('user')->where('pid', $id)->max('self_rebate_rate'));
+            if ($selfRate < 0 || $selfRate > $upperRate + 0.0000001 || $selfRate < $maxChildRate - 0.0000001) {
+                return json(['code' => 0, 'msg' => '合法比例范围为 ' . round($maxChildRate * 100, 4) . '%～' . round($upperRate * 100, 4) . '%']);
+            }
+            if ($minGap > 0 && $selfRate > 0 && $upperRate - $selfRate > 0.0000001 && $upperRate - $selfRate + 0.0000001 < $minGap) {
+                return json(['code' => 0, 'msg' => '与上级的比例差不能低于 ' . round($minGap * 100, 4) . '%']);
+            }
+            if ($minGap > 0 && $maxChildRate > 0 && $selfRate - $maxChildRate > 0.0000001 && $selfRate - $maxChildRate + 0.0000001 < $minGap) {
+                return json(['code' => 0, 'msg' => '与下级的比例差不能低于 ' . round($minGap * 100, 4) . '%']);
+            }
+
             \think\Db::name('user')->where('id', $id)->update([
-                'self_rebate_rate'   => round($selfRate, 4),
-                'invite_rebate_rate' => round($inviteRate, 4),
+                'self_rebate_rate' => $selfRate,
+                'invite_rebate_rate' => 0,
+                'updatetime' => time(),
             ]);
 
-            return json(['code' => 1, 'msg' => '保存成功! 自身返佣 ' . round($selfRate * 100, 2) . '%, 邀请返佣 ' . round($inviteRate * 100, 2) . '%']);
+            return json(['code' => 1, 'msg' => '层级返水比例已更新为 ' . round($selfRate * 100, 4) . '%，仅影响后续新投注']);
         } catch (\Exception $e) {
             return json(['code' => 0, 'msg' => '保存失败: ' . $e->getMessage()]);
         }
@@ -324,11 +334,10 @@ class User extends Backend
                         'win_count'     => \think\Db::name('lottery_bet')->where('user_id', $userId)->where('status', 1)->count(),
                         'pending_count' => \think\Db::name('lottery_bet')->where('user_id', $userId)->where('status', 0)->count(),
                     ];
-                    // 该用户的反佣、返利、自身洗码
-                    $userCommission = \think\Db::name('lottery_commission')->where('user_id', $userId)->sum('amount') ?: 0;
-                    $userRebate = \think\Db::name('rebate_record')->where('user_id', $userId)->where('status', 1)->sum('rebate_amount') ?: 0;
+                    // 新业务只统计逐笔返水：团队级差 + 自身返水。
+                    $userCommission = \think\Db::name('xima_record')->where('user_id', $userId)->where('type', 'parent')->sum('xima_amount') ?: 0;
                     $userXimaSelf = \think\Db::name('xima_record')->where('user_id', $userId)->where('type', 'self')->sum('xima_amount') ?: 0;
-                    $summary['profit'] = round($summary['total_bet'] - $summary['total_win'] - $userCommission - $userRebate - $userXimaSelf, 2);
+                    $summary['profit'] = round($summary['total_bet'] - $summary['total_win'] - $userCommission - $userXimaSelf, 2);
                     break;
 
                 case 'withdraw':
@@ -367,18 +376,15 @@ class User extends Backend
                     $total = \think\Db::name('xima_record')->where('user_id', $userId)->count();
                     foreach ($list as &$item) {
                         $item['create_date'] = date('Y-m-d H:i:s', $item['createtime']);
-                        $item['type_text'] = $item['type'] === 'self' ? '自身洗码' : '邀请人洗码';
-                        $item['status_text'] = ['待领取', '已领取', '已过期'][$item['status']] ?? '未知';
+                        $item['type_text'] = $item['type'] === 'self' ? '自身返水' : '团队级差返水';
+                        $item['status_text'] = ['待领取', '已领取', '已作废'][$item['status']] ?? '未知';
                     }
                     break;
 
                 case 'rebate':
-                    $list = \think\Db::name('rebate_record')->where('user_id', $userId)->order('createtime', 'desc')->page($page, $limit)->select();
-                    $total = \think\Db::name('rebate_record')->where('user_id', $userId)->count();
-                    foreach ($list as &$item) {
-                        $item['create_date'] = date('Y-m-d H:i:s', $item['createtime']);
-                        $item['status_text'] = $item['status'] == 1 ? '已领取' : '待领取';
-                    }
+                    // 兼容旧后台标签，数据统一返回新的逐笔返水记录。
+                    $list = \think\Db::name('xima_record')->where('user_id', $userId)->order('createtime', 'desc')->page($page, $limit)->select();
+                    $total = \think\Db::name('xima_record')->where('user_id', $userId)->count();
                     break;
             }
         } catch (\Exception $e) {

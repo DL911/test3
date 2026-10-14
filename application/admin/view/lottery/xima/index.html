@@ -1,9 +1,9 @@
 <div class="panel panel-default panel-intro">
-    <div class="panel-heading"><h3 class="panel-title">洗码管理</h3></div>
+    <div class="panel-heading"><h3 class="panel-title">逐笔返水管理</h3></div>
     <div class="panel-body">
         <!-- Tab 切换 -->
         <ul class="nav nav-tabs" style="margin-bottom:15px;">
-            <li class="active"><a href="javascript:;" onclick="switchTab('config')">洗码配置</a></li>
+            <li class="active"><a href="javascript:;" onclick="switchTab('config')">返水条件配置</a></li>
             <li><a href="javascript:;" onclick="switchTab('record')">返水记录</a></li>
         </ul>
 
@@ -14,27 +14,19 @@
             </div>
             <table class="table table-bordered table-hover" style="font-size:13px;">
                 <thead><tr style="background:#f5f5f5;">
-                    <th width="40">ID</th><th>名称</th><th>彩种</th><th>旧自身比例</th><th>旧邀请比例</th><th>单笔最低投注</th><th>状态</th><th width="120">操作</th>
+                    <th width="40">ID</th><th>名称</th><th>彩种</th><th>单笔最低有效投注</th><th>状态</th><th width="120">操作</th>
                 </tr></thead>
-                <tbody id="configBody"><tr><td colspan="8" style="text-align:center;color:#999;">加载中...</td></tr></tbody>
+                <tbody id="configBody"><tr><td colspan="6" style="text-align:center;color:#999;">加载中...</td></tr></tbody>
             </table>
 
             <!-- 配置表单 -->
             <div id="configForm" style="display:none;background:#f9f9f9;border:1px solid #ddd;border-radius:8px;padding:20px;margin-top:10px;">
-                <h5 id="configFormTitle" style="margin-top:0;"><i class="fa fa-cog"></i> 添加洗码配置</h5>
+                <h5 id="configFormTitle" style="margin-top:0;"><i class="fa fa-cog"></i> 添加返水条件配置</h5>
                 <input type="hidden" id="cfgId" value="0">
                 <div class="row">
                     <div class="col-sm-4 form-group">
                         <label>配置名称</label>
-                        <input type="text" class="form-control" id="cfgName" placeholder="如：默认洗码">
-                    </div>
-                    <div class="col-sm-4 form-group">
-                        <label>旧自身比例（仅兼容历史数据）</label>
-                        <input type="number" class="form-control" id="cfgSelfRate" step="0.01" placeholder="0.80 表示 0.8%">
-                    </div>
-                    <div class="col-sm-4 form-group">
-                        <label>旧邀请比例（新级差模式不使用）</label>
-                        <input type="number" class="form-control" id="cfgParentRate" step="0.01" placeholder="0.30 表示 0.3%">
+                        <input type="text" class="form-control" id="cfgName" placeholder="如：默认返水条件">
                     </div>
                 </div>
                 <div class="row">
@@ -68,7 +60,7 @@
             <!-- 统计 -->
             <div style="display:flex;gap:15px;margin-bottom:15px;">
                 <div style="flex:1;background:#e8f5e9;border-radius:8px;padding:12px 16px;">
-                    <div style="font-size:12px;color:#666;">总洗码金额</div>
+                    <div style="font-size:12px;color:#666;">总返水金额</div>
                     <div style="font-size:18px;font-weight:700;color:#2e7d32;" id="statTotalXima">¥0.00</div>
                 </div>
                 <div style="flex:1;background:#fff3e0;border-radius:8px;padding:12px 16px;">
@@ -99,7 +91,7 @@
             <!-- 表格 -->
             <table class="table table-bordered table-hover table-striped" style="font-size:13px;">
                 <thead><tr style="background:#f5f5f5;">
-                    <th width="40">ID</th><th>获得用户</th><th>类型</th><th>来源用户</th><th>投注订单</th><th>投注金额</th><th>洗码比例</th><th>洗码金额</th><th>状态</th><th>时间</th>
+                    <th width="40">ID</th><th>获得用户</th><th>类型</th><th>来源用户</th><th>投注订单</th><th>投注金额</th><th>返水比例</th><th>返水金额</th><th>状态</th><th>时间</th>
                 </tr></thead>
                 <tbody id="recordBody"><tr><td colspan="10" style="text-align:center;color:#999;">请点击搜索</td></tr></tbody>
             </table>
@@ -136,7 +128,7 @@ function loadConfigs() {
             var res = JSON.parse(xhr.responseText);
             if(res.code !== 1) return;
             var list = res.data.list || [], html = '';
-            if(!list.length){ html = '<tr><td colspan="8" style="text-align:center;color:#999;">暂无配置</td></tr>'; }
+            if(!list.length){ html = '<tr><td colspan="6" style="text-align:center;color:#999;">暂无配置</td></tr>'; }
             else {
                 for(var i=0;i<list.length;i++){
                     var c = list[i];
@@ -144,45 +136,37 @@ function loadConfigs() {
                         '<td>'+c.id+'</td>'+
                         '<td>'+c.name+'</td>'+
                         '<td><span class="label label-info">'+(c.lottery_name||'')+'</span></td>'+
-                        '<td><strong style="color:#2e7d32;">'+c.self_rate_pct+'</strong></td>'+
-                        '<td><strong style="color:#1565c0;">'+c.parent_rate_pct+'</strong></td>'+
                         '<td>¥'+parseFloat(c.min_bet).toFixed(2)+'</td>'+
                         '<td><span class="label '+(c.status==1?'label-success':'label-default')+'">'+(c.status==1?'启用':'禁用')+'</span></td>'+
                         '<td>'+
-                            '<button class="btn btn-xs btn-primary" onclick="editConfig('+c.id+',\''+c.name+'\','+ratePct(c.self_rate)+','+ratePct(c.parent_rate)+','+c.min_bet+','+c.lottery_type+','+c.status+')"><i class="fa fa-edit"></i></button> '+
+                            '<button class="btn btn-xs btn-primary" onclick="editConfig('+c.id+',\''+c.name+'\','+c.min_bet+','+c.lottery_type+','+c.status+')"><i class="fa fa-edit"></i></button> '+
                             '<button class="btn btn-xs btn-danger" onclick="delConfig('+c.id+')"><i class="fa fa-trash"></i></button>'+
                         '</td></tr>';
                 }
             }
             document.getElementById('configBody').innerHTML = html;
-        } catch(e){ document.getElementById('configBody').innerHTML='<tr><td colspan="8" style="color:red;">'+e.message+'</td></tr>'; }
+        } catch(e){ document.getElementById('configBody').innerHTML='<tr><td colspan="6" style="color:red;">'+e.message+'</td></tr>'; }
     };
     xhr.send();
 }
 
-function ratePct(v){ return Math.round(parseFloat(v || 0) * 1000000) / 10000; }
-
 function openConfigForm() {
     document.getElementById('cfgId').value = 0;
     document.getElementById('cfgName').value = '';
-    document.getElementById('cfgSelfRate').value = '';
-    document.getElementById('cfgParentRate').value = '';
     document.getElementById('cfgMinBet').value = 0;
     document.getElementById('cfgLotteryType').value = 0;
     document.getElementById('cfgStatus').value = 1;
-    document.getElementById('configFormTitle').textContent = '添加洗码配置';
+    document.getElementById('configFormTitle').textContent = '添加返水条件配置';
     document.getElementById('configForm').style.display = '';
 }
 
-function editConfig(id, name, selfRate, parentRate, minBet, lotteryType, status) {
+function editConfig(id, name, minBet, lotteryType, status) {
     document.getElementById('cfgId').value = id;
     document.getElementById('cfgName').value = name;
-    document.getElementById('cfgSelfRate').value = selfRate;
-    document.getElementById('cfgParentRate').value = parentRate;
     document.getElementById('cfgMinBet').value = minBet;
     document.getElementById('cfgLotteryType').value = lotteryType;
     document.getElementById('cfgStatus').value = status;
-    document.getElementById('configFormTitle').textContent = '编辑洗码配置 #'+id;
+    document.getElementById('configFormTitle').textContent = '编辑返水条件配置 #'+id;
     document.getElementById('configForm').style.display = '';
 }
 
@@ -190,8 +174,6 @@ function saveConfig() {
     var fd = new FormData();
     fd.append('id', document.getElementById('cfgId').value);
     fd.append('name', document.getElementById('cfgName').value);
-    fd.append('self_rate', document.getElementById('cfgSelfRate').value);
-    fd.append('parent_rate', document.getElementById('cfgParentRate').value);
     fd.append('min_bet', document.getElementById('cfgMinBet').value);
     fd.append('lottery_type', document.getElementById('cfgLotteryType').value);
     fd.append('status', document.getElementById('cfgStatus').value);

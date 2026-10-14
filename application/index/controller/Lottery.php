@@ -171,7 +171,7 @@ class Lottery extends Frontend
     }
 
     /**
-     * 全民代理系统
+     * 代理开户与团队返水管理
      */
     public function agent()
     {
@@ -229,7 +229,7 @@ class Lottery extends Frontend
     }
 
     /**
-     * 洗码中心页面
+     * 逐笔返水中心页面
      */
     public function xima()
     {
@@ -241,7 +241,7 @@ class Lottery extends Frontend
      */
     public function rebate()
     {
-        return $this->view->fetch('lottery/rebate');
+        return $this->redirect('index/lottery/xima');
     }
 
     /**

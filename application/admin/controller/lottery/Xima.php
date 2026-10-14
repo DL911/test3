@@ -6,7 +6,7 @@ use app\common\controller\Backend;
 use think\Db;
 
 /**
- * 洗码管理
+ * 逐笔返水管理
  */
 class Xima extends Backend
 {
@@ -18,7 +18,7 @@ class Xima extends Backend
     }
 
     /**
-     * 洗码管理主页 (配置 + 记录)
+     * 逐笔返水管理主页（条件配置 + 记录）
      */
     public function index()
     {
@@ -36,7 +36,7 @@ class Xima extends Backend
     }
 
     /**
-     * 洗码配置列表
+     * 返水条件配置列表
      */
     private function configList()
     {
@@ -51,7 +51,7 @@ class Xima extends Backend
     }
 
     /**
-     * 洗码记录列表
+     * 逐笔返水记录列表
      */
     private function recordList()
     {
@@ -118,30 +118,22 @@ class Xima extends Backend
     }
 
     /**
-     * 保存洗码配置
+     * 保存返水条件配置
      */
     public function saveConfig()
     {
         $id         = $this->request->post('id/d', 0);
         $name       = $this->request->post('name', '');
-        $selfRate   = $this->request->post('self_rate/f', 0);
-        $parentRate = $this->request->post('parent_rate/f', 0);
         $minBet     = $this->request->post('min_bet/f', 0);
         $lotteryType = $this->request->post('lottery_type/d', 0);
         $status     = $this->request->post('status/d', 1);
 
-        if ($selfRate < 0 || $selfRate > 100 || $parentRate < 0 || $parentRate > 100) {
-            return json(['code' => 0, 'msg' => '奖励比例必须在 0%~100% 之间']);
-        }
         if ($minBet < 0 || !in_array($lotteryType, [0, 1, 2], true) || !in_array($status, [0, 1], true)) {
             return json(['code' => 0, 'msg' => '配置参数不正确']);
         }
 
         $data = [
             'name'         => $name ?: '默认配置',
-            // 后台按百分数填写：3.5 表示 3.5%，数据库保存 0.035
-            'self_rate'    => round($selfRate / 100, 6),
-            'parent_rate'  => round($parentRate / 100, 6),
             'min_bet'      => $minBet,
             'lottery_type' => $lotteryType,
             'status'       => $status,
@@ -152,6 +144,9 @@ class Xima extends Backend
             Db::name('xima_config')->where('id', $id)->update($data);
             return json(['code' => 1, 'msg' => '更新成功']);
         } else {
+            // 新业务比例来自用户层级，旧字段固定为零，仅保留表结构兼容。
+            $data['self_rate'] = 0;
+            $data['parent_rate'] = 0;
             $data['createtime'] = time();
             Db::name('xima_config')->insert($data);
             return json(['code' => 1, 'msg' => '添加成功']);
@@ -159,7 +154,7 @@ class Xima extends Backend
     }
 
     /**
-     * 删除洗码配置
+     * 删除返水条件配置
      */
     public function delConfig()
     {

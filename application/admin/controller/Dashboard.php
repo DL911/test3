@@ -78,7 +78,7 @@ class Dashboard extends Backend
 
         try { $todayCommission = Db::name('xima_record')->where('type', 'parent')->where('createtime', '>=', $todayStart)->where('createtime', '<', $todayEnd)->sum('xima_amount'); } catch (\Exception $e) { $todayCommission = 0; }
         try { $todayWithdraw = Db::name('withdraw_order')->where('status', 1)->where('createtime', '>=', $todayStart)->where('createtime', '<', $todayEnd)->sum('amount'); } catch (\Exception $e) { $todayWithdraw = 0; }
-        try { $todayRebate = Db::name('rebate_record')->where('status', 1)->where('createtime', '>=', $todayStart)->where('createtime', '<', $todayEnd)->sum('rebate_amount'); } catch (\Exception $e) { $todayRebate = 0; }
+        $todayRebate = $todayXima; // 兼容现有视图字段：现仅代表新逐笔返水总额
 
         // 昨日数据
         try {
@@ -102,13 +102,13 @@ class Dashboard extends Backend
         try { $totalXima = Db::name('xima_record')->sum('xima_amount'); } catch (\Exception $e) { $totalXima = 0; }
         try { $totalCommission = Db::name('xima_record')->where('type', 'parent')->sum('xima_amount'); } catch (\Exception $e) { $totalCommission = 0; }
         try { $totalWithdraw = Db::name('withdraw_order')->where('status', 1)->sum('amount'); } catch (\Exception $e) { $totalWithdraw = 0; }
-        try { $totalRebate = Db::name('rebate_record')->where('status', 1)->sum('rebate_amount'); } catch (\Exception $e) { $totalRebate = 0; }
+        $totalRebate = $totalXima; // 兼容现有视图字段：现仅代表新逐笔返水总额
 
         // 待处理订单
         try { $pendingRecharge = Db::name('recharge_order')->where('status', 0)->count(); } catch (\Exception $e) { $pendingRecharge = 0; }
         try { $pendingWithdraw = Db::name('withdraw_order')->where('status', 0)->count(); } catch (\Exception $e) { $pendingWithdraw = 0; }
 
-        $todayProfit = round($todayBet - $todayWin - $todayCommission - $todayRebate - $todayXimaSelf, 2);
+        $todayProfit = round($todayBet - $todayWin - $todayCommission - $todayXimaSelf, 2);
 
         // 7日趋势
         $trendDays = $trendRecharge = $trendBet = $trendWin = $trendProfit = [];
@@ -123,9 +123,8 @@ class Dashboard extends Backend
             $trendRecharge[] = round($dR, 2);
             $trendBet[] = round($dB, 2);
             $trendWin[] = round($dW, 2);
-            try { $dRb = Db::name('rebate_record')->where('status', 1)->where('createtime', '>=', $ds)->where('createtime', '<', $de)->sum('rebate_amount'); } catch (\Exception $e) { $dRb = 0; }
             try { $dXs = Db::name('xima_record')->where('type', 'self')->where('createtime', '>=', $ds)->where('createtime', '<', $de)->sum('xima_amount'); } catch (\Exception $e) { $dXs = 0; }
-            $trendProfit[] = round($dB - $dW - $dC - $dRb - $dXs, 2);
+            $trendProfit[] = round($dB - $dW - $dC - $dXs, 2);
         }
 
         $this->view->assign([
@@ -269,9 +268,8 @@ class Dashboard extends Backend
             // 推荐反佣（邀请人洗码）
             try { $commission = Db::name('xima_record')->where('type', 'parent')
                 ->where('createtime', 'between', [$startTime, $endTime])->sum('xima_amount'); } catch (\Exception $e) { $commission = 0; }
-            // 流水返利
-            try { $rebate = Db::name('rebate_record')->where('status', 1)
-                ->where('createtime', 'between', [$startTime, $endTime])->sum('rebate_amount'); } catch (\Exception $e) { $rebate = 0; }
+            // 旧流水返利已停用，所有返水只统计 xima_record。
+            $rebate = 0;
             // 提现（已打款）
             $withdraw = Db::name('withdraw_order')->where('status', 1)
                 ->where('createtime', 'between', [$startTime, $endTime])->sum('amount');

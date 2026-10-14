@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>全民代理 - 好运北彩</title>
+    <title>代理开户管理 - 好运北彩</title>
     <link rel="stylesheet" href="/assets/lottery/css/lottery.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -51,11 +51,11 @@
                 </div>
                 <div class="pc-stat-item">
                     <div class="pc-stat-value" style="color:#f5a623;" id="agCommission">¥ 0.00</div>
-                    <div class="pc-stat-label">累计佣金</div>
+                    <div class="pc-stat-label">累计级差返水</div>
                 </div>
                 <div class="pc-stat-item">
                     <div class="pc-stat-value" style="color:#34d399;" id="agRate">--%</div>
-                    <div class="pc-stat-label">佣金比例</div>
+                    <div class="pc-stat-label">层级返水比例</div>
                 </div>
             </div>
 
@@ -77,7 +77,7 @@
         <div class="pc-card">
             <div class="pc-tabs">
                 <div class="pc-tab active" onclick="switchAgTab('team')">下级列表</div>
-                <div class="pc-tab" onclick="switchAgTab('logs')">佣金记录</div>
+                <div class="pc-tab" onclick="switchAgTab('logs')">级差返水记录</div>
             </div>
 
             <div id="agTeamPanel">
@@ -146,8 +146,12 @@
         var rateInput=document.getElementById('oaRate');
         rateInput.addEventListener('input',function(){var mine=parseFloat(rateInput.max||0),sub=parseFloat(rateInput.value||0),gap=Math.max(0,mine-sub);document.getElementById('ratePreview').textContent='每投注100元：下级约得 ¥'+sub.toFixed(2)+'，您约得级差 ¥'+gap.toFixed(2);});
         document.getElementById('btnOpenAccount').addEventListener('click',function(){
-            var fd=new FormData();fd.append('username',document.getElementById('oaUsername').value.trim());fd.append('mobile',document.getElementById('oaMobile').value.trim());fd.append('password',document.getElementById('oaPassword').value);fd.append('account_type',document.getElementById('oaType').value);fd.append('rebate_rate',rateInput.value);
-            LotteryAuth.request('/index.php/api/agent/createAccount',{method:'POST',body:fd}).then(function(res){alert(res.msg||'操作完成');if(res.code===1)location.reload();});
+            var username=document.getElementById('oaUsername').value.trim(), password=document.getElementById('oaPassword').value;
+            var fd=new FormData();fd.append('username',username);fd.append('mobile',document.getElementById('oaMobile').value.trim());fd.append('password',password);fd.append('account_type',document.getElementById('oaType').value);fd.append('rebate_rate',rateInput.value);
+            LotteryAuth.request('/index.php/api/agent/createAccount',{method:'POST',body:fd}).then(function(res){
+                if(res.code===1){var d=res.data||{};alert('开户成功，请立即保存并安全交付：\n账号：'+username+'\n初始密码：'+password+'\n账号类型：'+(d.account_type==='agent'?'代理用户':'普通用户')+'\n返水比例：'+(d.rebate_rate_text||'--'));location.reload();}
+                else alert(res.msg||'开户失败');
+            });
         });
         window.adjustRate=function(userId,current){var rate=prompt('请输入新的返水比例（%）。只影响之后的新投注：',Number(current).toFixed(2));if(rate===null)return;var fd=new FormData();fd.append('user_id',userId);fd.append('rebate_rate',rate);LotteryAuth.request('/index.php/api/agent/updateRate',{method:'POST',body:fd}).then(function(res){alert(res.msg||'操作完成');if(res.code===1)location.reload();});};
         window.resetPassword=function(userId){var password=prompt('请输入6-30位新密码：');if(password===null)return;var fd=new FormData();fd.append('user_id',userId);fd.append('password',password);LotteryAuth.request('/index.php/api/agent/resetPassword',{method:'POST',body:fd}).then(function(res){alert(res.msg||'操作完成');});};

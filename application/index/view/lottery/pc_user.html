@@ -158,7 +158,7 @@
                 <div class="uc-banner-id" id="pcUserId">ID: --</div>
                 <div style="margin-top:6px; font-size:12px; color:rgba(255,255,255,0.8); display:flex; flex-wrap:wrap; gap:4px 12px;">
                     <span>自身返水: <span id="pcUserSelfRebate">--</span></span>
-                    <span>下级洗码: <span id="pcUserInviteRebate">--</span></span>
+                    <span>团队级差: <span id="pcUserInviteRebate">--</span></span>
                 </div>
             </div>
             <div class="uc-banner-right" style="display:flex; align-items:center;">
@@ -190,7 +190,7 @@
                     <i class="fa-solid fa-receipt"></i> 投注记录 <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
                 <a class="uc-nav-item" href="/index.php/index/lottery/xima">
-                    <i class="fa-solid fa-recycle" style="color:#43e97b;"></i> 洗码中心 <i class="fa-solid fa-chevron-right arrow"></i>
+                    <i class="fa-solid fa-recycle" style="color:#43e97b;"></i> 返水中心 <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
 
                 <a class="uc-nav-item" href="/index.php/index/lottery/transactions">
@@ -198,15 +198,15 @@
                 </a>
                 <div class="uc-nav-divider"></div>
                 <a class="uc-nav-item" href="/index.php/index/lottery/agent">
-                    <i class="fa-solid fa-users"></i> 全民代理 <i class="fa-solid fa-chevron-right arrow"></i>
+                    <i class="fa-solid fa-users"></i> 代理开户 <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
                 <a class="uc-nav-item" href="/index.php/index/lottery/kefu">
                     <i class="fa-solid fa-headset"></i> 在线客服
                     <span id="kefuBadge" data-kefu-unread-total="badge" style="display:none; margin-left:auto; align-items:center; justify-content:center; background:#e33; color:#fff; padding:1px 8px; border-radius:10px; font-size:11px;"></span>
                     <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
-                <a class="uc-nav-item" href="javascript:;" onclick="openUserPasswordReset()">
-                    <i class="fa-solid fa-key" style="color:#d97706;"></i> 重置密码 <i class="fa-solid fa-chevron-right arrow"></i>
+                <a class="uc-nav-item" href="javascript:;" onclick="changeLoginPassword()">
+                    <i class="fa-solid fa-key" style="color:#d97706;"></i> 修改登录密码 <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
                 <div class="uc-nav-divider"></div>
                 <a class="uc-nav-item logout" onclick="doLogout()">
@@ -245,7 +245,7 @@
                             </a>
                             <a href="/index.php/index/lottery/agent" class="uc-grid-item">
                                 <div class="uc-grid-icon" style="background:linear-gradient(135deg,#f87171,#dc2626);"><i class="fa-solid fa-users"></i></div>
-                                <div class="uc-grid-label">全民代理</div><div class="uc-grid-desc">邀请赚佣金</div>
+                                <div class="uc-grid-label">代理开户</div><div class="uc-grid-desc">直属账号与级差返水</div>
                             </a>
                         </div>
                     </div>
@@ -316,10 +316,10 @@
                     </div>
                 </div>
 
-                <!-- 流水返利 -->
+                <!-- 逐笔返水 -->
                 <div class="uc-panel" id="panel-rebate">
                     <div class="uc-card">
-                        <div class="uc-card-title"><i class="fa-solid fa-gift"></i> 流水返利</div>
+                        <div class="uc-card-title"><i class="fa-solid fa-gift"></i> 返水中心</div>
                         <div id="pcRebateContent" style="color:#666;">加载中...</div>
                         <div style="margin-top:16px;">
                             <button id="pcClaimBtn" style="display:none; padding:12px 32px; border:none; border-radius:10px; background:linear-gradient(135deg,#f5a623,#e67e22); color:#fff; font-size:14px; font-weight:700; cursor:pointer;" onclick="pcClaimRebate()">立即领取</button>
@@ -345,6 +345,13 @@
     <script src="/assets/lottery/js/auth.js?v=2026090201"></script>
     <script>
     var usdtRate = 7.2; // 默认值，会被实时覆盖
+    function changeLoginPassword() {
+        var oldPassword = prompt('请输入原登录密码：'); if (oldPassword === null) return;
+        var newPassword = prompt('请输入6-30位新密码：'); if (newPassword === null) return;
+        var confirmPassword = prompt('请再次输入新密码：'); if (confirmPassword === null) return;
+        var fd = new FormData(); fd.append('old_password', oldPassword); fd.append('new_password', newPassword); fd.append('confirm_password', confirmPassword);
+        LotteryAuth.request('/index.php/api/user/changePassword',{method:'POST',body:fd}).then(function(res){ alert(res.msg || '操作完成'); if(res.code===1){ localStorage.removeItem('lottery_token'); localStorage.removeItem('lottery_user'); location.href='/index.php/index/lottery/login'; } });
+    }
     // 实时获取USDT汇率（优先OKX欧意）
     (function() {
         fetch('/index.php/api/lottery/getUsdtRate')
@@ -430,30 +437,22 @@
         var ct = document.getElementById('pcRebateContent');
         ct.innerHTML = '加载中...';
         document.getElementById('pcClaimBtn').style.display = 'none';
-        LotteryAuth.request('/index.php/api/rebate/summary', {method:'GET'}).then(function(res){
+        LotteryAuth.request('/index.php/api/xima/summary', {method:'GET'}).then(function(res){
             if(res.code===1) {
                 var d = res.data;
                 var h = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">';
-                h += '<div style="background:#f9f8ff; padding:18px; border-radius:12px;"><div style="font-size:12px; color:#999; margin-bottom:4px;">今日流水</div><div style="font-size:24px; font-weight:800; color:#764ba2;">¥'+d.today_bet+'</div></div>';
-                h += '<div style="background:#f9f8ff; padding:18px; border-radius:12px;"><div style="font-size:12px; color:#999; margin-bottom:4px;">昨日流水</div><div style="font-size:24px; font-weight:800; color:#333;">¥'+d.yesterday_bet+'</div></div></div>';
-                if(d.can_claim && d.yesterday_rebate > 0) {
+                h += '<div style="background:#f9f8ff; padding:18px; border-radius:12px;"><div style="font-size:12px; color:#999; margin-bottom:4px;">今日新增（次日解锁）</div><div style="font-size:24px; font-weight:800; color:#764ba2;">¥'+d.today_total+'</div><div style="font-size:12px;color:#999;margin-top:5px;">自身 ¥'+d.today_self+' · 团队级差 ¥'+d.today_parent+'</div></div>';
+                h += '<div style="background:#f9f8ff; padding:18px; border-radius:12px;"><div style="font-size:12px; color:#999; margin-bottom:4px;">累计已领取</div><div style="font-size:24px; font-weight:800; color:#333;">¥'+d.claimed_total+'</div></div></div>';
+                if(parseFloat(d.pending_total) > 0) {
                     h += '<div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:18px; border-radius:12px; text-align:center; margin-bottom:16px;">';
-                    h += '<div style="color:#16a34a; margin-bottom:4px;">可领取昨日返利</div>';
-                    h += '<div style="font-size:28px; font-weight:800; color:#f59e0b;">¥'+d.yesterday_rebate+'</div>';
-                    h += '<div style="font-size:12px; color:#999;">'+(d.yesterday_rate*100).toFixed(2)+'%</div></div>';
+                    h += '<div style="color:#16a34a; margin-bottom:4px;">当前可领取返水</div>';
+                    h += '<div style="font-size:28px; font-weight:800; color:#f59e0b;">¥'+d.pending_total+'</div>';
+                    h += '<div style="font-size:12px; color:#999;">'+d.pending_count+' 笔 · 自身 ¥'+d.pending_self+' · 团队级差 ¥'+d.pending_parent+'</div></div>';
                     document.getElementById('pcClaimBtn').style.display = '';
-                } else if(d.already_claimed) {
-                    h += '<div style="text-align:center; color:#999; padding:18px;">昨日返利已领取 ✓</div>';
                 } else {
-                    h += '<div style="text-align:center; color:#999; padding:18px;">昨日无可领返利</div>';
+                    h += '<div style="text-align:center; color:#999; padding:18px;">暂无已解锁的可领取返水；今日投注产生的奖励将在次日解锁</div>';
                 }
-                h += '<div style="font-size:13px; color:#999; margin-bottom:14px;">累计已领: ¥'+d.total_claimed+'</div>';
-                if(d.tiers && d.tiers.length) {
-                    h += '<div style="font-size:13px; font-weight:700; color:#333; margin-bottom:8px;">返利阶梯:</div>';
-                    h += '<table style="width:100%; font-size:13px; border-collapse:collapse;"><tr style="color:#999;"><th style="text-align:left; padding:6px 0; border-bottom:1px solid #f0f0f0;">流水范围</th><th style="text-align:right; padding:6px 0; border-bottom:1px solid #f0f0f0;">比例</th></tr>';
-                    d.tiers.forEach(function(t){ h += '<tr><td style="padding:6px 0; border-bottom:1px solid #f8f8f8; color:#555;">¥'+t.min_amount+' ~ '+(t.max_amount>0?'¥'+t.max_amount:'无上限')+'</td><td style="text-align:right; padding:6px 0; border-bottom:1px solid #f8f8f8; color:#f59e0b; font-weight:700;">'+(t.rebate_rate*100).toFixed(2)+'%</td></tr>'; });
-                    h += '</table>';
-                }
+                h += '<div style="font-size:13px;color:#999;">每次投注独立产生返水，比例按投注时的层级快照计算，次日统一开放领取。</div>';
                 ct.innerHTML = h;
             } else { ct.innerHTML = '<div style="color:red;">'+(res.msg||'加载失败')+'</div>'; }
         });
@@ -654,7 +653,7 @@
     function pcClaimRebate() {
         var btn = document.getElementById('pcClaimBtn');
         btn.disabled=true; btn.textContent='领取中...';
-        LotteryAuth.request('/index.php/api/rebate/claim',{method:'POST'}).then(function(res){
+        LotteryAuth.request('/index.php/api/xima/claim',{method:'POST'}).then(function(res){
             if(res.code===1) { alert(res.msg||'领取成功'); window.location.reload(); }
             else { alert(res.msg||'领取失败'); btn.disabled=false; btn.textContent='立即领取'; }
         });

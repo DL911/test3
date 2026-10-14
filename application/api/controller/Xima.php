@@ -5,7 +5,7 @@ use app\common\controller\Api;
 use think\Db;
 
 /**
- * 洗码 API
+ * 逐笔返水 API
  */
 class Xima extends Api
 {
@@ -13,7 +13,7 @@ class Xima extends Api
     protected $noNeedRight = '*';
 
     /**
-     * 我的洗码概况
+     * 我的返水概况
      * GET /api/xima/summary
      */
     public function summary()
@@ -21,7 +21,7 @@ class Xima extends Api
         $userId = $this->auth->id;
         $today = date('Y-m-d');
 
-        // 可领取洗码（隔天：createtime < 今天00:00）
+        // 可领取返水（每笔投注次日解锁）
         $claimableSelf = Db::name('xima_record')
             ->where('user_id', $userId)
             ->where('type', 'self')
@@ -77,7 +77,7 @@ class Xima extends Api
     }
 
     /**
-     * 一键领取全部洗码
+     * 一键领取全部返水
      * POST /api/xima/claim
      */
     public function claim()
@@ -100,7 +100,7 @@ class Xima extends Api
 
             if (empty($records)) {
                 Db::rollback();
-                $this->error('暂无可领取的洗码');
+                $this->error('暂无可领取的返水');
             }
 
             $totalAmount = 0;
@@ -111,7 +111,7 @@ class Xima extends Api
 
             if ($totalAmount <= 0) {
                 Db::rollback();
-                $this->error('洗码金额为0');
+                $this->error('返水金额为0');
             }
 
             $batchNo = 'XR' . date('YmdHis') . str_pad($userId, 6, '0', STR_PAD_LEFT) . mt_rand(1000, 9999);
@@ -168,7 +168,7 @@ class Xima extends Api
     }
 
     /**
-     * 洗码记录
+     * 返水记录
      * GET /api/xima/history?page=1&type=self
      */
     public function history()

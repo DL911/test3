@@ -2,7 +2,6 @@
 namespace app\admin\controller\lottery;
 
 use app\common\controller\Backend;
-use think\Db;
 
 /**
  * 流水返利配置管理
@@ -16,12 +15,7 @@ class RebateConfig extends Backend
      */
     public function index()
     {
-        if ($this->request->isAjax()) {
-            $list = Db::name('rebate_config')->order('min_amount', 'asc')->select();
-            $total = count($list);
-            return json(['total' => $total, 'rows' => $list]);
-        }
-        return $this->view->fetch();
+        $this->error('旧流水返利配置已停用，请使用返水管理与代理参数配置');
     }
 
     /**
@@ -29,23 +23,7 @@ class RebateConfig extends Backend
      */
     public function edit($id = null)
     {
-        if ($this->request->isPost()) {
-            $data = $this->request->post();
-            $data['updatetime'] = time();
-
-            if (!empty($data['id'])) {
-                Db::name('rebate_config')->where('id', $data['id'])->update($data);
-                $this->success('更新成功');
-            } else {
-                $data['createtime'] = time();
-                Db::name('rebate_config')->insert($data);
-                $this->success('添加成功');
-            }
-        }
-
-        $row = $id ? Db::name('rebate_config')->where('id', $id)->find() : [];
-        $this->view->assign('row', $row);
-        return $this->view->fetch();
+        $this->error('旧流水返利配置已停用');
     }
 
     /**
@@ -53,10 +31,6 @@ class RebateConfig extends Backend
      */
     public function del($ids = null)
     {
-        if ($ids) {
-            Db::name('rebate_config')->where('id', 'in', $ids)->delete();
-            $this->success('删除成功');
-        }
-        $this->error('参数错误');
+        $this->error('旧流水返利配置已停用');
     }
 }

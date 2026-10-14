@@ -459,6 +459,24 @@ class User extends Api
         $this->error(__('Operation failed'), $url);
     }
 
+    /** 登录后验证原密码并修改密码。 */
+    public function changePassword()
+    {
+        $oldPassword = (string)$this->request->post('old_password', '');
+        $newPassword = (string)$this->request->post('new_password', '');
+        $confirmPassword = (string)$this->request->post('confirm_password', '');
+        if (!$oldPassword || strlen($newPassword) < 6 || strlen($newPassword) > 30) {
+            $this->error('请输入原密码，新密码长度需为6-30位');
+        }
+        if ($newPassword !== $confirmPassword) $this->error('两次输入的新密码不一致');
+        if ($oldPassword === $newPassword) $this->error('新密码不能与原密码相同');
+        if (!$this->auth->changepwd($newPassword, $oldPassword)) {
+            $this->error($this->auth->getError() ?: '原密码不正确');
+        }
+        Db::name('token')->where('user_id', $this->auth->id)->delete();
+        $this->success('密码修改成功，请重新登录');
+    }
+
     /**
      * 重置密码
      *
@@ -657,19 +675,13 @@ class User extends Api
                 }
             }
 
-            if ($type === 'all' || $type === 'commission') {
-                $rows = Db::name('lottery_commission')->where('user_id', $userId)
-                    ->field('id, amount, createtime, remark')->order('createtime', 'desc')->select();
+            if ($type === 'all' || $type === 'commission' || $type === 'rebate') {
+                $rows = Db::name('xima_record')->where('user_id', $userId)->where('status', 1)
+                    ->field('id, type, xima_amount, claim_time, createtime')->order('claim_time', 'desc')->select();
                 foreach ($rows as $r) {
-                    $records[] = ['id' => $r['id'], 'type' => 'commission', 'type_text' => '推荐佣金', 'amount' => '+' . $r['amount'], 'color' => '#fa709a', 'time' => $r['createtime'], 'date' => date('m-d H:i', $r['createtime'])];
-                }
-            }
-
-            if ($type === 'all' || $type === 'rebate') {
-                $rows = Db::name('rebate_record')->where('user_id', $userId)->where('status', 1)
-                    ->field('id, rebate_amount, createtime, period_start')->order('createtime', 'desc')->select();
-                foreach ($rows as $r) {
-                    $records[] = ['id' => $r['id'], 'type' => 'rebate', 'type_text' => '返水', 'amount' => '+' . $r['rebate_amount'], 'color' => '#e67e22', 'time' => $r['createtime'], 'date' => date('m-d H:i', $r['createtime'])];
+                    if ($type === 'commission' && $r['type'] !== 'parent') continue;
+                    $recordTime = $r['claim_time'] ?: $r['createtime'];
+                    $records[] = ['id' => $r['id'], 'type' => 'rebate', 'type_text' => $r['type'] === 'self' ? '自身返水' : '团队级差返水', 'amount' => '+' . $r['xima_amount'], 'color' => '#e67e22', 'time' => $recordTime, 'date' => date('m-d H:i', $recordTime)];
                 }
             }
         } catch (\Exception $e) {}

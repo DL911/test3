@@ -80,7 +80,7 @@
                     </div>
                     <div style="margin-top:6px; font-size:11px; color:rgba(255,255,255,0.9); background:rgba(0,0,0,0.15); display:inline-flex; flex-wrap:wrap; justify-content:center; gap:4px 10px; max-width:100%; box-sizing:border-box; padding:2px 10px; border-radius:12px;">
                         <span>自身返水: <span id="userSelfRebate">--</span></span>
-                        <span>下级洗码: <span id="userInviteRebate">--</span></span>
+                        <span>团队级差: <span id="userInviteRebate">--</span></span>
                     </div>
                 </div>
             </div>
@@ -133,13 +133,13 @@
             <div class="lm-menu-list">
                 <a class="lm-menu-item" href="/index.php/index/lottery/xima">
                     <div class="lm-menu-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: #fff;"><i class="fa-solid fa-recycle"></i></div>
-                    <div class="lm-menu-text"><span>洗码中心</span><small id="ximaHint">投注产生洗码，随时领取</small></div>
+                    <div class="lm-menu-text"><span>返水中心</span><small id="ximaHint">逐笔产生返水，次日领取</small></div>
                     <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
                 </a>
 
                 <a class="lm-menu-item" href="/index.php/index/lottery/agent">
                     <div class="lm-menu-icon" style="background: linear-gradient(135deg, #FF6B6B, #E3001B); color: #fff;"><i class="fa-solid fa-users"></i></div>
-                    <div class="lm-menu-text"><span>全民代理</span><small>邀请好友赚佣金</small></div>
+                    <div class="lm-menu-text"><span>代理开户</span><small>管理直属账号与级差返水</small></div>
                     <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
                 </a>
             </div>
@@ -162,9 +162,9 @@
                     <div class="lm-menu-text"><span>在线客服</span><small id="kefuUnreadText" data-kefu-unread-total="text">联系官方客服</small></div>
                     <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
                 </a>
-                <a class="lm-menu-item" href="javascript:;" onclick="openUserPasswordReset()">
+                <a class="lm-menu-item" href="javascript:;" onclick="changeLoginPassword()">
                     <div class="lm-menu-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;"><i class="fa-solid fa-key"></i></div>
-                    <div class="lm-menu-text"><span>重置密码</span><small>通过安全问题设置新密码</small></div>
+                    <div class="lm-menu-text"><span>修改登录密码</span><small>验证原密码后修改</small></div>
                     <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
                 </a>
                 <a class="lm-menu-item" href="javascript:void(0)" id="logoutBtn" style="display:none;" onclick="LotteryAuth.logout()">
@@ -215,6 +215,14 @@
     <script src="/assets/lottery/js/auth.js?v=2026090201"></script>
     <script src="/assets/lottery/js/currency_picker.js"></script>
     <script>
+    function changeLoginPassword() {
+        var oldPassword = prompt('请输入原登录密码：'); if (oldPassword === null) return;
+        var newPassword = prompt('请输入6-30位新密码：'); if (newPassword === null) return;
+        var confirmPassword = prompt('请再次输入新密码：'); if (confirmPassword === null) return;
+        var fd = new FormData(); fd.append('old_password', oldPassword); fd.append('new_password', newPassword); fd.append('confirm_password', confirmPassword);
+        LotteryAuth.request('/index.php/api/user/changePassword',{method:'POST',body:fd}).then(function(res){ alert(res.msg || '操作完成'); if(res.code===1){ localStorage.removeItem('lottery_token'); localStorage.removeItem('lottery_user'); location.href='/index.php/index/lottery/login'; } });
+    }
+
     // ===== 退出登录 =====
     function doLogout() {
         if (confirm('确认退出登录？')) {
@@ -335,7 +343,7 @@
             var badge = document.getElementById('avatarBadge');
             if (badge) badge.style.display = 'flex';
 
-            // 显示流水返利入口
+            // 显示新的逐笔返水入口
             var rg = document.getElementById('rebateGroup');
             if (rg) rg.style.display = '';
 

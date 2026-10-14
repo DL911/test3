@@ -164,24 +164,24 @@
                         <div class="biz-card">
                             <div class="biz-icon bg-commission"><i class="fa fa-share-alt"></i></div>
                             <div class="biz-val">¥{$todayCommission}</div>
-                            <div class="biz-label">今日推荐反佣</div>
-                            <div class="biz-sub">下级投注2%返佣</div>
+                            <div class="biz-label">今日团队级差返水</div>
+                            <div class="biz-sub">按上下级比例差逐笔产生</div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6">
                         <div class="biz-card">
                             <div class="biz-icon bg-rebate"><i class="fa fa-gift"></i></div>
                             <div class="biz-val" style="color:#e67e22;">¥{$todayRebate}</div>
-                            <div class="biz-label">今日流水返利</div>
-                            <div class="biz-sub">阶梯返利已领取</div>
+                            <div class="biz-label">今日逐笔返水总额</div>
+                            <div class="biz-sub">自身返水与团队级差合计</div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6">
                         <div class="biz-card">
                             <div class="biz-icon bg-xima"><i class="fa fa-recycle"></i></div>
                             <div class="biz-val" style="color:#43e97b;">¥{$todayXimaSelf}</div>
-                            <div class="biz-label">今日自身洗码</div>
-                            <div class="biz-sub">每日生效（不论是否领取）</div>
+                            <div class="biz-label">今日自身返水</div>
+                            <div class="biz-sub">每笔投注产生，次日可领取</div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-sm-6">
@@ -238,19 +238,19 @@
                                     </tr>
 
                                     <tr>
-                                        <td><i class="fa fa-share-alt" style="color:#fa709a;margin-right:6px;"></i>推荐反佣</td>
+                                        <td><i class="fa fa-share-alt" style="color:#fa709a;margin-right:6px;"></i>团队级差返水</td>
                                         <td>¥{$todayCommission}</td>
                                         <td>¥{$sevenCommission}</td>
                                         <td>¥{$totalCommission}</td>
                                     </tr>
                                     <tr>
-                                        <td><i class="fa fa-gift" style="color:#e67e22;margin-right:6px;"></i>流水返利</td>
+                                        <td><i class="fa fa-gift" style="color:#e67e22;margin-right:6px;"></i>逐笔返水总额</td>
                                         <td>¥{$todayRebate}</td>
                                         <td>--</td>
                                         <td>¥{$totalRebate}</td>
                                     </tr>
                                     <tr>
-                                        <td><i class="fa fa-recycle" style="color:#43e97b;margin-right:6px;"></i>自身洗码</td>
+                                        <td><i class="fa fa-recycle" style="color:#43e97b;margin-right:6px;"></i>自身返水</td>
                                         <td>¥{$todayXimaSelf}</td>
                                         <td>--</td>
                                         <td>--</td>
@@ -646,8 +646,8 @@ function renderRangeStats(d) {
         { label: '中奖总额', val: '¥' + d.win, bg: 'bg-win', icon: 'fa-trophy' },
         { label: '平台盈亏', val: profitTxt, bg: 'bg-profit', icon: 'fa-line-chart', cls: profitCls },
         { label: '推荐反佣', val: '¥' + d.commission, bg: 'bg-commission', icon: 'fa-share-alt' },
-        { label: '流水返利', val: '¥' + d.rebate, bg: 'bg-rebate', icon: 'fa-gift' },
-        { label: '自身洗码', val: '¥' + (d.xima_self || 0), bg: 'bg-xima', icon: 'fa-recycle' },
+        { label: '逐笔返水总额', val: '¥' + ((parseFloat(d.commission)||0) + (parseFloat(d.xima_self)||0)).toFixed(2), bg: 'bg-rebate', icon: 'fa-gift' },
+        { label: '自身返水', val: '¥' + (d.xima_self || 0), bg: 'bg-xima', icon: 'fa-recycle' },
         { label: '提现（已打款）', val: '¥' + d.withdraw, bg: 'bg-withdraw', icon: 'fa-minus-circle' },
         { label: '投注笔数', val: d.bet_count + ' 笔', bg: 'bg-xima', icon: 'fa-list-ol' },
         { label: '投注人数', val: d.bet_users + ' 人', bg: 'bg-xima', icon: 'fa-users' }
