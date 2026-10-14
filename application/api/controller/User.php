@@ -45,21 +45,22 @@ class User extends Api
             'level'    => $user->level,
             'mobile'   => $user->mobile,
             'group_id' => $user->group_id,
-            'self_rebate_rate'   => $user->self_rebate_rate,
-            'invite_rebate_rate' => $user->invite_rebate_rate,
+            'self_rebate_rate'   => intval($user->agent_level) > 0 ? $user->self_rebate_rate : 0,
+            'invite_rebate_rate' => 0,
             'is_agent' => isset($user->is_agent) ? intval($user->is_agent) : 0,
             'can_open_account' => isset($user->can_open_account) ? intval($user->can_open_account) : 0,
             'agent_level' => isset($user->agent_level) ? intval($user->agent_level) : 0,
-            // 会员单独设置了比例则展示会员比例，未设置则展示后台洗码配置
+            // 仅展示新代理体系的投注比例；历史账号返回空数组。
             'xima_rates' => $this->getXimaDisplayRates($user),
             'verify_status' => $this->getUserVerifyStatus($user->id),
         ];
         $this->success('', $data);
     }
 
-    /** 与投注一致：会员单独设置了比例则优先，否则用启用的彩种专用配置优先、通用配置兜底，同类取最小 ID。 */
+    /** 新代理体系当前按账号层级总返水比例展示，各彩种统一使用该快照比例。 */
     private function getXimaDisplayRates($user)
     {
+        if (intval($user['agent_level']) <= 0) return [];
         $userRate = floatval($user['self_rebate_rate']);
         $rates = [];
         foreach ([1 => '福彩3D', 2 => '排列三'] as $type => $name) {

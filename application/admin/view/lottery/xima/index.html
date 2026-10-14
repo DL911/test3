@@ -1,14 +1,13 @@
 <div class="panel panel-default panel-intro">
     <div class="panel-heading"><h3 class="panel-title">逐笔返水管理</h3></div>
     <div class="panel-body">
-        <!-- Tab 切换 -->
+        <div class="alert alert-info">新代理模式按每笔投注和用户层级比例自动生成返水，不再使用旧洗码比例、阶梯或最低流水配置。</div>
         <ul class="nav nav-tabs" style="margin-bottom:15px;">
-            <li class="active"><a href="javascript:;" onclick="switchTab('config')">返水条件配置</a></li>
-            <li><a href="javascript:;" onclick="switchTab('record')">返水记录</a></li>
+            <li class="active"><a href="javascript:;">返水记录</a></li>
         </ul>
 
         <!-- ======== 配置 Tab ======== -->
-        <div id="tabConfig">
+        <div id="tabConfig" style="display:none;">
             <div style="margin-bottom:12px;">
                 <button class="btn btn-success btn-sm" onclick="openConfigForm()"><i class="fa fa-plus"></i> 添加配置</button>
             </div>
@@ -56,7 +55,7 @@
         </div>
 
         <!-- ======== 记录 Tab ======== -->
-        <div id="tabRecord" style="display:none;">
+        <div id="tabRecord">
             <!-- 统计 -->
             <div style="display:flex;gap:15px;margin-bottom:15px;">
                 <div style="flex:1;background:#e8f5e9;border-radius:8px;padding:12px 16px;">
@@ -259,5 +258,5 @@ window.editConfig = editConfig;
 window.saveConfig = saveConfig;
 window.delConfig = delConfig;
 
-loadConfigs();
+loadRecords();
 </script>

@@ -18,36 +18,21 @@ class Xima extends Backend
     }
 
     /**
-     * 逐笔返水管理主页（条件配置 + 记录）
+     * 逐笔返水记录主页
      */
     public function index()
     {
         if ($this->request->isAjax()) {
-            $tab = $this->request->param('tab', 'config');
+            $tab = $this->request->param('tab', 'record');
 
             if ($tab === 'config') {
-                return $this->configList();
+                $this->success('旧洗码条件配置已停用', '', ['list' => [], 'total' => 0]);
             } else {
                 return $this->recordList();
             }
         }
 
         return $this->view->fetch();
-    }
-
-    /**
-     * 返水条件配置列表
-     */
-    private function configList()
-    {
-        $list = Db::name('xima_config')->order('id', 'asc')->select();
-        $typeMap = [0 => '全部彩种', 1 => '福彩3D', 2 => '排列三'];
-        foreach ($list as &$item) {
-            $item['lottery_name'] = isset($typeMap[$item['lottery_type']]) ? $typeMap[$item['lottery_type']] : '未知';
-            $item['self_rate_pct'] = round($item['self_rate'] * 100, 2) . '%';
-            $item['parent_rate_pct'] = round($item['parent_rate'] * 100, 2) . '%';
-        }
-        $this->success('', '', ['list' => $list, 'total' => count($list)]);
     }
 
     /**
@@ -126,35 +111,7 @@ class Xima extends Backend
      */
     public function saveConfig()
     {
-        $id         = $this->request->post('id/d', 0);
-        $name       = $this->request->post('name', '');
-        $minBet     = $this->request->post('min_bet/f', 0);
-        $lotteryType = $this->request->post('lottery_type/d', 0);
-        $status     = $this->request->post('status/d', 1);
-
-        if ($minBet < 0 || !in_array($lotteryType, [0, 1, 2], true) || !in_array($status, [0, 1], true)) {
-            return json(['code' => 0, 'msg' => '配置参数不正确']);
-        }
-
-        $data = [
-            'name'         => $name ?: '默认配置',
-            'min_bet'      => $minBet,
-            'lottery_type' => $lotteryType,
-            'status'       => $status,
-            'updatetime'   => time(),
-        ];
-
-        if ($id > 0) {
-            Db::name('xima_config')->where('id', $id)->update($data);
-            return json(['code' => 1, 'msg' => '更新成功']);
-        } else {
-            // 新业务比例来自用户层级，旧字段固定为零，仅保留表结构兼容。
-            $data['self_rate'] = 0;
-            $data['parent_rate'] = 0;
-            $data['createtime'] = time();
-            Db::name('xima_config')->insert($data);
-            return json(['code' => 1, 'msg' => '添加成功']);
-        }
+        return json(['code' => 0, 'msg' => '新代理模式每笔投注自动返水，旧洗码条件配置已停用']);
     }
 
     /**
@@ -162,11 +119,6 @@ class Xima extends Backend
      */
     public function delConfig()
     {
-        $id = $this->request->post('id/d', 0);
-        if ($id) {
-            Db::name('xima_config')->where('id', $id)->delete();
-            return json(['code' => 1, 'msg' => '删除成功']);
-        }
-        return json(['code' => 0, 'msg' => '参数错误']);
+        return json(['code' => 0, 'msg' => '新代理模式已停用旧洗码条件配置']);
     }
 }

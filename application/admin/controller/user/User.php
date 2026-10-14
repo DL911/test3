@@ -203,22 +203,6 @@ class User extends Backend
     }
 
     /**
-     * 洗码管理配置里的默认比例（取第一条启用的配置）
-     */
-    private function getDefaultXimaRates()
-    {
-        try {
-            $config = \think\Db::name('xima_config')->where('status', 1)->order('id', 'asc')->find();
-        } catch (\Exception $e) {
-            $config = null;
-        }
-        return [
-            'self_rate'   => $config ? floatval($config['self_rate']) : 0,
-            'parent_rate' => $config ? floatval($config['parent_rate']) : 0,
-        ];
-    }
-
-    /**
      * 保存返佣参数
      */
     public function saveRebateRates()
@@ -363,11 +347,12 @@ class User extends Backend
                     break;
 
                 case 'commission':
-                    $list = \think\Db::name('lottery_commission')->where('user_id', $userId)->order('createtime', 'desc')->page($page, $limit)->select();
-                    $total = \think\Db::name('lottery_commission')->where('user_id', $userId)->count();
+                    $list = \think\Db::name('xima_record')->where('user_id', $userId)->where('type', 'parent')->order('createtime', 'desc')->page($page, $limit)->select();
+                    $total = \think\Db::name('xima_record')->where('user_id', $userId)->where('type', 'parent')->count();
                     foreach ($list as &$item) {
                         $item['create_date'] = date('Y-m-d H:i:s', $item['createtime']);
-                        $item['sub_name'] = \think\Db::name('user')->where('id', $item['sub_id'])->value('nickname') ?: 'UID:'.$item['sub_id'];
+                        $item['amount'] = $item['xima_amount'];
+                        $item['sub_name'] = \think\Db::name('user')->where('id', $item['source_user_id'])->value('nickname') ?: 'UID:'.$item['source_user_id'];
                     }
                     break;
 

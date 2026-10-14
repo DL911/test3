@@ -189,7 +189,7 @@
                 <a class="uc-nav-item" data-p="records" onclick="showPanel('records')">
                     <i class="fa-solid fa-receipt"></i> 投注记录 <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
-                <a class="uc-nav-item new-agent-only" href="/index.php/index/lottery/xima" style="display:none;">
+                <a class="uc-nav-item new-agent-only" data-p="rebate" onclick="showPanel('rebate')" style="display:none;">
                     <i class="fa-solid fa-recycle" style="color:#43e97b;"></i> 返水中心 <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
 
@@ -324,6 +324,8 @@
                         <div style="margin-top:16px;">
                             <button id="pcClaimBtn" style="display:none; padding:12px 32px; border:none; border-radius:10px; background:linear-gradient(135deg,#f5a623,#e67e22); color:#fff; font-size:14px; font-weight:700; cursor:pointer;" onclick="pcClaimRebate()">立即领取</button>
                         </div>
+                        <div style="margin-top:24px;font-size:14px;font-weight:700;color:#333;">最近返水记录</div>
+                        <div id="pcRebateHistory" style="margin-top:10px;color:#666;">加载中...</div>
                     </div>
                 </div>
             </div>
@@ -454,7 +456,19 @@
                 }
                 h += '<div style="font-size:13px;color:#999;">每次投注独立产生返水，比例按投注时的层级快照计算，次日统一开放领取。</div>';
                 ct.innerHTML = h;
+                loadPcRebateHistory();
             } else { ct.innerHTML = '<div style="color:red;">'+(res.msg||'加载失败')+'</div>'; }
+        });
+    }
+
+    function loadPcRebateHistory() {
+        var box = document.getElementById('pcRebateHistory');
+        LotteryAuth.request('/index.php/api/xima/history?page=1&limit=20',{method:'GET'}).then(function(res){
+            var list = res.code===1 && res.data ? (res.data.list||[]) : [];
+            if(!list.length){box.innerHTML='<div style="padding:18px 0;color:#999;">暂无返水记录</div>';return;}
+            var h='<table style="width:100%;border-collapse:collapse;font-size:13px;"><tr style="background:#f8f9fa;"><th style="padding:9px;text-align:left;">类型</th><th style="padding:9px;text-align:left;">投注/比例</th><th style="padding:9px;text-align:right;">返水金额</th><th style="padding:9px;text-align:center;">状态</th><th style="padding:9px;text-align:right;">产生时间</th></tr>';
+            list.forEach(function(r){h+='<tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:9px;">'+(r.type_text||'返水')+'</td><td style="padding:9px;">¥'+parseFloat(r.bet_amount||0).toFixed(2)+' × '+(parseFloat(r.xima_rate||0)*100).toFixed(2)+'%</td><td style="padding:9px;text-align:right;color:#e67e22;font-weight:700;">¥'+parseFloat(r.xima_amount||0).toFixed(2)+'</td><td style="padding:9px;text-align:center;">'+(r.status_text||'--')+'</td><td style="padding:9px;text-align:right;color:#999;">'+(r.create_date||'--')+'</td></tr>';});
+            box.innerHTML=h+'</table>';
         });
     }
 

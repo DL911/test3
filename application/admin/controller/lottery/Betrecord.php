@@ -362,6 +362,13 @@ class Betrecord extends Backend
 
         Db::startTrans();
         try {
+            $bet = Db::name('lottery_bet')->where('id', $id)->lock(true)->find();
+            if (!$bet || $bet['status'] == 3) throw new \RuntimeException('订单状态已变化，请刷新后重试');
+            Db::name('lottery_bet')->where('id', $id)->update([
+                'status' => 3,
+                'updatetime' => time(),
+            ]);
+
             // 待开奖(0) 或 未中奖(2)：退还投注金额
             if ($bet['status'] == 0 || $bet['status'] == 2) {
                 Db::name('user')->where('id', $bet['user_id'])->setInc('money', $bet['total_amount']);
@@ -372,45 +379,25 @@ class Betrecord extends Backend
                 Db::name('user')->where('id', $bet['user_id'])->setInc('money', $bet['total_amount']);
             }
 
-            Db::name('lottery_bet')->where('id', $id)->update([
-                'status' => 3,
-                'updatetime' => time(),
-            ]);
-
-            // 撤销相关代理佣金（优先用 bet_id 精确匹配，备选 remark 模糊匹配）
-            try {
-                $commission = Db::name('lottery_commission')->where('bet_id', $id)->find();
-                if (!$commission) {
-                    $commission = Db::name('lottery_commission')->where('remark', 'like', "%{$bet['order_no']}%")->find();
-                }
-                if ($commission) {
-                    Db::name('user')->where('id', $commission['user_id'])->setDec('money', $commission['amount']);
-                    Db::name('lottery_commission')->where('id', $commission['id'])->delete();
-                }
-            } catch (\Exception $e) {}
-
             // 撤销关联返水记录：已领取的冲正，所有记录保留用于审计。
-            try {
-                $ximaRecords = Db::name('xima_record')->where('bet_order_no', $bet['order_no'])->select();
-                foreach ($ximaRecords as $xr) {
-                    if ($xr['status'] == 1 && $xr['xima_amount'] > 0) {
-                        $user = Db::name('user')->where('id', $xr['user_id'])->lock(true)->field('id,money')->find();
-                        if ($user) {
-                            $before = floatval($user['money']);
-                            $after = round($before - floatval($xr['xima_amount']), 2);
-                            Db::name('user')->where('id', $xr['user_id'])->update(['money' => $after]);
-                            Db::name('money_log')->insert([
-                                'user_id' => $xr['user_id'], 'money' => -floatval($xr['xima_amount']),
-                                'before' => $before, 'after' => $after,
-                                'memo' => '后台撤单返水冲正：' . $bet['order_no'], 'createtime' => time(),
-                            ]);
-                        }
-                    }
+            $ximaRecords = Db::name('xima_record')->where('bet_order_no', $bet['order_no'])->lock(true)->select();
+            foreach ($ximaRecords as $xr) {
+                if ($xr['status'] == 1 && $xr['xima_amount'] > 0) {
+                    $user = Db::name('user')->where('id', $xr['user_id'])->lock(true)->field('id,money')->find();
+                    if (!$user) throw new \RuntimeException('返水受益账号不存在');
+                    $before = floatval($user['money']);
+                    $after = round($before - floatval($xr['xima_amount']), 2);
+                    Db::name('user')->where('id', $xr['user_id'])->update(['money' => $after]);
+                    Db::name('money_log')->insert([
+                        'user_id' => $xr['user_id'], 'money' => -floatval($xr['xima_amount']),
+                        'before' => $before, 'after' => $after,
+                        'memo' => '后台撤单返水冲正：' . $bet['order_no'], 'createtime' => time(),
+                    ]);
                 }
-                Db::name('xima_record')->where('bet_order_no', $bet['order_no'])->update([
-                    'status' => 2, 'cancel_time' => time(), 'cancel_reason' => '管理员撤销投注', 'updatetime' => time(),
-                ]);
-            } catch (\Exception $e) {}
+            }
+            Db::name('xima_record')->where('bet_order_no', $bet['order_no'])->update([
+                'status' => 2, 'cancel_time' => time(), 'cancel_reason' => '管理员撤销投注', 'updatetime' => time(),
+            ]);
 
             Db::commit();
             return json(['code' => 1, 'msg' => '撤销成功，已退还 ¥' . $bet['total_amount']]);

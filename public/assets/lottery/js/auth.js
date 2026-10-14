@@ -163,7 +163,7 @@ var LotteryAuth = (function() {
             }
         }
         
-        // 两端个人中心只展示后台洗码配置；旧缓存缺少新字段时显示 --，不回退个人比例。
+        // 两端仅展示新代理模式的层级返水比例；历史账号不参与返水。
         if (u) {
             var rates = Array.isArray(u.xima_rates) ? u.xima_rates : [];
             function formatXimaRate(field) {
