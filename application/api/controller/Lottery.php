@@ -953,9 +953,11 @@ class Lottery extends Api
         } catch (\think\exception\HttpResponseException $e) {
             // $this->success / $this->error 内部抛的，必须原样抛出
             throw $e;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Db::rollback();
-            $this->error('投注失败: ' . $e->getMessage());
+            $errorId = 'BET-' . date('YmdHis') . '-' . $userId;
+            \think\Log::error($errorId . ' 投注事务失败: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            $this->error('投注失败，请联系管理员并提供编号 ' . $errorId);
         }
         $this->success('投注成功', [
             'order_no'     => $orderNo,
