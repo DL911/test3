@@ -52,6 +52,8 @@ class Agent extends Api
             $item['date'] = date('Y-m-d H:i', $item['createtime']);
             $item['account_type'] = intval($item['is_agent']) === 1 ? 'agent' : 'user';
             $item['account_type_text'] = intval($item['is_agent']) === 1 ? '代理用户' : '普通用户';
+            $item['status_text'] = $item['status'] === 'normal' ? '正常' : '已禁用';
+            $item['status_action_text'] = $item['status'] === 'normal' ? '禁用' : '启用';
             $item['rebate_rate'] = floatval($item['self_rebate_rate']);
             $item['rebate_rate_text'] = $this->rateText($item['rebate_rate']);
             $item['rate_gap'] = max(0, floatval($parent['self_rebate_rate']) - $item['rebate_rate']);
