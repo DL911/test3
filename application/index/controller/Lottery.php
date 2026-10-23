@@ -181,6 +181,12 @@ class Lottery extends Frontend
         return $this->view->fetch('lottery/pc_agent');
     }
 
+    /** PC 与手机共用的代理团队记录页。 */
+    public function agentRecords()
+    {
+        return $this->view->fetch('lottery/agent_records');
+    }
+
     /**
      * 移动端大厅
      */

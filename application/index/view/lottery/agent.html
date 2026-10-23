@@ -140,6 +140,7 @@
         <div class="lm-tab active" data-target="teamList">直推列表</div>
         <div class="lm-tab" data-target="commList">佣金明细</div>
     </div>
+    <div style="margin:12px 16px;"><a href="/index.php/index/lottery/agentRecords">查看团队投注与划转记录 →</a></div>
 
     <!-- 列表区 -->
     <div class="lm-safe-bottom" style="margin-top:8px;">
@@ -150,6 +151,7 @@
     <div class="lm-toast" id="toastContainer"></div>
 
     <script src="/assets/lottery/js/auth.js"></script>
+    <script src="/assets/lottery/js/agent-transfer.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         if (!LotteryAuth.isLoggedIn()) {
@@ -251,7 +253,7 @@
                     res.data.forEach(function(item) {
                         html += '<div class="list-item">' +
                                 '<div><div class="list-title">' + item.name + ' · ' + item.account_type_text + '</div><div class="list-time">注册: ' + item.date + ' · 下级 '+item.sub_count+' 人</div></div>' +
-                                '<div style="text-align:right;"><div class="list-val" style="font-size:14px;">'+item.rebate_rate_text+'</div><div class="list-time">我的级差 '+item.rate_gap_text+'</div><div style="display:flex;gap:4px;justify-content:flex-end;flex-wrap:wrap;margin-top:5px;"><button onclick="adjustRate('+item.id+','+(item.rebate_rate*100)+')" style="border:0;background:#eef4ff;color:#1677ff;border-radius:10px;padding:4px 8px;">调比例</button><button onclick="resetPassword('+item.id+')" style="border:0;background:#fff7e6;color:#d46b08;border-radius:10px;padding:4px 8px;">重置密码</button><button onclick="toggleStatus('+item.id+')" style="border:0;background:#fff1f0;color:#cf1322;border-radius:10px;padding:4px 8px;">启停</button></div></div>' +
+                                '<div style="text-align:right;"><div class="list-val" style="font-size:14px;">'+item.rebate_rate_text+'</div><div class="list-time">余额 ¥'+parseFloat(item.money||0).toFixed(2)+' · 我的级差 '+item.rate_gap_text+'</div><div style="display:flex;gap:4px;justify-content:flex-end;flex-wrap:wrap;margin-top:5px;"><button onclick="transferBalance('+item.id+',\'give\')">加款</button><button onclick="transferBalance('+item.id+',\'take\')">扣款</button><button onclick="adjustRate('+item.id+','+(item.rebate_rate*100)+')" style="border:0;background:#eef4ff;color:#1677ff;border-radius:10px;padding:4px 8px;">调比例</button><button onclick="resetPassword('+item.id+')" style="border:0;background:#fff7e6;color:#d46b08;border-radius:10px;padding:4px 8px;">重置密码</button><button onclick="toggleStatus('+item.id+')" style="border:0;background:#fff1f0;color:#cf1322;border-radius:10px;padding:4px 8px;">启停</button></div></div>' +
                                 '</div>';
                     });
                 } else {

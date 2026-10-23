@@ -45,7 +45,7 @@ class Agent extends Api
         $userId = $this->auth->id;
         $parent = $this->currentUser();
         $list = Db::name('user')->where('pid', $userId)
-            ->field('id,username,nickname,mobile,is_agent,can_open_account,self_rebate_rate,status,createtime')
+            ->field('id,username,nickname,mobile,money,is_agent,can_open_account,self_rebate_rate,status,createtime')
             ->order('createtime', 'desc')->select();
         foreach ($list as &$item) {
             $item['name'] = $item['nickname'] ?: $item['username'];
@@ -60,6 +60,109 @@ class Agent extends Api
         }
         unset($item);
         $this->success('success', $list);
+    }
+
+    /** 代理与直属账号之间划转余额，充值仍由后台客服向代理账户办理。 */
+    public function transferBalance()
+    {
+        $agent = $this->currentUser(true);
+        $subId = $this->request->post('user_id/d', 0);
+        $direction = $this->request->post('direction', '');
+        $amountText = trim((string)$this->request->post('amount', ''));
+        $remark = trim((string)$this->request->post('remark', ''));
+        $requestId = trim((string)$this->request->post('request_id', ''));
+        if (!in_array($direction, ['give', 'take'], true)) $this->error('划转方向不正确');
+        if (!preg_match('/^\d{1,10}(\.\d{1,2})?$/', $amountText) || floatval($amountText) <= 0) $this->error('金额须为正数，最多两位小数');
+        if ($direction === 'take' && ($remark === '' || mb_strlen($remark) > 200)) $this->error('扣款原因必填，最多200字');
+        if (mb_strlen($remark) > 200) $this->error('备注最多200字');
+        if (!preg_match('/^[A-Za-z0-9-]{16,64}$/', $requestId)) $this->error('请求标识不正确，请刷新页面重试');
+        $cents = intval(round(floatval($amountText) * 100));
+        if ($cents <= 0) $this->error('金额不正确');
+        $amount = number_format($cents / 100, 2, '.', '');
+        Db::startTrans();
+        try {
+            $previous = Db::name('agent_balance_transfer')->where('agent_id', $agent['id'])->where('request_id', $requestId)->find();
+            if ($previous) throw new \RuntimeException('该操作已提交，请查看划转记录');
+            // 统一按 ID 顺序锁定账户，避免相反方向并发划转死锁。
+            $ids = [intval($agent['id']), intval($subId)];
+            if ($subId <= 0 || $subId === intval($agent['id'])) throw new \RuntimeException('直属账号不正确');
+            sort($ids, SORT_NUMERIC);
+            $users = [];
+            foreach ($ids as $id) $users[$id] = Db::name('user')->where('id', $id)->lock(true)->field('id,pid,agent_level,status,money')->find();
+            $parent = $users[intval($agent['id'])];
+            $child = $users[intval($subId)];
+            if (!$parent || $parent['status'] !== 'normal' || !$child || intval($child['pid']) !== intval($agent['id']) || intval($child['agent_level']) !== intval($parent['agent_level']) + 1) throw new \RuntimeException('只能操作新代理体系的直属账号');
+            $fromId = $direction === 'give' ? intval($agent['id']) : intval($subId);
+            $toId = $direction === 'give' ? intval($subId) : intval($agent['id']);
+            $fromBefore = intval(round(floatval($users[$fromId]['money']) * 100));
+            $toBefore = intval(round(floatval($users[$toId]['money']) * 100));
+            if ($fromBefore < $cents) throw new \RuntimeException('转出账户余额不足');
+            $fromAfter = number_format(($fromBefore - $cents) / 100, 2, '.', '');
+            $toAfter = number_format(($toBefore + $cents) / 100, 2, '.', '');
+            $now = time();
+            $orderNo = 'AT' . date('YmdHis') . str_pad($agent['id'], 6, '0', STR_PAD_LEFT) . mt_rand(100000, 999999);
+            Db::name('user')->where('id', $fromId)->update(['money' => $fromAfter, 'updatetime' => $now]);
+            Db::name('user')->where('id', $toId)->update(['money' => $toAfter, 'updatetime' => $now]);
+            Db::name('agent_balance_transfer')->insert(['order_no' => $orderNo, 'request_id' => $requestId, 'agent_id' => $agent['id'], 'sub_id' => $subId, 'direction' => $direction, 'amount' => $amount, 'remark' => $remark, 'from_user_id' => $fromId, 'to_user_id' => $toId, 'from_before' => $fromBefore / 100, 'from_after' => $fromAfter, 'to_before' => $toBefore / 100, 'to_after' => $toAfter, 'operator_ip' => $this->request->ip(), 'createtime' => $now]);
+            Db::name('money_log')->insert(['user_id' => $fromId, 'money' => -floatval($amount), 'before' => $fromBefore / 100, 'after' => $fromAfter, 'memo' => '代理余额划转转出：' . $orderNo, 'createtime' => $now]);
+            Db::name('money_log')->insert(['user_id' => $toId, 'money' => floatval($amount), 'before' => $toBefore / 100, 'after' => $toAfter, 'memo' => '代理余额划转转入：' . $orderNo, 'createtime' => $now]);
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            $this->error('划转失败：' . $e->getMessage());
+        }
+        $this->success('划转成功', ['order_no' => $orderNo, 'agent_balance' => $direction === 'give' ? $fromAfter : $toAfter, 'sub_balance' => $direction === 'give' ? $toAfter : $fromAfter]);
+    }
+
+    public function transferHistory()
+    {
+        $agent = $this->currentUser(true);
+        $page = max(1, $this->request->get('page/d', 1));
+        $limit = min(50, max(1, $this->request->get('limit/d', 20)));
+        $query = Db::name('agent_balance_transfer')->alias('t')->join('user u', 'u.id=t.sub_id')->where('t.agent_id', $agent['id']);
+        $total = (clone $query)->count();
+        $list = $query->field('t.*,u.username as sub_name')->order('t.id', 'desc')->page($page, $limit)->select();
+        foreach ($list as &$row) $row['date'] = date('Y-m-d H:i:s', $row['createtime']);
+        $this->success('success', ['list' => $list, 'total' => $total]);
+    }
+
+    public function teamBets()
+    {
+        $agent = $this->currentUser(true);
+        $rootId = intval($agent['id']);
+        $directId = $this->request->get('direct_id/d', 0);
+        $keyword = trim((string)$this->request->get('keyword', ''));
+        $type = $this->request->get('lottery_type/d', 0);
+        $status = $this->request->get('status', '');
+        $start = $this->request->get('date_start', date('Y-m-d', strtotime('-6 days')));
+        $end = $this->request->get('date_end', date('Y-m-d'));
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $end) || strtotime($start) > strtotime($end) || strtotime($end) - strtotime($start) > 31 * 86400) $this->error('请选择不超过31天的有效日期范围');
+        $page = max(1, $this->request->get('page/d', 1));
+        $limit = min(50, max(1, $this->request->get('limit/d', 20)));
+        $frontier = [$rootId]; $seen = [$rootId => true]; $branches = [];
+        for ($depth = 1; $depth <= 100 && $frontier; $depth++) {
+            $children = Db::name('user')->where('pid', 'in', $frontier)->where('agent_level', '>', 0)->field('id,pid')->select();
+            $frontier = [];
+            foreach ($children as $child) {
+                $id = intval($child['id']); $pid = intval($child['pid']);
+                if (isset($seen[$id])) continue;
+                $seen[$id] = true; $frontier[] = $id;
+                $branches[$id] = ['direct_id' => $pid === $rootId ? $id : $branches[$pid]['direct_id'], 'distance' => $depth];
+            }
+        }
+        $ids = array_keys($branches);
+        if ($directId) $ids = array_values(array_filter($ids, function ($id) use ($branches, $directId) { return $branches[$id]['direct_id'] === $directId; }));
+        if (!$ids) $this->success('success', ['list' => [], 'total' => 0, 'bet_amount' => 0, 'win_amount' => 0]);
+        $query = Db::name('lottery_bet')->alias('b')->join('user u', 'u.id=b.user_id')->where('b.user_id', 'in', $ids)->where('b.createtime', 'between', [strtotime($start), strtotime($end) + 86399]);
+        if ($type) $query->where('b.lottery_type', $type);
+        if ($status !== '' && in_array((string)$status, ['0','1','2','3'], true)) $query->where('b.status', intval($status));
+        if ($keyword !== '') $query->where('b.order_no|u.username', 'like', '%' . addcslashes($keyword, '%_\\') . '%');
+        $total = (clone $query)->count();
+        $betAmount = (clone $query)->where('b.status', '<>', 3)->sum('b.total_amount');
+        $winAmount = (clone $query)->where('b.status', 1)->sum('b.win_amount');
+        $list = $query->field('b.id,b.order_no,b.user_id,b.lottery_type,b.period,b.play_type,b.panel_type,b.bet_content,b.total_amount,b.win_amount,b.status,b.createtime,u.username')->order('b.createtime desc,b.id desc')->page($page, $limit)->select();
+        foreach ($list as &$row) { $row['date'] = date('Y-m-d H:i:s', $row['createtime']); $row['direct_id'] = $branches[intval($row['user_id'])]['direct_id']; $row['distance'] = $branches[intval($row['user_id'])]['distance']; }
+        $this->success('success', ['list' => $list, 'total' => $total, 'bet_amount' => round($betAmount, 2), 'win_amount' => round($winAmount, 2)]);
     }
 
     public function createAccount()
