@@ -181,11 +181,11 @@ body.m-bet-page { padding-bottom: calc(70px + var(--safe-bottom)); padding-top: 
    ============================================ */
 .m-panel-toggle {
     display: flex; align-items: center; gap: 0; padding: 8px 12px;
-    background: white; border-bottom: 1px solid var(--border);
+    background: white; border-bottom: 1px solid var(--border); overflow-x: auto;
 }
 .m-panel-btn {
     padding: 6px 20px; border-radius: 20px; font-size: 13px; font-weight: 600;
-    color: var(--text-secondary); cursor: pointer; transition: all 0.2s;
+    color: var(--text-secondary); cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
 }
 .m-panel-btn.active {
     background: linear-gradient(135deg, #1890ff, #096dd9); color: white;

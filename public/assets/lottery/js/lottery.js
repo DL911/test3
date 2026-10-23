@@ -885,9 +885,9 @@ var BetPage = (function() {
 
     /* --------------------------------------------------------------- 盘口切换 --------------------------------------------------------------- */
     function initPanelToggle() {
-        document.querySelectorAll('.panel-toggle-btn, .m-panel-btn').forEach(function(btn) {
+        document.querySelectorAll('.panel-toggle-btn[data-panel], .m-panel-btn[data-panel]').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                document.querySelectorAll('.panel-toggle-btn, .m-panel-btn').forEach(function(b){b.classList.remove('active');});
+                document.querySelectorAll('.panel-toggle-btn[data-panel], .m-panel-btn[data-panel]').forEach(function(b){b.classList.remove('active');});
                 btn.classList.add('active');
                 state.panelType = btn.dataset.panel;
                 state.selectedBets = [];

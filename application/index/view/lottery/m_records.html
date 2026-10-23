@@ -525,7 +525,7 @@
         list.forEach(function(r){
             var typeName = typeNames[r.lottery_type] || '未知';
             var typeCls = typeClass[r.lottery_type] || 'fc3d';
-            var playName = playNames[r.play_type] || r.play_type;
+            var playName = r.play_type === 'quick' ? '快译模式' : (playNames[r.play_type] || r.play_type);
             var subName = playNames[r.play_sub] || r.play_sub || '';
             // play_sub 白名单：只有真正按位区分的玩法才显示位置标签
             // 其他玩法的 play_sub='baiwei' 是前端面板默认值，不应显示
@@ -548,7 +548,10 @@
             try {
                 var bets = JSON.parse(r.bet_content);
                 if(Array.isArray(bets)) {
-                    contentHtml = formatBetContent(bets, r.play_type, r.play_sub);
+                    if (r.play_type === 'quick') {
+                        var quickNames={direct:'三码直选',onepos:'一码定位',twopos:'两码定位',sumodd:'和值单',sumeven:'和值双',sumbig:'和值大',sumsmall:'和值小',posodd:'位置单',poseven:'位置双',posbig:'位置大',possmall:'位置小'};
+                        contentHtml=bets.map(function(x){return '<span class="bet-tag">'+(quickNames[x.play]||'快译')+' '+(x.number||'')+' ¥'+Number(x.amount||0).toFixed(2)+'</span>'}).join(' ');
+                    } else contentHtml = formatBetContent(bets, r.play_type, r.play_sub);
                 }
             } catch(e) { contentHtml = r.bet_content || ''; }
 

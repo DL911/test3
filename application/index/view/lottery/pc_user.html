@@ -607,7 +607,7 @@
                     qe_zuxuan_fushi:'前二组选复式',qe_zuxuan_danshi:'前二组选单式',qe_zuxuan_hezhi:'前二组选和值',qe_zuxuan_baodan:'前二组选包胆',
                     he_zx_fushi:'后二直选复式',he_zx_danshi:'后二直选单式',he_zx_hezhi:'后二直选和值',he_zx_kuadu:'后二直选跨度',
                     he_zuxuan_fushi:'后二组选复式',he_zuxuan_danshi:'后二组选单式',he_zuxuan_hezhi:'后二组选和值',he_zuxuan_baodan:'后二组选包胆',
-                    dingweidan:'定位胆',dxds:'大小单双'
+                    dingweidan:'定位胆',dxds:'大小单双',quick:'快译模式'
                 };
                 var playName = '';
                 var subLabelMap = {baiwei:'百位',shiwei:'十位',gewei:'个位',baishi:'百十',baige:'百个',shige:'十个',zonghe:'总和',longhu:'龙虎'};
@@ -624,6 +624,9 @@
                 }
                 // 投注内容解析
                 var betContent = parseBetDisplay(r.bet_content || r.bets || '');
+                if (r.play_type === 'quick') {
+                    try { betContent = JSON.parse(r.bet_content || '[]').map(function(x){ return (x.play||'快译')+' '+(x.number||'')+' ¥'+Number(x.amount||0).toFixed(2); }).join('；'); } catch(e) { betContent='快译注单'; }
+                }
                 var winAmount = parseFloat(r.win_amount || 0);
                 html += '<tr style="border-bottom:1px solid #f0f0f0;">';
                 html += '<td style="padding:10px 8px;">' + lotteryName + '</td>';

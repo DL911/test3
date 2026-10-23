@@ -453,6 +453,9 @@ class DrawService
      */
     public static function calcWinAmount($bet, $betContent, $numbersArr, $sumValue, $oddsMap, $oddsMap2 = [])
     {
+        if ($bet['panel_type'] === 'quick') {
+            return QuickBetService::award($betContent, implode('', $numbersArr));
+        }
         $totalWin = 0;
         $playType = $bet['play_type'];
         $panelType = $bet['panel_type'];

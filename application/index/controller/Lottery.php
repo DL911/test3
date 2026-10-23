@@ -99,6 +99,14 @@ class Lottery extends Frontend
         return $this->view->fetch();
     }
 
+    public function quickBet()
+    {
+        $type = $this->request->param('type', 'fc3d');
+        if (!in_array($type, ['fc3d', 'pl3'], true)) $type = 'fc3d';
+        $this->view->assign('lottery_type', $type);
+        return $this->view->fetch('lottery/quick_bet');
+    }
+
     /**
      * 登录页面
      */
