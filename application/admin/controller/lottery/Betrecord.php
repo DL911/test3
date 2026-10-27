@@ -388,7 +388,7 @@ class Betrecord extends Backend
                     $before = floatval($user['money']);
                     $after = round($before - floatval($xr['xima_amount']), 2);
                     Db::name('user')->where('id', $xr['user_id'])->update(['money' => $after]);
-                    Db::name('money_log')->insert([
+                    Db::name('user_money_log')->insert([
                         'user_id' => $xr['user_id'], 'money' => -floatval($xr['xima_amount']),
                         'before' => $before, 'after' => $after,
                         'memo' => '后台撤单返水冲正：' . $bet['order_no'], 'createtime' => time(),

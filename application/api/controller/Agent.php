@@ -106,8 +106,8 @@ class Agent extends Api
             Db::name('user')->where('id', $fromId)->update(['money' => $fromAfter, 'updatetime' => $now]);
             Db::name('user')->where('id', $toId)->update(['money' => $toAfter, 'updatetime' => $now]);
             Db::name('agent_balance_transfer')->insert(['order_no' => $orderNo, 'request_id' => $requestId, 'agent_id' => $agent['id'], 'sub_id' => $subId, 'direction' => $direction, 'amount' => $amount, 'remark' => $remark, 'from_user_id' => $fromId, 'to_user_id' => $toId, 'from_before' => $fromBefore / 100, 'from_after' => $fromAfter, 'to_before' => $toBefore / 100, 'to_after' => $toAfter, 'operator_ip' => $this->request->ip(), 'createtime' => $now]);
-            Db::name('money_log')->insert(['user_id' => $fromId, 'money' => -floatval($amount), 'before' => $fromBefore / 100, 'after' => $fromAfter, 'memo' => '代理余额划转转出：' . $orderNo, 'createtime' => $now]);
-            Db::name('money_log')->insert(['user_id' => $toId, 'money' => floatval($amount), 'before' => $toBefore / 100, 'after' => $toAfter, 'memo' => '代理余额划转转入：' . $orderNo, 'createtime' => $now]);
+            Db::name('user_money_log')->insert(['user_id' => $fromId, 'money' => -floatval($amount), 'before' => $fromBefore / 100, 'after' => $fromAfter, 'memo' => '代理余额划转转出：' . $orderNo, 'createtime' => $now]);
+            Db::name('user_money_log')->insert(['user_id' => $toId, 'money' => floatval($amount), 'before' => $toBefore / 100, 'after' => $toAfter, 'memo' => '代理余额划转转入：' . $orderNo, 'createtime' => $now]);
             Db::commit();
         } catch (\Throwable $e) {
             Db::rollback();

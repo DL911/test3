@@ -1097,7 +1097,7 @@ class Lottery extends Api
                     $before = floatval($beneficiary['money']);
                     $after = round($before - floatval($xr['xima_amount']), 2);
                     Db::name('user')->where('id', $xr['user_id'])->update(['money' => $after]);
-                    Db::name('money_log')->insert([
+                    Db::name('user_money_log')->insert([
                         'user_id' => $xr['user_id'],
                         'money' => -floatval($xr['xima_amount']),
                         'before' => $before,

@@ -136,7 +136,7 @@ class Xima extends Api
             $balanceBefore = floatval($lockedUser['money']);
             Db::name('user')->where('id', $userId)->setInc('money', $totalAmount);
             $newBalance = Db::name('user')->where('id', $userId)->value('money');
-            Db::name('money_log')->insert([
+            Db::name('user_money_log')->insert([
                 'user_id' => $userId,
                 'money' => $totalAmount,
                 'before' => $balanceBefore,
