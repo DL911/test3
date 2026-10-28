@@ -549,8 +549,8 @@
                 var bets = JSON.parse(r.bet_content);
                 if(Array.isArray(bets)) {
                     if (r.play_type === 'quick') {
-                        var quickNames={direct:'三码直选',onepos:'一码定位',twopos:'两码定位',sumodd:'和值单',sumeven:'和值双',sumbig:'和值大',sumsmall:'和值小',posodd:'位置单',poseven:'位置双',posbig:'位置大',possmall:'位置小'};
-                        contentHtml=bets.map(function(x){return '<span class="bet-tag">'+(quickNames[x.play]||'快译')+' '+(x.number||'')+' ¥'+Number(x.amount||0).toFixed(2)+'</span>'}).join(' ');
+                        var quickText=String(r.quick_content_display||'快译注单').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]});
+                        contentHtml='<span class="bet-tag">'+quickText+'</span>';
                     } else contentHtml = formatBetContent(bets, r.play_type, r.play_sub);
                 }
             } catch(e) { contentHtml = r.bet_content || ''; }

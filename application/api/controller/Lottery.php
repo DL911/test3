@@ -1041,6 +1041,12 @@ class Lottery extends Api
             ->order('createtime', 'desc')
             ->page($page, $limit)
             ->select();
+        foreach ($list as &$betRow) {
+            if ($betRow['play_type'] === 'quick') {
+                $betRow['quick_content_display'] = \app\common\service\QuickBetService::displayContent($betRow['bet_content']);
+            }
+        }
+        unset($betRow);
 
         $this->success('OK', [
             'list'       => $list,

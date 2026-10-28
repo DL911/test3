@@ -163,7 +163,7 @@ class Agent extends Api
         $betAmount = (clone $query)->where('b.status', '<>', 3)->sum('b.total_amount');
         $winAmount = (clone $query)->where('b.status', 1)->sum('b.win_amount');
         $list = $query->field('b.id,b.order_no,b.user_id,b.lottery_type,b.period,b.play_type,b.panel_type,b.bet_content,b.total_amount,b.win_amount,b.status,b.createtime,u.username')->order('b.createtime desc,b.id desc')->page($page, $limit)->select();
-        foreach ($list as &$row) { $row['date'] = date('Y-m-d H:i:s', $row['createtime']); $row['direct_id'] = $branches[intval($row['user_id'])]['direct_id']; $row['distance'] = $branches[intval($row['user_id'])]['distance']; }
+        foreach ($list as &$row) { $row['date'] = date('Y-m-d H:i:s', $row['createtime']); $row['direct_id'] = $branches[intval($row['user_id'])]['direct_id']; $row['distance'] = $branches[intval($row['user_id'])]['distance']; if ($row['play_type'] === 'quick') $row['quick_content_display'] = \app\common\service\QuickBetService::displayContent($row['bet_content']); }
         $this->success('success', ['list' => $list, 'total' => $total, 'bet_amount' => round($betAmount, 2), 'win_amount' => round($winAmount, 2)]);
     }
 

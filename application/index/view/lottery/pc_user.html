@@ -625,7 +625,7 @@
                 // 投注内容解析
                 var betContent = parseBetDisplay(r.bet_content || r.bets || '');
                 if (r.play_type === 'quick') {
-                    try { betContent = JSON.parse(r.bet_content || '[]').map(function(x){ return (x.play||'快译')+' '+(x.number||'')+' ¥'+Number(x.amount||0).toFixed(2); }).join('；'); } catch(e) { betContent='快译注单'; }
+                    betContent = String(r.quick_content_display || '快译注单').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]});
                 }
                 var winAmount = parseFloat(r.win_amount || 0);
                 html += '<tr style="border-bottom:1px solid #f0f0f0;">';

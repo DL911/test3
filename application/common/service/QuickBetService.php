@@ -12,6 +12,24 @@ class QuickBetService
         for($n=0;$n<=13;$n++)$c['sum_'.$n]='和值 '.$n.'／'.(27-$n);
         return $c;
     }
+    public static function displayContent($raw)
+    {
+        $items = json_decode((string)$raw, true);
+        if (!is_array($items)) return '快译注单';
+        $catalog = self::catalog();
+        $positions = ['0'=>'百位','1'=>'十位','2'=>'个位','01'=>'百十','02'=>'百个','12'=>'十个'];
+        $parts = [];
+        foreach ($items as $item) {
+            if (!is_array($item)) continue;
+            $play = (string)($item['play'] ?? '');
+            $name = $catalog[$play] ?? '快译玩法';
+            $number = (string)($item['number'] ?? '');
+            $pos = (string)($item['pos'] ?? '');
+            $amount = number_format((float)($item['amount'] ?? 0), 2, '.', '');
+            $parts[] = $name . ($number !== '' ? ' ' . $number : '') . ($pos !== '' ? ' ' . ($positions[$pos] ?? '位置' . $pos) : '') . ' ¥' . $amount;
+        }
+        return $parts ? implode('；', $parts) : '快译注单';
+    }
     // lottery_type=0 is the single shared configuration for all supported games.
     public static function settings($type){return Db::name('quick_bet_odds')->where('lottery_type',0)->order('id')->select();}
     public static function validateItem($i)
