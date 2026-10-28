@@ -11,7 +11,7 @@ class Quickodds extends Backend
     public function index()
     {
         if (!$this->request->isAjax()) return $this->view->fetch();
-        $rows = Db::name('quick_bet_odds')->order('lottery_type,id')->select();
+        $rows = Db::name('quick_bet_odds')->where('lottery_type', 0)->order('id')->select();
         return json(['code' => 1, 'data' => ['rows' => $rows, 'catalog' => QuickBetService::catalog()]]);
     }
 
@@ -27,7 +27,7 @@ class Quickodds extends Backend
         Db::startTrans();
         try {
             $row = Db::name('quick_bet_odds')->where('id', $id)->lock(true)->find();
-            if (!$row || !isset(QuickBetService::catalog()[$row['play_code']])) throw new \RuntimeException('不支持该玩法');
+            if (!$row || intval($row['lottery_type']) !== 0 || !isset(QuickBetService::catalog()[$row['play_code']])) throw new \RuntimeException('不支持该玩法');
             Db::name('quick_bet_odds')->where('id', $id)->update($new);
             Db::name('quick_bet_odds_log')->insert(['odds_id' => $id, 'admin_id' => $this->auth->id, 'before_data' => json_encode($row, JSON_UNESCAPED_UNICODE), 'after_data' => json_encode($new, JSON_UNESCAPED_UNICODE), 'createtime' => time()]);
             Db::commit();
