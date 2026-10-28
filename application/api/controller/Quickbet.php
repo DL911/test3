@@ -43,6 +43,8 @@ class Quickbet extends Api
                 $this->success('该批注单已投注成功', ['order_no' => $previous['order_no']]);
             }
             $draw = Db::name('lottery_draw')->where('lottery_type', $lotteryType)->where('period', $period)->where('status', 0)->find();
+            $latestSettledPeriod = Db::name('lottery_draw')->where('lottery_type', $lotteryType)->where('status', 1)->max('period');
+            if ($latestSettledPeriod && (int)$period <= (int)$latestSettledPeriod) throw new \RuntimeException('该期号已过期，请刷新期号');
             if (!$draw || strtotime($draw['draw_time']) - time() <= intval($config['bet_close_seconds'])) throw new \RuntimeException('该期已封盘，请重新选择期号');
             $rows = Db::name('quick_bet_odds')->where('lottery_type', 0)->order('id')->lock(true)->select();
             if (!$version || $version !== $this->version($rows)) throw new \RuntimeException('玩法赔率已调整，请重新核对注单');

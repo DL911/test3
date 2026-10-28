@@ -33,6 +33,11 @@
         .pc-tab.active { background:linear-gradient(135deg,#1a3a6c,#0d6efd); color:#fff; }
         .pc-tab:hover:not(.active) { background:#e8f0fe; color:#333; }
         .pc-empty { text-align:center; padding:40px; color:#999; }
+        .agent-records-link { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:17px 22px; margin:0 0 20px; border-radius:12px; background:linear-gradient(135deg,#183c79,#1164ed); color:#fff; text-decoration:none; box-shadow:0 6px 18px rgba(17,100,237,.18); }
+        .agent-records-link:hover,.agent-records-link:focus { color:#fff; text-decoration:none; box-shadow:0 8px 22px rgba(17,100,237,.3); }
+        .agent-records-link strong { display:block; font-size:17px; }.agent-records-link small { display:block; margin-top:4px; color:rgba(255,255,255,.85); font-size:12px; }
+        .agent-records-link .fa-arrow-right { font-size:20px; }
+        @media(max-width:600px){.agent-records-link{padding:15px 16px}.agent-records-link strong{font-size:15px}}
     </style>
 </head>
 <body class="lottery-page">
@@ -74,7 +79,7 @@
         </div>
 
         <!-- 下级列表 & 佣金记录 -->
-        <p><a href="/index.php/index/lottery/agentRecords">查看团队投注与划转记录 →</a></p>
+        <a class="agent-records-link" href="/index.php/index/lottery/agentRecords"><span><strong><i class="fa-solid fa-list-check"></i> 查看团队投注与划转记录</strong><small>查询团队投注明细、直属加扣款记录</small></span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
         <div class="pc-card">
             <div class="pc-tabs">
                 <div class="pc-tab active" onclick="switchAgTab('team')">下级列表</div>

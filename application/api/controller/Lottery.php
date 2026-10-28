@@ -219,6 +219,7 @@ class Lottery extends Api
         $next = Db::name('lottery_draw')
             ->where('lottery_type', $lotteryType)
             ->where('status', 0)
+            ->where('period', '>', $latest ? $latest['period'] : '0')
             ->order('draw_time', 'asc')
             ->find();
 
@@ -238,6 +239,7 @@ class Lottery extends Api
             $next = Db::name('lottery_draw')
                 ->where('lottery_type', $lotteryType)
                 ->where('status', 0)
+                ->where('period', '>', $latest ? $latest['period'] : '0')
                 ->order('draw_time', 'asc')
                 ->find();
 
@@ -262,6 +264,7 @@ class Lottery extends Api
                 $next = Db::name('lottery_draw')
                     ->where('lottery_type', $lotteryType)
                     ->where('status', 0)
+                    ->where('period', '>', $latest['period'])
                     ->order('draw_time', 'asc')
                     ->find();
             }
@@ -700,6 +703,12 @@ class Lottery extends Api
 
         if (!$nextDraw) {
             $this->error('该期号暂不可投注');
+        }
+
+        $latestSettledPeriod = Db::name('lottery_draw')->where('lottery_type', $lotteryType)
+            ->where('status', 1)->max('period');
+        if ($latestSettledPeriod && (int)$period <= (int)$latestSettledPeriod) {
+            $this->error('该期号已过期，请刷新期号');
         }
 
         $countdown = strtotime($nextDraw['draw_time']) - time();
