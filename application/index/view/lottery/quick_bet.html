@@ -157,9 +157,9 @@ el('submit').onclick=function(){
     var total=items.reduce(function(v,x){return v+Number(x.amount)},0);
     if(!confirm('确认投注 '+items.length+' 笔，合计 ¥'+total.toFixed(2)+'，期号 '+period+'？')){result('已取消投注，未扣款',false);return}
     if(!batchId)batchId='Q'+Date.now()+'-'+Math.random().toString(36).slice(2,14);
-    var f=new FormData();f.append('type',game);f.append('period',period);f.append('version',config.version);f.append('request_id',batchId);f.append('raw',el('raw').value);f.append('items',reviewed);
+    var payload=JSON.stringify({type:game,period:period,version:config.version,request_id:batchId,raw:el('raw').value,items:reviewed});
     result('正在提交投注，请勿重复点击…',false);
-    return LotteryAuth.request('/index.php/api/quickbet/place',{method:'POST',body:f}).then(function(r){
+    return LotteryAuth.request('/index.php/api/quickbet/place',{method:'POST',body:payload}).then(function(r){
       if(r.code!==1)throw Error(r.msg||'投注失败');
       result('投注成功，订单号 '+r.data.order_no+'，金额 ¥'+r.data.total_amount,false);
       if(memoryKey){try{memories=S.learnConfirmed(memories,rows).memories;localStorage.setItem(memoryKey,JSON.stringify(memories))}catch(e){}}
