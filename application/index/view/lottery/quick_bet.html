@@ -157,7 +157,9 @@ el('submit').onclick=function(){
     var total=items.reduce(function(v,x){return v+Number(x.amount)},0);
     if(!confirm('确认投注 '+items.length+' 笔，合计 ¥'+total.toFixed(2)+'，期号 '+period+'？')){result('已取消投注，未扣款',false);return}
     if(!batchId)batchId='Q'+Date.now()+'-'+Math.random().toString(36).slice(2,14);
-    var payload=JSON.stringify({type:game,period:period,version:config.version,request_id:batchId,raw:el('raw').value,items:reviewed});
+    // 注单含中文原文，单独编码，避免表单过滤或转义破坏 JSON。
+    var encodedItems=btoa(unescape(encodeURIComponent(reviewed)));
+    var payload=JSON.stringify({type:game,period:period,version:config.version,request_id:batchId,raw:el('raw').value,items_b64:encodedItems});
     result('正在提交投注，请勿重复点击…',false);
     return LotteryAuth.request('/index.php/api/quickbet/place',{method:'POST',body:payload}).then(function(r){
       if(r.code!==1)throw Error(r.msg||'投注失败');

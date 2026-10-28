@@ -30,11 +30,13 @@ class Quickbet extends Api
         $version = trim((string)$this->request->post('version', ''));
         $raw = trim((string)$this->request->post('raw', ''));
         $requestId = trim((string)$this->request->post('request_id', ''));
-        $items = json_decode((string)$this->request->post('items', ''), true);
+        $itemsEncoded = (string)$this->request->post('items_b64', '');
+        $itemsJson = $itemsEncoded !== '' ? base64_decode($itemsEncoded, true) : (string)$this->request->post('items', '');
+        $items = is_string($itemsJson) ? json_decode($itemsJson, true) : null;
         if (!$lotteryType) $this->error('快译彩种参数无效');
         if (!preg_match('/^\d{5,20}$/', $period)) $this->error('快译期号参数无效，请刷新页面');
         if (!preg_match('/^[A-Za-z0-9-]{16,64}$/', $requestId)) $this->error('快译请求编号无效，请刷新页面');
-        if (!is_array($items) || !$items || count($items) > 100) $this->error('快译注单内容无效，请重新快译核对');
+        if (!is_array($items) || !$items || count($items) > 100) $this->error('快译注单传输或解析失败，请刷新页面后重新快译核对');
         if (mb_strlen($raw) > 10000) $this->error('快译原文过长，请分批投注');
         $config = Db::name('lottery_config')->where('code', $type)->where('status', 1)->find();
         if (!$config) $this->error('彩种未开放');
