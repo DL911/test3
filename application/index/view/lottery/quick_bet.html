@@ -29,7 +29,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}.row input,.row select{max-width:180
 <div class="grid"><section class="card"><h2>输入投注内容</h2><p class="muted">使用参考模块的离线规则识别。例：518 581 185 一百直10组。识别结果仍需逐笔核对。</p><textarea id="raw" maxlength="10000" placeholder="输入或粘贴本次投注内容"></textarea><p><button id="recognize" disabled>快译并核对</button> <button class="secondary" id="manual" disabled>手动补充一笔</button></p><p id="message" class="danger"></p></section>
 <aside class="card"><h2>本次投注</h2><p>彩种：<b id="gameLabel"></b></p><p>当前期号：<b id="period">读取中</b></p><p>余额：¥<b id="balance">--</b></p><p>候选：<b id="count">0</b> 笔　合计：<b id="total">¥0.00</b></p><p class="muted">快译只生成候选；确认投注成功后才会真实扣款。后台停用的玩法不能投注。</p></aside></div>
 <section class="card"><h2>逐笔核对</h2><div id="pending"></div><div id="entries" class="muted">尚无候选注单。</div></section>
-<section class="card"><button id="submit" disabled>确认投注</button><p class="muted">提交时服务端重新核对彩种、期号、玩法、赔率及余额；任一项无效，整批不扣款。</p><p id="result"></p></section></div>
+<section class="card"><button id="submit" disabled>确认投注</button><p class="muted">提交时服务端重新核对彩种、期号、玩法、赔率及余额；任一项无效，整批不扣款。</p><p id="result" role="status" aria-live="polite"></p></section></div>
 <dialog id="manualDialog"><h2>手动添加一笔</h2><p class="muted">直接选择玩法、号码、位置和金额，加入后逐笔核对；若从待补充段落进入，则替换该段。未开放玩法不可添加。</p><div class="row"><select id="manualPlay"></select><input id="manualNumber" placeholder="号码；全包/条件玩法留空"><select id="manualPos"><option value="">不指定位置</option><option value="0">百位</option><option value="1">十位</option><option value="2">个位</option><option value="01">百十</option><option value="02">百个</option><option value="12">十个</option></select><input id="manualAmount" type="number" min="0.01" step="0.01" placeholder="每笔金额"></div><p id="manualError" class="danger"></p><p><button id="manualAdd">加入核对</button> <button class="secondary" id="manualClose">关闭</button></p></dialog>
 <dialog id="oddsDialog" aria-labelledby="oddsTitle"><div class="odds-head"><h2 id="oddsTitle">快译玩法赔率</h2><p class="muted">所有彩种共用；赔率表示每投注 1 元中奖返还金额。停用玩法不可投注。</p><input id="oddsSearch" type="search" placeholder="搜索玩法或说明" aria-label="搜索玩法或说明"><p id="oddsSummary" class="muted"></p></div><div id="oddsList"></div><div class="odds-foot"><button id="oddsClose">关闭</button></div></dialog>
 <script src="/assets/lottery/js/auth.js"></script>
@@ -40,10 +40,11 @@ dialog::backdrop{background:rgba(0,0,0,.45)}.row input,.row select{max-width:180
 (function(){
 'use strict';
 var S=window.LotteryRecognitionOdds,game='{$lottery_type}',hostGame=game==='fc3d'?'3D':'P3',name=game==='fc3d'?'福彩3D':'排列三';
-var config=null,oddsRows=[],catalog={},rows=[],items=[],pending=[],period='',batchId='',memories=[],memoryKey='',manualSource=null;
+var config=null,oddsRows=[],catalog={},rows=[],items=[],pending=[],period='',batchId='',memories=[],memoryKey='',manualSource=null,submitting=false;
 function el(id){return document.getElementById(id)}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function msg(v){el('message').textContent=v}
+function result(v,error){el('result').textContent=v;el('result').className=error?'danger':''}
 function rateRow(p){return oddsRows.find(function(x){return x.play_code===p})}
 function formatOdds(value){return String(value).replace(/(\.\d*?[1-9])0+$|\.0+$/,'$1')}
 function active(p){var x=rateRow(p);return x&&Number(x.status)===1&&Number(x.odds)>0}
@@ -105,7 +106,7 @@ function render(){
   el('count').textContent=items.length;el('total').textContent='¥'+total.toFixed(2);
   el('pending').innerHTML=pending.map(function(e,i){var canExplain=e.status==='pending';return '<div class="pending"><b>待补充／不可投注</b><pre>'+esc(e.raw||'')+'</pre><p>'+esc(e.reason||'内容不明确')+'</p>'+(canExplain?'<textarea data-answer="'+i+'" rows="2" placeholder="写出这段原文明确的号码、玩法和金额"></textarea><button data-clarify="'+i+'">按说明重新快译</button> <button class="secondary" data-manual="'+i+'">手动补充一笔</button>':'')+'</div>'}).join('');
   el('entries').innerHTML=items.length?items.map(function(x,i){return '<div class="line">'+(i+1)+'. <b>'+esc(catalog[x.play]||x.play)+'</b>　'+esc(x.number||'条件/全包')+'　位置 '+esc(x.pos||'—')+'　¥'+esc(x.amount)+'　赔率 1:'+esc(formatOdds(x.odds))+'</div>'}).join(''):'暂无可投注候选。';
-  el('submit').disabled=!items.length||!!pending.length||!period;
+  el('submit').disabled=submitting||!items.length||!!pending.length||!period;
   el('pending').querySelectorAll('[data-clarify]').forEach(function(b){b.onclick=function(){var i=Number(b.dataset.clarify),e=pending[i],answer=el('pending').querySelector('[data-answer="'+i+'"]').value.trim();if(!answer)return msg('请先写出明确解释');try{var corrected=S.clarifyOffline(e.raw,answer,e.suggestedEntries||[],{game:hostGame,settings:config.settings,memories:memories});var at=rows.indexOf(e);if(at<0)throw Error('请重新快译后补充');rows.splice.apply(rows,[at,1].concat(corrected));batchId='';render();msg('已按说明重新快译，请核对所有候选')}catch(err){msg(err.message)}}});
   el('pending').querySelectorAll('[data-manual]').forEach(function(b){b.onclick=function(){openManual(pending[Number(b.dataset.manual)])}});
 }
@@ -116,7 +117,7 @@ function recognize(){
   if(hostGame==='P3'&&/(福彩3D|福彩|3[Dd]|(?:^|[\s，,：:])福(?=\s|直选|直|组选|组|组三|组六|一码|两码|和值|\d))/m.test(raw))return msg('原文包含福彩3D标记，请到福彩3D快译页投注');
   try{rows=S.recognizeOffline(raw,{game:hostGame,settings:config.settings,memories:memories});batchId='';render();msg(pending.length?'仍有待补充或未开放玩法，不能提交投注':'请逐笔核对号码、金额和赔率，再确认投注')}catch(e){msg(e.message)}
 }
-function loadDraw(){LotteryAuth.request('/index.php/api/lottery/getLatestDraw?type='+game,{method:'GET'}).then(function(r){var d=r.data||{};period=d.next&&d.next.period||'';el('period').textContent=period||'暂无可投注期号';render()}).catch(function(){el('period').textContent='期号读取失败'})}
+function loadDraw(){return LotteryAuth.request('/index.php/api/lottery/getLatestDraw?type='+game,{method:'GET'}).then(function(r){if(r.code!==1)throw Error(r.msg||'期号读取失败');var d=r.data||{};period=d.is_open&&d.next?d.next.period:'';el('period').textContent=d.next?d.next.period+(d.is_open?'':'（已封盘）'):'暂无可投注期号';render();return d}).catch(function(e){period='';el('period').textContent='期号读取失败';render();throw e})}
 function loadBalance(){LotteryAuth.request('/index.php/api/user/index',{method:'GET'}).then(function(r){if(r.code!==1)return;el('balance').textContent=Number(r.data.money||0).toFixed(2);if(r.data.id){memoryKey='lottery-quick-memory-'+r.data.id+'-'+game;try{memories=S.validateMemories(JSON.parse(localStorage.getItem(memoryKey)||'[]'))}catch(e){memories=[]}}})}
 if(!S||!LotteryAuth.isLoggedIn()){location.href='/index.php/index/lottery/login';return}
 el('gameName').textContent=name;el('gameLabel').textContent=name;
@@ -143,24 +144,30 @@ el('manualAdd').onclick=function(){
   manualSource=null;batchId='';render();el('manualDialog').close();msg('已加入候选；请逐笔核对后确认投注');
 };
 el('submit').onclick=function(){
-  if(pending.length||!items.length||!period)return;
-  el('submit').disabled=true;var previous=config.version,reviewed=JSON.stringify(items);
-  loadSettings().then(function(){
+  if(submitting)return;
+  if(pending.length||!items.length||!period){result('请先处理待补充注单，并确认当前期号仍可投注',true);return}
+  submitting=true;el('submit').disabled=true;result('正在核对期号、赔率和注单，请稍候…',false);
+  var previous=config.version,reviewed=JSON.stringify(items),chosenPeriod=period;
+  loadDraw().then(function(d){
+    if(!d.is_open||period!==chosenPeriod)throw Error('期号已变化或封盘，请重新核对');
+    return loadSettings();
+  }).then(function(){
     if(config.version!==previous)throw Error('后台玩法赔率已变化，请重新快译核对');
     var latest=normalizeRows(rows);if(latest.pending.length||JSON.stringify(latest.items)!==reviewed)throw Error('候选已变化，请重新快译核对');
     var total=items.reduce(function(v,x){return v+Number(x.amount)},0);
-    if(!confirm('确认投注 '+items.length+' 笔，合计 ¥'+total.toFixed(2)+'，期号 '+period+'？')){render();return}
+    if(!confirm('确认投注 '+items.length+' 笔，合计 ¥'+total.toFixed(2)+'，期号 '+period+'？')){result('已取消投注，未扣款',false);return}
     if(!batchId)batchId='Q'+Date.now()+'-'+Math.random().toString(36).slice(2,14);
     var f=new FormData();f.append('type',game);f.append('period',period);f.append('version',config.version);f.append('request_id',batchId);f.append('raw',el('raw').value);f.append('items',reviewed);
+    result('正在提交投注，请勿重复点击…',false);
     return LotteryAuth.request('/index.php/api/quickbet/place',{method:'POST',body:f}).then(function(r){
       if(r.code!==1)throw Error(r.msg||'投注失败');
-      el('result').textContent='投注成功，订单号 '+r.data.order_no+'，金额 ¥'+r.data.total_amount;
+      result('投注成功，订单号 '+r.data.order_no+'，金额 ¥'+r.data.total_amount,false);
       if(memoryKey){try{memories=S.learnConfirmed(memories,rows).memories;localStorage.setItem(memoryKey,JSON.stringify(memories))}catch(e){}}
-      rows=[];batchId='';render();loadBalance();loadDraw();
+      rows=[];batchId='';render();loadBalance();loadDraw().catch(function(){});
     });
-  }).catch(function(e){msg(e.message);render()});
+  }).catch(function(e){result('投注未确认成功：'+(e.message||'请求失败，请检查网络和订单记录后再操作'),true)}).then(function(){submitting=false;render()});
 };
 loadSettings().then(function(){el('recognize').disabled=false;el('manual').disabled=false;render()}).catch(function(e){msg('后台赔率读取失败，原文已保留：'+e.message)});
-loadDraw();loadBalance();
+loadDraw().catch(function(){});loadBalance();
 })();
 </script></body></html>
