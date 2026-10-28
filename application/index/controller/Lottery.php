@@ -208,7 +208,8 @@ class Lottery extends Frontend
      */
     public function m_bet()
     {
-        return $this->view->fetch('lottery/m_bet');
+        // 兼容旧手机入口，统一复用 bet() 的彩种校验和模板变量赋值。
+        return $this->bet();
     }
 
     /**
