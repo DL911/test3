@@ -27,6 +27,7 @@ function metadata(raw){
   return {prefix:raw.slice(0,length),body:raw.slice(length)};
 }
 const moneyPattern='(?:\\d+(?:\\.\\d+)?|[零〇一二两三四五六七八九十百千万]+)';
+const moneyUnit='(?:元|员|块钱|块|倍)?';
 function moneyValue(value){
   if(/^\d+(?:\.\d+)?$/.test(value))return Number(value);
   if(!/^[零〇一二两三四五六七八九十百千万]+$/.test(value))return NaN;
@@ -46,7 +47,7 @@ function clean(raw){
   const date=dateLine;
   if(lines.length>1&&date.test(lines[1])&&/^[\u4e00-\u9fffA-Za-z_]{1,24}$/.test(lines[0]))lines.shift();
   if(lines.length&&date.test(lines[0]))lines.shift();
-  return lines.join('\n').replace(/＊/g,'*').replace(/[➕＋]/g,'+').replace(/[…—－]+/g,' ').replace(/二码/g,'两码');
+  return lines.join('\n').replace(/＊/g,'*').replace(/[➕＋]/g,'+').replace(/[…—－]+/g,' ').replace(/二码/g,'两码').replace(/块钱|员/g,'元');
 }
 function candidate(raw,entries,settings){
   return S.normalizeModelResult({segments:[{raw,question:'',entries}]},raw,{settings}).map(e=>({...e,source:'offline'}));
@@ -62,11 +63,68 @@ function groupPlay(number,kind='group'){
   return 'g6_'+number.length;
 }
 function entry(game,play,numbers,amount,pos=''){return {game,play,numbers,amount:Number(amount),pos,includeBomb:false}}
+function explicitCandidates(raw,text,settings,game){
+  const body=text.replace(markers,'').trim().replace(/^[：:]\s*/,'').replace(/(?<=\d)和(?=\d)/g,' ').replace(/\s+/g,' ');
+  const list='([\\d\\s,，.。;；、/\\-=]+?)';
+  const stake='('+moneyPattern+')\\s*'+moneyUnit;
+  const numbers=value=>value.trim().split(/[\s,，.。;；、/\-=]+/).filter(Boolean);
+  const validNumbers=ns=>ns.length>0&&ns.every(n=>/^\d{2,9}$/.test(n));
+  const make=(play,ns,value,pos='')=>candidate(raw,ns.map(n=>entry(game,play(n),[n],moneyValue(value),pos)),settings);
+  let m=body.match(new RegExp('^'+list+'\\s*各\\s*'+stake+'\\s*(?:防对子|防对|防|放对子|放对|放|组三)\\s*'+stake+'\\s*$'));
+  if(m){const ns=numbers(m[1]),first=moneyValue(m[2]),second=moneyValue(m[3]);
+    if(!validNumbers(ns)||!ns.every(n=>new Set(n).size===n.length)||!Number.isFinite(first)||!Number.isFinite(second))return pending(raw,'各组号码或双金额不明确，请核对。',game);
+    return candidate(raw,ns.flatMap(n=>[entry(game,n.length===2?'two':'g6_'+n.length,[n],first),entry(game,n.length===2?'twog3':'g3_'+n.length,[n],second)]),settings);
+  }
+  m=body.match(new RegExp('^'+list+'\\s*各\\s*'+stake+'\\s*\\+\\s*'+stake+'\\s*$'));
+  if(m){const ns=numbers(m[1]),first=moneyValue(m[2]),second=moneyValue(m[3]);
+    if(!ns.length||!ns.every(n=>/^\d{3,9}$/.test(n)&&new Set(n).size===n.length)||!Number.isFinite(first)||!Number.isFinite(second))return pending(raw,'各组号码或双金额不明确，请核对。',game);
+    return candidate(raw,ns.flatMap(n=>[entry(game,n.length===3?'direct':'g6_'+n.length,[n],first),entry(game,n.length===3?'g6_3':'g3_'+n.length,[n],second)]),settings);
+  }
+  m=body.match(new RegExp('^(\\d{3})\\s+'+stake+'\\s*\\+\\s*'+stake+'\\s*\\+\\s*'+stake+'\\s*$'));
+  if(m){const values=[moneyValue(m[2]),moneyValue(m[3]),moneyValue(m[4])];
+    if(values.some(v=>!Number.isFinite(v))||new Set(m[1]).size!==3)return pending(raw,'三笔组合的号码或金额不明确，请核对。',game);
+    return candidate(raw,['direct','g6_3','g3_3'].map((play,i)=>entry(game,play,[m[1]],values[i])),settings);
+  }
+  m=body.match(new RegExp('^'+list+'\\s*(?:直选|直)\\s*(?:组选六|组六|组选|组|租)\\s*(?:各\\s*)?(?:打\\s*)?'+stake+'\\s*$'));
+  if(m){const ns=numbers(m[1]);if(!ns.length||!ns.every(n=>/^\d{3}$/.test(n))||!Number.isFinite(moneyValue(m[2])))return pending(raw,'直组各买的号码或金额不明确，请核对。',game);
+    if(ns.some(n=>new Set(n).size!==3))return pending(raw,'明写组选六但号码有重复，请核对。',game);
+    return candidate(raw,ns.flatMap(n=>[entry(game,'direct',[n],moneyValue(m[2])),entry(game,'g6_3',[n],moneyValue(m[2]))]),settings);
+  }
+  m=body.match(new RegExp('^'+list+'\\s*(组选六|组六|组选|组|租|组三|防对子|防对|防|放对子|放对|放)\\s*(?:各\\s*)?(?:打\\s*)?'+stake+'\\s*$'));
+  if(m){const ns=numbers(m[1]),kind=/^(组三|防|放)/.test(m[2])?'g3':'g6',value=moneyValue(m[3]);
+    if(!validNumbers(ns)||!Number.isFinite(value))return pending(raw,'号码或金额不明确，请核对。',game);
+    if(ns.some(n=>new Set(n).size!==n.length && !(kind==='g3'&&n.length===3&&new Set(n).size===2)))return pending(raw,kind==='g6'?'明写组选六但号码有重复，请核对。':'组三集合号码有重复，请核对。',game);
+    return make(n=>kind==='g3'?(n.length===2?'twog3':'g3_'+n.length):(n.length===2?'two':'g6_'+n.length),ns,m[3]);
+  }
+  m=body.match(new RegExp('^'+list+'\\s*(?:各\\s*)?(?:打\\s*)?(?:直选|直)\\s*'+stake+'\\s*$'));
+  if(m){const ns=numbers(m[1]);if(ns.length&&ns.every(n=>/^\d{3}$/.test(n))&&Number.isFinite(moneyValue(m[2])))return make(()=> 'direct',ns,m[2]);return pending(raw,'直选号码或金额不明确，请核对。',game)}
+  m=body.match(new RegExp('^((?:(?:百|十|个)(?:位)?[0-9])+?)\\s*各\\s*'+stake+'\\s*$'));
+  if(m){const hits=[...m[1].matchAll(/(百|十|个)(?:位)?([0-9])/g)];if(hits.length&&hits.map(x=>x[0]).join('')===m[1]&&Number.isFinite(moneyValue(m[2])))return candidate(raw,hits.map(x=>entry(game,'onepos',[x[2]],moneyValue(m[2]),{百:'0',十:'1',个:'2'}[x[1]])),settings)}
+  m=body.match(new RegExp('^(百|十|个)(?:位)?([0-9])\\s*(?:打\\s*)?'+stake+'\\s*$'));
+  if(m&&Number.isFinite(moneyValue(m[3])))return candidate(raw,[entry(game,'onepos',[m[2]],moneyValue(m[3]),{百:'0',十:'1',个:'2'}[m[1]])],settings);
+  m=body.match(new RegExp('^(?:胆|独胆|独旦|一码不定位|不定位一码|一码)\\s*([0-9])\\s*(?:打\\s*)?'+stake+'\\s*$'));
+  if(m&&Number.isFinite(moneyValue(m[2])))return candidate(raw,[entry(game,'one',[m[1]],moneyValue(m[2]))],settings);
+  m=body.match(new RegExp('^(?:一码定位)\\s*([0-9*]{3})\\s*(?:打\\s*)?'+stake+'\\s*$'));
+  if(m&&/^\*{0,2}\d\*{0,2}$/.test(m[1])&&m[1].replace(/\*/g,'').length===1&&Number.isFinite(moneyValue(m[2]))){const pos=String(m[1].indexOf(m[1].replace(/\*/g,'')));return candidate(raw,[entry(game,'onepos',[m[1].replace(/\*/g,'')],moneyValue(m[2]),pos)],settings)}
+  m=body.match(new RegExp('^(?:对子全包|对子|队子|对|队)\\s*(?:打\\s*)?'+stake+'\\s*$'));
+  if(m&&Number.isFinite(moneyValue(m[1])))return candidate(raw,[entry(game,'pairall',[],moneyValue(m[1]))],settings);
+  m=body.match(new RegExp('^(?:对子|对|队子|队)\\s*([0-9])\\s*(?:打\\s*)?'+stake+'\\s*$'));
+  if(m&&Number.isFinite(moneyValue(m[2])))return candidate(raw,[entry(game,'pair',[m[1]+m[1]],moneyValue(m[2]))],settings);
+  m=body.match(new RegExp('^(?:对子|对|队子|队)\\s*([0-9])\\1\\s*(?:打\\s*)?'+stake+'\\s*$'));
+  if(m&&Number.isFinite(moneyValue(m[2])))return candidate(raw,[entry(game,'pair',[m[1]+m[1]],moneyValue(m[2]))],settings);
+  m=body.match(new RegExp('^(?:和值|和)?([单双大小])(?:和值|和)?\\s*(?:打\\s*)?'+stake+'\\s*$'));
+  if(m&&/和|值/.test(body)&&Number.isFinite(moneyValue(m[2])))return candidate(raw,[entry(game,{单:'sumodd',双:'sumeven',大:'sumbig',小:'sumsmall'}[m[1]],[],moneyValue(m[2]))],settings);
+  return null;
+}
 function parseBlock(raw,settings,memories,game){
   const remembered=[...memories].reverse().find(r=>r.key===key(raw));
   if(remembered)return candidate(raw,(remembered.entries||[remembered.entry]).map(e=>({...e,game})),settings).map(e=>({...e,learned:true}));
   if(unsafe.test(raw))return pending(raw,'这条内容依赖前文或涉及改单，请补充完整的投注内容。',game);
   let text=clean(raw);
+  if(/^(?:百|十|个)(?:位)?[0-9]\s*=\s*\d+(?:\.\d+)?\s*(?:元|块)?$/.test(text))text=text.replace(/\s*=\s*/,' ');
+  if(text.includes('；')){const parts=text.split('；').map(x=>x.trim()).filter(Boolean);if(parts.length>1){const rows=parts.flatMap(x=>parseBlock(x,settings,memories,game));return rows.every(e=>e.status==='confirmed')?rows:pending(raw,'分段内容有未识别或不明确的投注，请逐段核对。',game)}}
+  const specific=explicitCandidates(raw,text,settings,game);
+  if(specific)return specific;
   const correction=L.knownCorrection(text,settings.rates);
   if(correction)return candidate(raw,correction.map(e=>({...e,game})),settings);
   text=text.replace(/[＝=]\s*\d+(?:\.\d+)?\s*(?:元|块)?\s*$/,'').trim()
