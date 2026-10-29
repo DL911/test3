@@ -9,7 +9,6 @@ class QuickBetService
     {
         $c=['one'=>'一码','onepos'=>'一码定位','two'=>'两码','pair'=>'两码对子','twopos'=>'两码定位','twog3'=>'两码组三','pairall'=>'对子全包','g3all'=>'组三全包','g6all'=>'组六全包','direct'=>'三码直选','g6_3'=>'三码组选六','g3_3'=>'三码组三','bomb'=>'具体豹子','bomball'=>'豹子全包','sumodd'=>'和值单','sumeven'=>'和值双','sumbig'=>'和值大','sumsmall'=>'和值小','posodd'=>'位置单','poseven'=>'位置双','posbig'=>'单位置大','possmall'=>'单位置小'];
         for($n=4;$n<=9;$n++){ $c['g6_'.$n]=$n.'码组六'; $c['g3_'.$n]=$n.'码组三'; }
-        for($n=0;$n<=13;$n++)$c['sum_'.$n]='和值 '.$n.'／'.(27-$n);
         return $c;
     }
     public static function displayContent($raw)
@@ -31,7 +30,14 @@ class QuickBetService
         return $parts ? implode('；', $parts) : '快译注单';
     }
     // lottery_type=0 is the single shared configuration for all supported games.
-    public static function settings($type){return Db::name('quick_bet_odds')->where('lottery_type',0)->order('id')->select();}
+    public static function supportedRows($rows)
+    {
+        $catalog = self::catalog();
+        return array_values(array_filter($rows, function ($row) use ($catalog) {
+            return isset($catalog[$row['play_code']]);
+        }));
+    }
+    public static function settings($type){return self::supportedRows(Db::name('quick_bet_odds')->where('lottery_type',0)->order('id')->select());}
     public static function validateItem($i)
     {
         if(!is_array($i))throw new \RuntimeException('注单格式错误');

@@ -1,6 +1,6 @@
 -- 由管理员手动执行；要求先已执行 upgrade_quick_bet.sql 建表。
 -- lottery_type=0 表示所有彩种共用同一套玩法、赔率、说明和启停。
--- 按 FastMode 当前默认赔率同步48个玩法，全部设为启用。
+-- 按当前可用玩法同步34个赔率，全部设为启用；具体和值14项已下线。
 -- 会覆盖既有共用赔率及开关；后续人工调价/停用后不要重跑。原有按彩种配置行保留但不再使用。
 INSERT INTO `fa_quick_bet_odds` (`lottery_type`,`play_code`,`odds`,`description`,`status`,`updatetime`) VALUES
 (0,'one',3.3,'一码',1,UNIX_TIMESTAMP()),
@@ -36,19 +36,5 @@ INSERT INTO `fa_quick_bet_odds` (`lottery_type`,`play_code`,`odds`,`description`
 (0,'g6_8',2.6,'8码组六',1,UNIX_TIMESTAMP()),
 (0,'g3_8',5.3,'8码组三',1,UNIX_TIMESTAMP()),
 (0,'g6_9',1.8,'9码组六',1,UNIX_TIMESTAMP()),
-(0,'g3_9',4.1,'9码组三',1,UNIX_TIMESTAMP()),
-(0,'sum_0',860,'和值0或27',1,UNIX_TIMESTAMP()),
-(0,'sum_1',300,'和值1或26',1,UNIX_TIMESTAMP()),
-(0,'sum_2',150,'和值2或25',1,UNIX_TIMESTAMP()),
-(0,'sum_3',90,'和值3或24',1,UNIX_TIMESTAMP()),
-(0,'sum_4',60,'和值4或23',1,UNIX_TIMESTAMP()),
-(0,'sum_5',43,'和值5或22',1,UNIX_TIMESTAMP()),
-(0,'sum_6',32,'和值6或21',1,UNIX_TIMESTAMP()),
-(0,'sum_7',24,'和值7或20',1,UNIX_TIMESTAMP()),
-(0,'sum_8',19,'和值8或19',1,UNIX_TIMESTAMP()),
-(0,'sum_9',16,'和值9或18',1,UNIX_TIMESTAMP()),
-(0,'sum_10',14,'和值10或17',1,UNIX_TIMESTAMP()),
-(0,'sum_11',13,'和值11或16',1,UNIX_TIMESTAMP()),
-(0,'sum_12',12,'和值12或15',1,UNIX_TIMESTAMP()),
-(0,'sum_13',11.5,'和值13或14',1,UNIX_TIMESTAMP())
+(0,'g3_9',4.1,'9码组三',1,UNIX_TIMESTAMP())
 ON DUPLICATE KEY UPDATE `odds`=VALUES(`odds`),`status`=VALUES(`status`),`updatetime`=VALUES(`updatetime`);

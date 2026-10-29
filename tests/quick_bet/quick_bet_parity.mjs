@@ -15,7 +15,6 @@ const examples={
   posodd:'',poseven:'',posbig:'',possmall:''
 };
 for(let n=4;n<=9;n++){examples['g6_'+n]='012345678'.slice(0,n);examples['g3_'+n]='012345678'.slice(0,n)}
-for(let n=0;n<=13;n++)examples['sum_'+n]=String(n);
 const draws=['000','007','070','077','111','123','185','518','581','564','654','999'];
 const tests=[],expected=[];
 for(const [p,number] of Object.entries(examples)){

@@ -22,7 +22,9 @@ check('sample 581 award', Q::award($sample, '581'), 94500.0);
 check('sample unrelated award', Q::award($sample, '123'), 0.0);
 check('specific group 3', Q::award([bet('g3_3','007',2,300)], '070'), 600.0);
 check('specific group 3 excludes different pair', Q::award([bet('g3_3','007',2,300)], '077'), 0.0);
-check('sum bracket', Q::award([bet('sum_0','27',10,860)], '999'), 8600.0);
+try { bet('sum_0','27',10,860); throw new RuntimeException('retired sum bracket accepted'); }
+catch (RuntimeException $e) { if ($e->getMessage() === 'retired sum bracket accepted') throw $e; }
+check('historical sum bracket settlement', Q::award([['play'=>'sum_0','number'=>'27','amount'=>'10.00','odds'=>860,'pos'=>'','include_bomb'=>0]], '999'), 8600.0);
 check('two-position', Q::award([bet('twopos','56',20,90,'01')], '564'), 1800.0);
 check('two-position miss', Q::award([bet('twopos','56',20,90,'01')], '654'), 0.0);
 echo "quick bet service checks passed\n";

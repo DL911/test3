@@ -11,7 +11,7 @@ class Quickodds extends Backend
     public function index()
     {
         if (!$this->request->isAjax()) return $this->view->fetch();
-        $rows = Db::name('quick_bet_odds')->where('lottery_type', 0)->order('id')->select();
+        $rows = QuickBetService::settings(0);
         return json(['code' => 1, 'data' => ['rows' => $rows, 'catalog' => QuickBetService::catalog()]]);
     }
 
