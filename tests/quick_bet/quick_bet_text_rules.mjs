@@ -10,6 +10,7 @@ for(const file of ['core/engine.js','core/learned.js','core/model-result.js','co
 const S=globalThis.LotteryRecognitionOdds,settings=S.defaultSettings();
 const cases=[
   ['589组200',['g6_3:589:200:']],
+  ['196组5',['g6_3:196:5:']],
   ['589组选200',['g6_3:589:200:']],
   ['589直200',['direct:589:200:']],
   ['12345组10',['g6_5:12345:10:']],
