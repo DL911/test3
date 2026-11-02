@@ -64,7 +64,7 @@ function groupPlay(number,kind='group'){
 }
 function entry(game,play,numbers,amount,pos=''){return {game,play,numbers,amount:Number(amount),pos,includeBomb:false}}
 function explicitCandidates(raw,text,settings,game){
-  const body=text.replace(markers,'').trim().replace(/^[：:]\s*/,'').replace(/(?<=\d)和(?=\d)/g,' ').replace(/\s+/g,' ');
+  const body=text.replace(markers,'').trim().replace(/^[：:]\s*/,'').replace(/(?<=\d)和(?=\d)/g,' ').replace(/\s+/g,' ').replace(/([\u4e00-\u9fff])\s+(?=[\u4e00-\u9fff\d])/g,'$1').replace(/(\d)\s+(?=[\u4e00-\u9fff])/g,'$1');
   const position={百:'0',十:'1',个:'2',百十:'01',百个:'02',十个:'12'};
   const property={大:'posbig',小:'possmall',单:'posodd',双:'poseven'};
   let location=body.match(new RegExp('^(百十|百个|十个|百|十|个)(?:位)?([大小单双])\\s*(?:打\\s*)?('+moneyPattern+')\\s*'+moneyUnit+'\\s*$'));
