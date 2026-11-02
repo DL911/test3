@@ -34,9 +34,9 @@ dialog::backdrop{background:rgba(0,0,0,.45)}.row input,.row select{max-width:180
 <dialog id="manualDialog"><h2>手动添加一笔</h2><p class="muted">直接选择玩法、号码、位置和金额，加入后逐笔核对；若从待补充段落进入，则替换该段。未开放玩法不可添加。</p><div class="row"><select id="manualPlay"></select><input id="manualNumber" placeholder="号码；全包/条件玩法留空"><select id="manualPos"><option value="">不指定位置</option><option value="0">百位</option><option value="1">十位</option><option value="2">个位</option><option value="01">百十</option><option value="02">百个</option><option value="12">十个</option></select><input id="manualAmount" type="number" min="0.01" step="0.01" placeholder="每笔金额"></div><p id="manualError" class="danger"></p><p><button id="manualAdd">加入核对</button> <button class="secondary" id="manualClose">关闭</button></p></dialog>
 <dialog id="oddsDialog" aria-labelledby="oddsTitle"><div class="odds-head"><h2 id="oddsTitle">快译玩法赔率</h2><p class="muted">所有彩种共用；赔率表示每投注 1 元中奖返还金额。停用玩法不可投注。</p><input id="oddsSearch" type="search" placeholder="搜索玩法或说明" aria-label="搜索玩法或说明"><p id="oddsSummary" class="muted"></p></div><div id="oddsList"></div><div class="odds-foot"><button id="oddsClose">关闭</button></div></dialog>
 <script src="/assets/lottery/js/auth.js"></script>
-<script src="/assets/lottery/quickref/core/engine.js"></script><script src="/assets/lottery/quickref/core/learned.js"></script>
+<script src="/assets/lottery/quickref/core/engine.js?v=20261102-1"></script><script src="/assets/lottery/quickref/core/learned.js"></script>
 <script src="/assets/lottery/quickref/core/model-result.js"></script><script src="/assets/lottery/quickref/core/knowledge.js"></script>
-<script src="/assets/lottery/quickref/core/stream.js"></script><script src="/assets/lottery/quickref/module.js"></script><script src="/assets/lottery/quickref/offline.js?v=20261029-2"></script>
+<script src="/assets/lottery/quickref/core/stream.js"></script><script src="/assets/lottery/quickref/module.js"></script><script src="/assets/lottery/quickref/offline.js?v=20261102-1"></script>
 <script>
 (function(){
 'use strict';
@@ -100,7 +100,7 @@ function normalizeRows(input){
       origins.push({rowIndex:rowIndex,numberIndex:numberIndex});
     });
   });
-  if(output.length>100)waiting.push({raw:'',reason:'单批最多100笔，请分批投注'});
+  if(output.length>500)waiting.push({raw:'',reason:'单批最多500笔，请分批投注'});
   return {items:output,pending:waiting,origins:origins};
 }
 function render(){
@@ -139,10 +139,11 @@ el('manualAdd').onclick=function(){
   if(empty?n!=='':(!new RegExp('^\\d{'+len+'}$').test(n)))return manualError(empty?'此玩法不需要填写号码':'请填写 '+len+' 位数字号码');
   var unique=new Set(n.split('')).size;
   if((/^(pair|bomb)$/.test(p)&&unique!==1)||(/^(two|twog3)$/.test(p)&&unique!==2)||(/^g6_[3-9]$/.test(p)&&unique!==len)||(/^g3_[4-9]$/.test(p)&&unique!==len)||(p==='g3_3'&&unique!==2&&unique!==3))return manualError('该玩法的号码重复规则不匹配');
-  if(p==='onepos'||/^(posodd|poseven|posbig|possmall)$/.test(p)){if(!/^[012]$/.test(pos))return manualError('请选择百位、十位或个位')}
+  if(p==='onepos'){if(!/^[012]$/.test(pos))return manualError('请选择百位、十位或个位')}
+  else if(/^(posodd|poseven|posbig|possmall)$/.test(p)){if(!/^(?:[012]|01|02|12)$/.test(pos))return manualError('请选择一个或两个位置')}
   else if(p==='twopos'){if(!/^(01|02|12)$/.test(pos))return manualError('请选择两个不同的位置')}
   else if(pos)return manualError('此玩法不需要指定位置');
-  if(items.length>=100)return manualError('单批最多 100 笔，请分批投注');
+  if(items.length>=500)return manualError('单批最多 500 笔，请分批投注');
   var entry={status:'confirmed',game:hostGame,play:p,numbers:n?[n]:[],pos:pos,amount:Number(a),includeBomb:false,raw:manualSource?manualSource.raw:'手动添加'};
   if(manualSource){var at=rows.indexOf(manualSource);if(at<0)return manualError('待补充段落已变化，请重新快译');rows.splice(at,1,entry)}else rows.push(entry);
   manualSource=null;batchId='';render();el('manualDialog').close();msg('已加入候选；请逐笔核对后确认投注');

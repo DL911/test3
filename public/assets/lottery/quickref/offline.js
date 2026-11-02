@@ -65,11 +65,19 @@ function groupPlay(number,kind='group'){
 function entry(game,play,numbers,amount,pos=''){return {game,play,numbers,amount:Number(amount),pos,includeBomb:false}}
 function explicitCandidates(raw,text,settings,game){
   const body=text.replace(markers,'').trim().replace(/^[：:]\s*/,'').replace(/(?<=\d)和(?=\d)/g,' ').replace(/\s+/g,' ');
+  const position={百:'0',十:'1',个:'2',百十:'01',百个:'02',十个:'12'};
+  const property={大:'posbig',小:'possmall',单:'posodd',双:'poseven'};
+  let location=body.match(new RegExp('^(百十|百个|十个|百|十|个)(?:位)?([大小单双])\\s*(?:打\\s*)?('+moneyPattern+')\\s*'+moneyUnit+'\\s*$'));
+  if(location)return candidate(raw,[entry(game,property[location[2]],[],moneyValue(location[3]),position[location[1]])],settings);
+  location=body.match(new RegExp('^((?:(?:百|十|个)(?:位)?[0-9]\\s*[,，、]?\\s*)+)各\\s*(?:打\\s*)?('+moneyPattern+')\\s*'+moneyUnit+'\\s*$'));
+  if(location){const bits=[...location[1].matchAll(/(百|十|个)(?:位)?([0-9])/g)];if(bits.length&&location[1].replace(/(百|十|个)(?:位)?[0-9]|[\s,，、]/g,'')==='')return candidate(raw,bits.map(x=>entry(game,'onepos',[x[2]],moneyValue(location[2]),position[x[1]])),settings)}
   const list='([\\d\\s,，.。;；、/\\-=]+?)';
   const stake='('+moneyPattern+')\\s*'+moneyUnit;
   const numbers=value=>value.trim().split(/[\s,，.。;；、/\-=]+/).filter(Boolean);
   const validNumbers=ns=>ns.length>0&&ns.every(n=>/^\d{2,9}$/.test(n));
   const make=(play,ns,value,pos='')=>candidate(raw,ns.map(n=>entry(game,play(n),[n],moneyValue(value),pos)),settings);
+  let declared=body.match(new RegExp('^([\\d\\s,，.。;；、/]+?)\\s*(?:直选|直)\\s*(\\d+)\\s*注\\s*各\\s*(?:打\\s*)?('+moneyPattern+')\\s*'+moneyUnit+'\\s*$'));
+  if(declared){const ns=numbers(declared[1]);if(ns.length!==Number(declared[2])||!ns.every(n=>/^\d{3}$/.test(n)))return pending(raw,'声明注数与实际三位号码数量不一致，请核对。',game);return make(()=> 'direct',ns,declared[3])}
   let m=body.match(new RegExp('^'+list+'\\s*各\\s*'+stake+'\\s*(?:防对子|防对|防|放对子|放对|放|组三)\\s*'+stake+'\\s*$'));
   if(m){const ns=numbers(m[1]),first=moneyValue(m[2]),second=moneyValue(m[3]);
     if(!validNumbers(ns)||!ns.every(n=>new Set(n).size===n.length)||!Number.isFinite(first)||!Number.isFinite(second))return pending(raw,'各组号码或双金额不明确，请核对。',game);

@@ -27,4 +27,7 @@ catch (RuntimeException $e) { if ($e->getMessage() === 'retired sum bracket acce
 check('historical sum bracket settlement', Q::award([['play'=>'sum_0','number'=>'27','amount'=>'10.00','odds'=>860,'pos'=>'','include_bomb'=>0]], '999'), 8600.0);
 check('two-position', Q::award([bet('twopos','56',20,90,'01')], '564'), 1800.0);
 check('two-position miss', Q::award([bet('twopos','56',20,90,'01')], '654'), 0.0);
+check('two-position odd', Q::award([bet('posodd','',10,1.8,'01')], '580'), 18.0);
+check('two-position big boundary', Q::award([bet('posbig','',10,1.8,'01')], '550'), 18.0);
+check('two-position small boundary', Q::award([bet('possmall','',10,1.8,'01')], '460'), 0.0);
 echo "quick bet service checks passed\n";

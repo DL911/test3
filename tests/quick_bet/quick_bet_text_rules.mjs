@@ -10,6 +10,12 @@ for(const file of ['core/engine.js','core/learned.js','core/model-result.js','co
 const S=globalThis.LotteryRecognitionOdds,settings=S.defaultSettings();
 const cases=[
   ['589组200',['g6_3:589:200:']],
+  ['百单100',['posodd::100:0']],
+  ['百十单100',['posodd::100:01']],
+  ['百十大10',['posbig::10:01']],
+  ['百个大100',['posbig::100:02']],
+  ['十位7，个位9，各打200',['onepos:7:200:1','onepos:9:200:2']],
+  ['026 039 049直3注各2',['direct:026:2:','direct:039:2:','direct:049:2:']],
   ['196组5',['g6_3:196:5:']],
   ['589组选200',['g6_3:589:200:']],
   ['589直200',['direct:589:200:']],
@@ -46,7 +52,7 @@ const servicePath=path.resolve(import.meta.dirname,'../../application/common/ser
 const validateCode=`require '${servicePath}'; foreach(json_decode(stream_get_contents(STDIN),true) as $item) \\app\\common\\service\\QuickBetService::validateItem($item); echo 'server validation OK';`;
 const php=spawnSync('php',['-r',validateCode],{input:JSON.stringify(serverItems),encoding:'utf8'});
 if(php.status!==0||!php.stdout.includes('server validation OK'))throw Error(php.stderr||php.stdout);
-for(const raw of ['007组10','12310','一百二','和15 10元','百十大10']){
+for(const raw of ['007组10','12310','一百二','和15 10元','026 039直3注各2']){
   const rows=S.recognizeOffline(raw,{game:'3D',settings,memories:[]});
   if(rows.every(e=>e.status==='confirmed'))throw Error('ambiguous or retired play accepted: '+raw);
 }

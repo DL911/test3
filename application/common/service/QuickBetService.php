@@ -63,7 +63,7 @@ class QuickBetService
         }
         if($p==='onepos'&&!preg_match('/^[012]$/',$pos))throw new \RuntimeException('一码定位位置错误');
         if($p==='twopos'&&!in_array($pos,['01','02','12'],true))throw new \RuntimeException('两码定位位置错误');
-        if(strpos($p,'pos')===0&&!preg_match('/^[012]$/',$pos))throw new \RuntimeException('位置玩法仅支持单位置');
+        if(strpos($p,'pos')===0&&!preg_match('/^(?:[012]|01|02|12)$/',$pos))throw new \RuntimeException('位置玩法位置错误');
         if(!in_array($p,['onepos','twopos','posodd','poseven','posbig','possmall'],true)&&$pos!=='')throw new \RuntimeException('该玩法不应指定位置');
         if($bomb&&!in_array($p,['pair','twog3','pairall','g3all','g3_3','g3_4','g3_5','g3_6','g3_7','g3_8','g3_9'],true))throw new \RuntimeException('该玩法不能包含豹子');
         return ['play'=>$p,'number'=>$n,'pos'=>$pos,'amount'=>number_format((float)$a,2,'.',''),'include_bomb'=>$bomb?1:0];
@@ -92,10 +92,11 @@ class QuickBetService
             elseif($p==='sumeven')$hit=$sum%2===0;
             elseif($p==='sumbig')$hit=$sum>=14;
             elseif($p==='sumsmall')$hit=$sum<=13;
-            elseif($p==='posodd')$hit=((int)$d[(int)$pos])%2===1;
-            elseif($p==='poseven')$hit=((int)$d[(int)$pos])%2===0;
-            elseif($p==='posbig')$hit=(int)$d[(int)$pos]>=5;
-            elseif($p==='possmall')$hit=(int)$d[(int)$pos]<=4;
+            elseif(strpos($p,'pos')===0){$value=0;foreach(str_split($pos) as $place)$value+=(int)$d[(int)$place];$threshold=strlen($pos)===2?10:5;
+                if($p==='posodd')$hit=$value%2===1;
+                elseif($p==='poseven')$hit=$value%2===0;
+                elseif($p==='posbig')$hit=$value>=$threshold;
+                elseif($p==='possmall')$hit=$value<$threshold;}
             if($hit)$win+=round((float)$i['amount']*(float)$i['odds'],2);
         }
         return round($win,2);
