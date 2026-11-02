@@ -7,7 +7,7 @@ class QuickBetService
 {
     public static function catalog()
     {
-        $c=['one'=>'一码','onepos'=>'一码定位','two'=>'两码','pair'=>'两码对子','twopos'=>'两码定位','twog3'=>'两码组三','pairall'=>'对子全包','g3all'=>'组三全包','g6all'=>'组六全包','direct'=>'三码直选','g6_3'=>'三码组选六','g3_3'=>'三码组三','bomb'=>'具体豹子','bomball'=>'豹子全包','sumodd'=>'和值单','sumeven'=>'和值双','sumbig'=>'和值大','sumsmall'=>'和值小','posodd'=>'位置单','poseven'=>'位置双','posbig'=>'单位置大','possmall'=>'单位置小'];
+$c=['one'=>'一码','onepos'=>'一码定位','two'=>'两码','pair'=>'两码对子','twopos'=>'两码定位','twog3'=>'两码组三','pairall'=>'对子全包','g3all'=>'组三全包','g6all'=>'组六全包','direct'=>'三码直选','g6_3'=>'三码组选六','g3_3'=>'三码组三','bomb'=>'具体豹子','bomball'=>'豹子全包','sumodd'=>'和值单','sumeven'=>'和值双','sumbig'=>'和值大','sumsmall'=>'和值小','posodd'=>'位置单','poseven'=>'位置双','posbig'=>'位置大','possmall'=>'位置小'];
         for($n=4;$n<=9;$n++){ $c['g6_'.$n]=$n.'码组六'; $c['g3_'.$n]=$n.'码组三'; }
         return $c;
     }
