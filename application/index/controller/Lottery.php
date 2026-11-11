@@ -195,6 +195,12 @@ class Lottery extends Frontend
         return $this->view->fetch('lottery/agent_records');
     }
 
+    /** PC 与手机共用的代理市场核算报表。 */
+    public function agentMarket()
+    {
+        return $this->view->fetch('lottery/agent_market');
+    }
+
     /**
      * 移动端大厅
      */

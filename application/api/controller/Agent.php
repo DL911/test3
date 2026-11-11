@@ -167,6 +167,18 @@ class Agent extends Api
         $this->success('success', ['list' => $list, 'total' => $total, 'bet_amount' => round($betAmount, 2), 'win_amount' => round($winAmount, 2)]);
     }
 
+    /** 当前代理市场或指定下级用户的只读核算报表。 */
+    public function marketReport()
+    {
+        $agent = $this->currentUser(true);
+        try {
+            $data = \app\common\service\AgentMarketReportService::report($agent['id'], $this->request->get());
+            $this->success('success', $data);
+        } catch (\InvalidArgumentException $e) {
+            $this->error($e->getMessage());
+        }
+    }
+
     public function createAccount()
     {
         $agent = $this->currentUser(true);
