@@ -163,8 +163,23 @@ class Agent extends Api
         $betAmount = (clone $query)->where('b.status', '<>', 3)->sum('b.total_amount');
         $winAmount = (clone $query)->where('b.status', 1)->sum('b.win_amount');
         $list = $query->field('b.id,b.order_no,b.user_id,b.lottery_type,b.period,b.play_type,b.panel_type,b.bet_content,b.total_amount,b.win_amount,b.status,b.createtime,u.username')->order('b.createtime desc,b.id desc')->page($page, $limit)->select();
-        foreach ($list as &$row) { $row['date'] = date('Y-m-d H:i:s', $row['createtime']); $row['direct_id'] = $branches[intval($row['user_id'])]['direct_id']; $row['distance'] = $branches[intval($row['user_id'])]['distance']; if ($row['play_type'] === 'quick') $row['quick_content_display'] = \app\common\service\QuickBetService::displayContent($row['bet_content']); }
+        foreach ($list as &$row) { $row['date'] = date('Y-m-d H:i:s', $row['createtime']); $row['direct_id'] = $branches[intval($row['user_id'])]['direct_id']; $row['distance'] = $branches[intval($row['user_id'])]['distance']; if ($row['play_type'] === 'quick') $row['quick_content_display'] = \app\common\service\QuickBetService::displayContent($row['bet_content']); else $row['content_display'] = $this->teamBetContentDisplay($row['bet_content']); }
         $this->success('success', ['list' => $list, 'total' => $total, 'bet_amount' => round($betAmount, 2), 'win_amount' => round($winAmount, 2)]);
+    }
+
+    private function teamBetContentDisplay($raw)
+    {
+        $items = json_decode((string)$raw, true);
+        if (!is_array($items)) return (string)$raw;
+        $positions = [0 => '百位', 1 => '十位', 2 => '个位'];
+        $parts = [];
+        foreach ($items as $item) {
+            $key = is_array($item) ? (string)($item['key'] ?? '') : (string)$item;
+            if (preg_match('/^p([012])_(\d)$/', $key, $match)) $parts[] = $positions[intval($match[1])] . '选' . $match[2];
+            elseif (preg_match('/^(?:num|yz|ez|sz)_(\d+)$/', $key, $match)) $parts[] = $match[1];
+            elseif ($key !== '') $parts[] = $key;
+        }
+        return $parts ? implode('、', $parts) : (string)$raw;
     }
 
     /** 当前代理市场或指定下级用户的只读核算报表。 */
