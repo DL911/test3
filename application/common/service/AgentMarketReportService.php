@@ -45,43 +45,52 @@ class AgentMarketReportService
         $page = max(1, isset($params['page']) ? intval($params['page']) : 1);
         $limit = min(50, max(1, isset($params['limit']) ? intval($params['limit']) : 20));
         $zero = ['order_count'=>0,'bet_amount'=>0,'win_amount'=>0,'lost_amount'=>0,'winning_bet_amount'=>0,'pending_amount'=>0,'settled_difference'=>0,'rebate_total'=>0,'rebate_pending'=>0,'rebate_claimed'=>0,'rebate_void'=>0];
-        $result = ['agent'=>['id'=>$agent['id'],'username'=>$agent['username']], 'scope'=>$userId ? 'user' : 'market', 'date_start'=>$start,'date_end'=>$end,'summary'=>$zero,'users'=>[],'bets'=>[],'bet_total'=>0,'money_logs'=>[],'money_log_total'=>0,'rebates'=>[],'rebate_total_count'=>0,'page'=>$page,'limit'=>$limit,'generated_at'=>date('Y-m-d H:i:s')];
+        $userPage = max(1, isset($params['user_page']) ? intval($params['user_page']) : 1);
+        $result = ['agent'=>['id'=>$agent['id'],'username'=>$agent['username']], 'scope'=>$userId ? 'user' : 'market', 'date_start'=>$start,'date_end'=>$end,'summary'=>$zero,'users'=>[],'user_total'=>0,'user_page'=>$userPage,'bets'=>[],'bet_total'=>0,'money_logs'=>[],'money_log_total'=>0,'rebates'=>[],'rebate_total_count'=>0,'page'=>$page,'limit'=>$limit,'generated_at'=>date('Y-m-d H:i:s')];
         if (!$ids) return $result;
         $query = Db::name('lottery_bet')->alias('b')->where('b.user_id', 'in', $ids)->where('b.createtime', 'between', [$from, $to]);
         if ($type) $query->where('b.lottery_type', $type);
-        $totals = (clone $query)->field('b.status,COUNT(*) AS cnt,SUM(b.total_amount) AS bet_sum,SUM(b.win_amount) AS win_sum')->group('b.status')->select();
-        foreach ($totals as $row) {
-            $status = intval($row['status']); $amount = round(floatval($row['bet_sum']), 2);
-            if ($status === 3) continue;
-            $result['summary']['order_count'] += intval($row['cnt']);
-            $result['summary']['bet_amount'] += $amount;
-            if ($status === 0) $result['summary']['pending_amount'] += $amount;
-            if ($status === 1) { $result['summary']['winning_bet_amount'] += $amount; $result['summary']['win_amount'] += round(floatval($row['win_sum']), 2); }
-            if ($status === 2) $result['summary']['lost_amount'] += $amount;
-        }
+        $result['summary']['order_count'] = (clone $query)->where('b.status', '<>', 3)->count();
+        $result['summary']['bet_amount'] = round(floatval((clone $query)->where('b.status', '<>', 3)->sum('b.total_amount')), 2);
+        $result['summary']['pending_amount'] = round(floatval((clone $query)->where('b.status', 0)->sum('b.total_amount')), 2);
+        $result['summary']['winning_bet_amount'] = round(floatval((clone $query)->where('b.status', 1)->sum('b.total_amount')), 2);
+        $result['summary']['win_amount'] = round(floatval((clone $query)->where('b.status', 1)->sum('b.win_amount')), 2);
+        $result['summary']['lost_amount'] = round(floatval((clone $query)->where('b.status', 2)->sum('b.total_amount')), 2);
         $s = &$result['summary'];
         $s['settled_difference'] = round($s['winning_bet_amount'] + $s['lost_amount'] - $s['win_amount'], 2);
         unset($s);
         $result['bet_total'] = (clone $query)->count();
-        $result['bets'] = (clone $query)->alias('b')->join('user u', 'u.id=b.user_id')->field('b.id,b.order_no,b.user_id,b.lottery_type,b.period,b.play_type,b.bet_content,b.total_amount,b.win_amount,b.status,b.createtime,u.username')->order('b.createtime desc,b.id desc')->page($page, $limit)->select();
+        $result['bets'] = (clone $query)->join('user u', 'u.id=b.user_id')->field('b.id,b.order_no,b.user_id,b.lottery_type,b.period,b.play_type,b.bet_content,b.total_amount,b.win_amount,b.status,b.createtime,u.username')->order('b.createtime desc,b.id desc')->page($page, $limit)->select();
         foreach ($result['bets'] as &$bet) {
             $bet['date'] = date('Y-m-d H:i:s', $bet['createtime']);
             if ($bet['play_type'] === 'quick') $bet['content_display'] = QuickBetService::displayContent($bet['bet_content']);
             else $bet['content_display'] = $bet['bet_content'];
         }
         unset($bet);
-        $result['users'] = (clone $query)->alias('b')->join('user u', 'u.id=b.user_id')->where('b.status', '<>', 3)
-            ->field('b.user_id,u.username,COUNT(*) AS order_count,SUM(b.total_amount) AS bet_amount,SUM(CASE WHEN b.status=1 THEN b.win_amount ELSE 0 END) AS win_amount,SUM(CASE WHEN b.status=2 THEN b.total_amount ELSE 0 END) AS lost_amount')
-            ->group('b.user_id,u.username')->order('bet_amount desc')->limit(100)->select();
+        $userIds = (clone $query)->where('b.status', '<>', 3)->group('b.user_id')->column('b.user_id');
+        $userIds = array_values(array_unique(array_map('intval', $userIds)));
+        $result['user_total'] = count($userIds);
+        if ($userIds) {
+            $users = Db::name('user')->where('id', 'in', $userIds)->field('id,username')->order('id desc')->page($userPage, 20)->select();
+            foreach ($users as $person) {
+                $uid = intval($person['id']);
+                $personal = (clone $query)->where('b.user_id', $uid);
+                $result['users'][] = [
+                    'user_id' => $uid, 'username' => $person['username'],
+                    'order_count' => (clone $personal)->where('b.status', '<>', 3)->count(),
+                    'bet_amount' => round(floatval((clone $personal)->where('b.status', '<>', 3)->sum('b.total_amount')), 2),
+                    'win_amount' => round(floatval((clone $personal)->where('b.status', 1)->sum('b.win_amount')), 2),
+                    'lost_amount' => round(floatval((clone $personal)->where('b.status', 2)->sum('b.total_amount')), 2),
+                ];
+            }
+        }
         $rebate = Db::name('xima_record')->where('source_user_id', 'in', $ids)->where('createtime', 'between', [$from, $to]);
         // 返水记录没有彩种字段；按关联投注订单筛选。
         if ($type) $rebate->where('bet_order_no', 'in', (clone $query)->field('b.order_no')->select(false));
-        $rebateRows = (clone $rebate)->field('status,SUM(xima_amount) AS amount')->group('status')->select();
-        foreach ($rebateRows as $row) {
-            $amount = round(floatval($row['amount']), 2);
-            if (intval($row['status']) === 2) $result['summary']['rebate_void'] += $amount;
-            else { $result['summary']['rebate_total'] += $amount; $result['summary'][intval($row['status']) === 1 ? 'rebate_claimed' : 'rebate_pending'] += $amount; }
-        }
+        $result['summary']['rebate_pending'] = round(floatval((clone $rebate)->where('status', 0)->sum('xima_amount')), 2);
+        $result['summary']['rebate_claimed'] = round(floatval((clone $rebate)->where('status', 1)->sum('xima_amount')), 2);
+        $result['summary']['rebate_void'] = round(floatval((clone $rebate)->where('status', 2)->sum('xima_amount')), 2);
+        $result['summary']['rebate_total'] = round($result['summary']['rebate_pending'] + $result['summary']['rebate_claimed'], 2);
         if ($userId) {
             $result['rebate_total_count'] = (clone $rebate)->count();
             $result['rebates'] = (clone $rebate)->order('id desc')->page($page, $limit)->select();

@@ -18,6 +18,9 @@ class Agentmarket extends Backend
             return json(['code' => 1, 'data' => AgentMarketReportService::report($agentId, $this->request->get())]);
         } catch (\InvalidArgumentException $e) {
             return json(['code' => 0, 'msg' => $e->getMessage()]);
+        } catch (\Exception $e) {
+            \think\Log::error('后台代理市场报表查询失败，代理ID=' . $agentId . '：' . $e->getMessage());
+            return json(['code' => 0, 'msg' => '报表查询失败，请查看服务端日志']);
         }
     }
 

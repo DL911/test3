@@ -2,7 +2,7 @@
     'use strict';
     var admin = !!document.querySelector('[data-market-admin="1"]');
     var endpoint = admin ? '/index.php/admin/lottery.agentmarket/index' : '/index.php/api/agent/marketReport';
-    var page = 1, total = 0, maxPage = 1;
+    var page = 1, total = 0, maxPage = 1, userPage = 1, userMaxPage = 1;
     function el(id) { return document.getElementById(id); }
     function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
     function money(v) { return '¥' + Number(v || 0).toFixed(2); }
@@ -19,7 +19,7 @@
         });
     }
     function params(p) {
-        var q = new URLSearchParams({page:p, date_start:el('mrStart').value, date_end:el('mrEnd').value, direct_id:el('mrDirect').value, user_id:el('mrUserId').value, user_keyword:el('mrUserSearch').value, lottery_type:el('mrType').value});
+        var q = new URLSearchParams({page:p, user_page:userPage, date_start:el('mrStart').value, date_end:el('mrEnd').value, direct_id:el('mrDirect').value, user_id:el('mrUserId').value, user_keyword:el('mrUserSearch').value, lottery_type:el('mrType').value});
         if (admin) { q.set('ajax','1'); q.set('agent_id',el('mrAgentId').value); }
         return q;
     }
@@ -30,6 +30,7 @@
         el('mrSummary').innerHTML = row('有效投注总额',s.bet_amount) + row('实际派奖总额',s.win_amount) + row('未中奖投注额',s.lost_amount) + row('中奖订单投注额',s.winning_bet_amount) + row('待开奖投注额',s.pending_amount) + row('已结算差额（参考）',s.settled_difference) + row('有效返水',s.rebate_total) + row('待领取返水',s.rebate_pending) + row('已领取返水',s.rebate_claimed) + row('已作废返水',s.rebate_void);
         el('mrCount').textContent = '有效订单 ' + s.order_count + ' 笔；订单明细 ' + d.bet_total + ' 笔（含撤单）';
         el('mrUsers').innerHTML = (d.users || []).map(function (u) { return '<tr><td><button type="button" class="mr-link" data-user="' + esc(u.user_id) + '">' + esc(u.username) + '（' + esc(u.user_id) + '）</button></td><td>' + esc(u.order_count) + '</td><td>' + money(u.bet_amount) + '</td><td>' + money(u.win_amount) + '</td><td>' + money(u.lost_amount) + '</td></tr>'; }).join('') || '<tr><td colspan="5">暂无用户数据</td></tr>';
+        userMaxPage = Math.max(1, Math.ceil(d.user_total / 20)); el('mrUserPager').textContent = '共 ' + d.user_total + ' 人，第 ' + userPage + ' / ' + userMaxPage + ' 页';
         el('mrBets').innerHTML = (d.bets || []).map(function (b) { var names=['待开奖','已中奖','未中奖','已撤单']; return '<tr><td>' + esc(b.date) + '<br>' + esc(b.order_no) + '</td><td>' + esc(b.username) + '</td><td>' + (b.lottery_type == 1 ? '福彩3D' : '排列三') + ' ' + esc(b.period) + '<br>' + esc(b.play_type === 'quick' ? '快译模式' : b.play_type) + '</td><td>' + esc(names[b.status] || b.status) + '</td><td>' + money(b.total_amount) + '</td><td>' + money(b.win_amount) + '</td><td><details><summary>查看</summary><pre>' + esc(b.content_display) + '</pre></details></td></tr>'; }).join('') || '<tr><td colspan="7">暂无订单</td></tr>';
         maxPage = Math.max(1, Math.ceil(d.bet_total / d.limit), Math.ceil(d.money_log_total / d.limit), Math.ceil(d.rebate_total_count / d.limit));
         el('mrPager').textContent = '第 ' + page + ' / ' + maxPage + ' 页'; total = d.bet_total;
@@ -39,10 +40,12 @@
         el('mrFlowPager').textContent = '资金流水 ' + d.money_log_total + ' 条，返水记录 ' + d.rebate_total_count + ' 条；均显示第 ' + page + ' 页';
     }
     function load(p) { if (p < 1 || (p > 1 && p > maxPage)) return; if (admin && !el('mrAgentId').value) { el('mrMessage').textContent='请先选择代理'; return; } el('mrMessage').textContent='查询中…'; request(endpoint + '?' + params(p)).then(function (r) { if (r.code !== 1) throw new Error(r.msg || '查询失败'); page=p; render(r.data); el('mrMessage').textContent=''; }).catch(function (e) { el('mrMessage').textContent=e.message || '查询失败'; }); }
-    el('mrSearch').onclick = function () { total=0; maxPage=1; load(1); };
+    el('mrSearch').onclick = function () { total=0; maxPage=1; userPage=1; load(1); };
+    el('mrUserPrev').onclick = function () { if (userPage > 1) { userPage--; load(page); } };
+    el('mrUserNext').onclick = function () { if (userPage < userMaxPage) { userPage++; load(page); } };
     el('mrPrev').onclick = function () { load(page - 1); };
     el('mrNext').onclick = function () { load(page + 1); };
-    el('mrClearUser').onclick = function () { el('mrUserId').value=''; el('mrUserSearch').value=''; total=0; maxPage=1; load(1); };
-    el('mrUsers').onclick = function (event) { var t=event.target.closest('[data-user]'); if (t) { el('mrUserId').value=t.getAttribute('data-user'); el('mrUserSearch').value=''; total=0; maxPage=1; load(1); } };
+    el('mrClearUser').onclick = function () { el('mrUserId').value=''; el('mrUserSearch').value=''; total=0; maxPage=1; userPage=1; load(1); };
+    el('mrUsers').onclick = function (event) { var t=event.target.closest('[data-user]'); if (t) { el('mrUserId').value=t.getAttribute('data-user'); el('mrUserSearch').value=''; total=0; maxPage=1; userPage=1; load(1); } };
     if (!admin) load(1);
 })();
