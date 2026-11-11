@@ -27,10 +27,12 @@ class Agentmarket extends Backend
     public function agents()
     {
         $keyword = trim((string)$this->request->get('keyword', ''));
-        if ($keyword === '') return json(['code' => 1, 'data' => []]);
-        $list = Db::name('user')->where('agent_level', '>', 0)->where('is_agent', 1)
-            ->where('username|nickname', 'like', '%' . addcslashes($keyword, '%_\\') . '%')
-            ->field('id,username,nickname,agent_level')->order('id desc')->limit(20)->select();
+        $query = Db::name('user')->where('agent_level', '>', 0)->where('is_agent', 1);
+        if ($keyword !== '') {
+            if (ctype_digit($keyword)) $query->where('id', intval($keyword));
+            else $query->where('username|nickname', 'like', '%' . addcslashes($keyword, '%_\\') . '%');
+        }
+        $list = $query->field('id,username,nickname,agent_level')->order('id desc')->limit(20)->select();
         return json(['code' => 1, 'data' => $list]);
     }
 }

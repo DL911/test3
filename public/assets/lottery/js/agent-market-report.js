@@ -11,12 +11,27 @@
     function date(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
     el('mrStart').value = date(start); el('mrEnd').value = date(now);
     if (admin) {
+        function showAgents(list, autoLoad) {
+            var current = el('mrAgentId').value;
+            el('mrAgentId').innerHTML = '<option value="">选择代理</option>' + (list || []).map(function (a) { return '<option value="' + esc(a.id) + '">' + esc(a.username) + '（ID ' + esc(a.id) + '）</option>'; }).join('');
+            if (current && (list || []).some(function (a) { return String(a.id) === current; })) el('mrAgentId').value = current;
+            else if (autoLoad && list && list.length) { el('mrAgentId').value = list[0].id; load(1); }
+        }
+        request('/index.php/admin/lottery.agentmarket/agents').then(function (r) {
+            if (r.code !== 1) throw new Error(r.msg || '加载代理失败');
+            showAgents(r.data, true);
+            if (!r.data || !r.data.length) el('mrMessage').textContent = '暂无可查询的代理';
+        }).catch(function (e) { el('mrMessage').textContent = e.message || '加载代理失败'; });
         el('mrAgentSearch').addEventListener('input', function () {
-            var v = this.value.trim(); if (!v) { el('mrAgentOptions').innerHTML = ''; return; }
+            var v = this.value.trim();
             request('/index.php/admin/lottery.agentmarket/agents?keyword=' + encodeURIComponent(v)).then(function (r) {
-                el('mrAgentId').innerHTML = '<option value="">选择代理</option>' + (r.data || []).map(function (a) { return '<option value="' + esc(a.id) + '">' + esc(a.username) + '（ID ' + esc(a.id) + '）</option>'; }).join('');
+                if (r.code !== 1) throw new Error(r.msg || '搜索代理失败');
+                showAgents(r.data, false);
+                if (!r.data || !r.data.length) el('mrMessage').textContent = '未找到代理，请核对账号或 ID';
+                else el('mrMessage').textContent = '';
             });
         });
+        el('mrAgentId').onchange = function () { if (this.value) { userPage=1; maxPage=1; load(1); } };
     }
     function params(p) {
         var q = new URLSearchParams({page:p, user_page:userPage, date_start:el('mrStart').value, date_end:el('mrEnd').value, direct_id:el('mrDirect').value, user_id:el('mrUserId').value, user_keyword:el('mrUserSearch').value, lottery_type:el('mrType').value});

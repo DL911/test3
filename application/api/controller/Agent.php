@@ -173,13 +173,13 @@ class Agent extends Api
         $agent = $this->currentUser(true);
         try {
             $data = \app\common\service\AgentMarketReportService::report($agent['id'], $this->request->get());
-            $this->success('success', $data);
         } catch (\InvalidArgumentException $e) {
             $this->error($e->getMessage());
         } catch (\Exception $e) {
             \think\Log::error('代理市场报表查询失败，代理ID=' . $agent['id'] . '：' . $e->getMessage());
             $this->error('报表查询失败，请联系管理员查看服务端日志');
         }
+        $this->success('success', $data);
     }
 
     public function createAccount()
