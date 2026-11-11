@@ -12,8 +12,11 @@ class Agentmarket extends Backend
     public function index()
     {
         if (!$this->request->isAjax()) return $this->view->fetch();
-        $agentId = $this->request->get('agent_id/d', 0);
-        if (!$agentId) return json(['code' => 0, 'msg' => '请选择代理']);
+        $username = trim((string)$this->request->get('agent_username', ''));
+        if ($username === '') return json(['code' => 0, 'msg' => '请输入代理账号']);
+        $agent = Db::name('user')->where('username', $username)->where('agent_level', '>', 0)->where('is_agent', 1)->field('id')->find();
+        if (!$agent) return json(['code' => 0, 'msg' => '未找到该新体系代理账号']);
+        $agentId = intval($agent['id']);
         try {
             return json(['code' => 1, 'data' => AgentMarketReportService::report($agentId, $this->request->get())]);
         } catch (\InvalidArgumentException $e) {
@@ -24,15 +27,4 @@ class Agentmarket extends Backend
         }
     }
 
-    public function agents()
-    {
-        $keyword = trim((string)$this->request->get('keyword', ''));
-        $query = Db::name('user')->where('agent_level', '>', 0)->where('is_agent', 1);
-        if ($keyword !== '') {
-            if (ctype_digit($keyword)) $query->where('id', intval($keyword));
-            else $query->where('username|nickname', 'like', '%' . addcslashes($keyword, '%_\\') . '%');
-        }
-        $list = $query->field('id,username,nickname,agent_level')->order('id desc')->limit(20)->select();
-        return json(['code' => 1, 'data' => $list]);
-    }
 }

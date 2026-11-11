@@ -46,7 +46,7 @@ class AgentMarketReportService
         $limit = min(50, max(1, isset($params['limit']) ? intval($params['limit']) : 20));
         $zero = ['order_count'=>0,'bet_amount'=>0,'win_amount'=>0,'lost_amount'=>0,'winning_bet_amount'=>0,'pending_amount'=>0,'settled_difference'=>0,'rebate_total'=>0,'rebate_pending'=>0,'rebate_claimed'=>0,'rebate_void'=>0];
         $userPage = max(1, isset($params['user_page']) ? intval($params['user_page']) : 1);
-        $result = ['agent'=>['id'=>$agent['id'],'username'=>$agent['username']], 'scope'=>$userId ? 'user' : 'market', 'date_start'=>$start,'date_end'=>$end,'summary'=>$zero,'users'=>[],'user_total'=>0,'user_page'=>$userPage,'bets'=>[],'bet_total'=>0,'money_logs'=>[],'money_log_total'=>0,'rebates'=>[],'rebate_total_count'=>0,'page'=>$page,'limit'=>$limit,'generated_at'=>date('Y-m-d H:i:s')];
+        $result = ['agent'=>['id'=>$agent['id'],'username'=>$agent['username']], 'scope'=>$userId ? 'user' : 'market', 'date_start'=>$start,'date_end'=>$end,'summary'=>$zero,'users'=>[],'user_total'=>0,'user_page'=>$userPage,'bets'=>[],'bet_total'=>0,'money_logs'=>[],'money_log_total'=>0,'rebates'=>[],'rebate_total_count'=>0,'warnings'=>[],'page'=>$page,'limit'=>$limit,'generated_at'=>date('Y-m-d H:i:s')];
         if (!$ids) return $result;
         $query = Db::name('lottery_bet')->alias('b')->where('b.user_id', 'in', $ids)->where('b.createtime', 'between', [$from, $to]);
         if ($type) $query->where('b.lottery_type', $type);
@@ -67,11 +67,9 @@ class AgentMarketReportService
             else $bet['content_display'] = $bet['bet_content'];
         }
         unset($bet);
-        $userIds = (clone $query)->where('b.status', '<>', 3)->group('b.user_id')->column('b.user_id');
-        $userIds = array_values(array_unique(array_map('intval', $userIds)));
-        $result['user_total'] = count($userIds);
-        if ($userIds) {
-            $users = Db::name('user')->where('id', 'in', $userIds)->field('id,username')->order('id desc')->page($userPage, 20)->select();
+        $result['user_total'] = Db::name('user')->where('id', 'in', $ids)->count();
+        if ($result['user_total']) {
+            $users = Db::name('user')->where('id', 'in', $ids)->field('id,username')->order('id desc')->page($userPage, 20)->select();
             foreach ($users as $person) {
                 $uid = intval($person['id']);
                 $personal = (clone $query)->where('b.user_id', $uid);
@@ -84,16 +82,24 @@ class AgentMarketReportService
                 ];
             }
         }
-        $rebate = Db::name('xima_record')->where('source_user_id', 'in', $ids)->where('createtime', 'between', [$from, $to]);
-        // 返水记录没有彩种字段；按关联投注订单筛选。
-        if ($type) $rebate->where('bet_order_no', 'in', (clone $query)->field('b.order_no')->select(false));
-        $result['summary']['rebate_pending'] = round(floatval((clone $rebate)->where('status', 0)->sum('xima_amount')), 2);
-        $result['summary']['rebate_claimed'] = round(floatval((clone $rebate)->where('status', 1)->sum('xima_amount')), 2);
-        $result['summary']['rebate_void'] = round(floatval((clone $rebate)->where('status', 2)->sum('xima_amount')), 2);
-        $result['summary']['rebate_total'] = round($result['summary']['rebate_pending'] + $result['summary']['rebate_claimed'], 2);
+        try {
+            $rebate = Db::name('xima_record')->where('source_user_id', 'in', $ids)->where('createtime', 'between', [$from, $to]);
+            // 返水记录没有彩种字段；按关联投注订单筛选。
+            if ($type) $rebate->where('bet_order_no', 'in', (clone $query)->field('b.order_no')->select(false));
+            $result['summary']['rebate_pending'] = round(floatval((clone $rebate)->where('status', 0)->sum('xima_amount')), 2);
+            $result['summary']['rebate_claimed'] = round(floatval((clone $rebate)->where('status', 1)->sum('xima_amount')), 2);
+            $result['summary']['rebate_void'] = round(floatval((clone $rebate)->where('status', 2)->sum('xima_amount')), 2);
+            $result['summary']['rebate_total'] = round($result['summary']['rebate_pending'] + $result['summary']['rebate_claimed'], 2);
+            if ($userId) {
+                $result['rebate_total_count'] = (clone $rebate)->count();
+                $result['rebates'] = (clone $rebate)->order('id desc')->page($page, $limit)->select();
+            }
+        } catch (\Exception $e) {
+            \think\Log::error('代理市场报表返水查询失败，代理ID=' . $agentId . '：' . $e->getMessage());
+            foreach (['rebate_pending','rebate_claimed','rebate_void','rebate_total'] as $key) $result['summary'][$key] = null;
+            $result['warnings'][] = '返水数据暂不可用，请查看服务端日志；投注与派奖金额不受影响';
+        }
         if ($userId) {
-            $result['rebate_total_count'] = (clone $rebate)->count();
-            $result['rebates'] = (clone $rebate)->order('id desc')->page($page, $limit)->select();
             $logs = Db::name('user_money_log')->where('user_id', $userId)->where('createtime', 'between', [$from, $to]);
             $result['money_log_total'] = (clone $logs)->count();
             $result['money_logs'] = (clone $logs)->order('id desc')->page($page, $limit)->select();
