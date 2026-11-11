@@ -40,6 +40,16 @@ class AgentMarketReportService
             $matched = Db::name('user')->where('id', 'in', $ids ?: [0])->where('username|nickname', 'like', '%' . addcslashes($keyword, '%_\\') . '%')->column('id');
             $ids = array_map('intval', $matched);
         }
+        $listIds = $ids;
+        $listUserId = isset($params['list_user_id']) ? intval($params['list_user_id']) : 0;
+        if ($listUserId) {
+            $listIds = in_array($listUserId, $ids, true) ? [$listUserId] : [];
+        }
+        $listKeyword = trim((string)(isset($params['list_user_keyword']) ? $params['list_user_keyword'] : ''));
+        if ($listKeyword !== '') {
+            $matched = Db::name('user')->where('id', 'in', $listIds ?: [0])->where('username', 'like', '%' . addcslashes($listKeyword, '%_\\') . '%')->column('id');
+            $listIds = array_map('intval', $matched);
+        }
         $type = isset($params['lottery_type']) ? intval($params['lottery_type']) : 0;
         if ($type && !in_array($type, [1, 2], true)) throw new \InvalidArgumentException('彩种不正确');
         $page = max(1, isset($params['page']) ? intval($params['page']) : 1);
@@ -59,9 +69,9 @@ class AgentMarketReportService
         $s = &$result['summary'];
         $s['settled_difference'] = round($s['winning_bet_amount'] + $s['lost_amount'] - $s['win_amount'], 2);
         unset($s);
-        $result['user_total'] = Db::name('user')->where('id', 'in', $ids)->count();
+        $result['user_total'] = Db::name('user')->where('id', 'in', $listIds ?: [0])->count();
         if ($result['user_total']) {
-            $users = Db::name('user')->where('id', 'in', $ids)->field('id,username')->order('id desc')->page($userPage, 20)->select();
+            $users = Db::name('user')->where('id', 'in', $listIds)->field('id,username')->order('id desc')->page($userPage, 20)->select();
             foreach ($users as $person) {
                 $uid = intval($person['id']);
                 $personal = (clone $query)->where('b.user_id', $uid);
