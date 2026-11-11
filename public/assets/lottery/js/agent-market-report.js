@@ -2,7 +2,7 @@
     'use strict';
     var admin = !!document.querySelector('[data-market-admin="1"]');
     var endpoint = admin ? document.querySelector('[data-market-admin="1"]').getAttribute('data-market-endpoint') : '/index.php/api/agent/marketReport';
-    var page = 1, maxPage = 1, userPage = 1, userMaxPage = 1;
+    var page = 1, maxPage = 1, userPage = 1, userMaxPage = 1, requestSerial = 0;
     function el(id) { return document.getElementById(id); }
     function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
     function money(v) { return v == null ? '—' : '¥' + Number(v || 0).toFixed(2); }
@@ -11,8 +11,8 @@
     function date(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
     el('mrStart').value = date(start); el('mrEnd').value = date(now);
     function params(p) {
-        var q = new URLSearchParams({page:p, user_page:userPage, date_start:el('mrStart').value, date_end:el('mrEnd').value, direct_id:el('mrDirect').value, user_id:el('mrUserId').value, user_keyword:el('mrUserSearch').value, lottery_type:el('mrType').value});
-        if (admin) { q.set('ajax','1'); q.set('agent_username',el('mrAgentSearch').value.trim()); }
+        var q = new URLSearchParams({page:p, user_page:userPage, date_start:el('mrStart').value, date_end:el('mrEnd').value, user_id:el('mrUserId').value, user_keyword:el('mrUserSearch').value, lottery_type:el('mrType').value});
+        if (admin) { q.set('ajax','1'); q.set('agent_username',el('mrAgentSearch').value.trim()); q.set('direct_id',el('mrDirect').value); }
         return q;
     }
     function row(label, value) { return '<div class="mr-stat"><small>' + label + '</small><strong>' + money(value) + '</strong></div>'; }
@@ -29,13 +29,13 @@
         el('mrUserOnly').style.display = d.scope === 'user' ? '' : 'none';
         el('mrMoneyLogs').innerHTML = (d.money_logs || []).map(function (x) { return '<tr><td>' + esc(new Date(x.createtime * 1000).toLocaleString()) + '</td><td>' + money(x.money) + '</td><td>' + money(x.before) + ' → ' + money(x.after) + '</td><td>' + esc(x.memo) + '</td></tr>'; }).join('') || '<tr><td colspan="4">当前范围无已记录的资金流水</td></tr>';
     }
-    function load(p) { if (p < 1 || (p > 1 && p > maxPage)) return; if (admin && !el('mrAgentSearch').value.trim()) { el('mrMessage').textContent='请输入代理账号'; return; } el('mrMessage').textContent='查询中…'; request(endpoint + '?' + params(p)).then(function (r) { if (r.code !== 1) throw new Error(r.msg || '查询失败'); page=p; render(r.data); }).catch(function (e) { el('mrMessage').textContent=e.message || '查询失败'; }); }
+    function load(p) { if (p < 1 || (p > 1 && p > maxPage)) return; if (admin && !el('mrAgentSearch').value.trim()) { el('mrMessage').textContent='请输入代理账号'; return; } var serial=++requestSerial; el('mrMessage').textContent='查询中…'; request(endpoint + '?' + params(p)).then(function (r) { if (serial !== requestSerial) return; if (r.code !== 1) throw new Error(r.msg || '查询失败'); page=p; render(r.data); }).catch(function (e) { if (serial === requestSerial) el('mrMessage').textContent=e.message || '查询失败'; }); }
     el('mrSearch').onclick = function () { maxPage=1; userPage=1; load(1); };
     el('mrUserPrev').onclick = function () { if (userPage > 1) { userPage--; load(page); } };
     el('mrUserNext').onclick = function () { if (userPage < userMaxPage) { userPage++; load(page); } };
     el('mrPrev').onclick = function () { load(page - 1); };
     el('mrNext').onclick = function () { load(page + 1); };
-    el('mrClearUser').onclick = function () { el('mrUserId').value=''; el('mrUserSearch').value=''; maxPage=1; userPage=1; load(1); };
+    el('mrReset').onclick = function () { requestSerial++; el('mrStart').value=date(start); el('mrEnd').value=date(now); if(admin) el('mrDirect').value=''; el('mrUserId').value=''; el('mrUserSearch').value=''; el('mrType').value=''; if(admin) el('mrAgentSearch').value=''; page=1; maxPage=1; userPage=1; userMaxPage=1; el('mrScope').textContent='市场汇总'; el('mrSummary').innerHTML=''; el('mrCount').textContent=''; el('mrUsers').innerHTML=''; el('mrUserPager').textContent=''; el('mrMoneyLogs').innerHTML=''; el('mrPager').textContent=''; el('mrUserOnly').style.display='none'; el('mrMessage').textContent=admin?'请输入代理账号后查询':'筛选条件已重置，请点击查询'; };
     el('mrUsers').onclick = function (event) { var t=event.target.closest('[data-user]'); if (t) { el('mrUserId').value=t.getAttribute('data-user'); el('mrUserSearch').value=''; maxPage=1; userPage=1; load(1); } };
     if (!admin) load(1);
 })();
