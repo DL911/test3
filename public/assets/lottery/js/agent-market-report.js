@@ -22,10 +22,10 @@
     function render(d) {
         var s = d.summary || {}, scope = d.scope === 'user' ? '单用户' : '代理市场';
         el('mrScope').textContent = scope + ' · ' + d.agent.username + ' · 投注日期 ' + d.date_start + ' 至 ' + d.date_end + ' · 生成于 ' + d.generated_at;
-        el('mrSummary').innerHTML = row('有效投注总额',s.bet_amount) + row('实际派奖总额',s.win_amount) + row('未中奖投注额',s.lost_amount) + row('中奖订单投注额',s.winning_bet_amount) + row('待开奖投注额',s.pending_amount) + row('已结算差额（参考）',s.settled_difference);
+        el('mrSummary').innerHTML = row('有效投注总额',s.bet_amount) + row('实际派奖总额',s.win_amount) + row('未中奖投注额',s.lost_amount) + row('中奖订单投注额',s.winning_bet_amount) + row('待开奖投注额',s.pending_amount) + row('有效返水总额',s.rebate_amount) + row('已结算差额（参考）',s.settled_difference);
         el('mrCount').textContent = '有效订单 ' + s.order_count + ' 笔';
         el('mrMessage').textContent = '';
-        el('mrUsers').innerHTML = (d.users || []).map(function (u) { return '<tr><td>' + esc(u.user_id) + '</td><td><button type="button" class="mr-link" data-user="' + esc(u.user_id) + '">' + esc(u.username) + '</button></td><td>' + esc(u.order_count) + '</td><td>' + money(u.bet_amount) + '</td><td>' + money(u.win_amount) + '</td><td>' + money(u.lost_amount) + '</td></tr>'; }).join('') || '<tr><td colspan="6">暂无用户数据</td></tr>';
+        el('mrUsers').innerHTML = (d.users || []).map(function (u) { return '<tr><td>' + esc(u.user_id) + '</td><td><button type="button" class="mr-link" data-user="' + esc(u.user_id) + '">' + esc(u.username) + '</button></td><td>' + esc(u.order_count) + '</td><td>' + money(u.bet_amount) + '</td><td>' + money(u.win_amount) + '</td><td>' + money(u.lost_amount) + '</td><td>' + money(u.rebate_amount) + '</td></tr>'; }).join('') || '<tr><td colspan="7">暂无用户数据</td></tr>';
         userMaxPage = Math.max(1, Math.ceil(d.user_total / 20)); el('mrUserPager').textContent = '共 ' + d.user_total + ' 人，第 ' + userPage + ' / ' + userMaxPage + ' 页';
         maxPage = Math.max(1, Math.ceil(d.money_log_total / d.limit));
         el('mrPager').textContent = '资金流水共 ' + d.money_log_total + ' 条，第 ' + page + ' / ' + maxPage + ' 页';

@@ -54,7 +54,7 @@ class AgentMarketReportService
         if ($type && !in_array($type, [1, 2], true)) throw new \InvalidArgumentException('彩种不正确');
         $page = max(1, isset($params['page']) ? intval($params['page']) : 1);
         $limit = min(50, max(1, isset($params['limit']) ? intval($params['limit']) : 20));
-        $zero = ['order_count'=>0,'bet_amount'=>0,'win_amount'=>0,'lost_amount'=>0,'winning_bet_amount'=>0,'pending_amount'=>0,'settled_difference'=>0];
+        $zero = ['order_count'=>0,'bet_amount'=>0,'win_amount'=>0,'lost_amount'=>0,'winning_bet_amount'=>0,'pending_amount'=>0,'settled_difference'=>0,'rebate_amount'=>0];
         $userPage = max(1, isset($params['user_page']) ? intval($params['user_page']) : 1);
         $result = ['agent'=>['id'=>$agent['id'],'username'=>$agent['username']], 'scope'=>$userId ? 'user' : 'market', 'date_start'=>$start,'date_end'=>$end,'summary'=>$zero,'users'=>[],'user_total'=>0,'user_page'=>$userPage,'money_logs'=>[],'money_log_total'=>0,'page'=>$page,'limit'=>$limit,'generated_at'=>date('Y-m-d H:i:s')];
         if (!$ids) return $result;
@@ -66,6 +66,9 @@ class AgentMarketReportService
         $result['summary']['winning_bet_amount'] = round(floatval((clone $query)->where('b.status', 1)->sum('b.total_amount')), 2);
         $result['summary']['win_amount'] = round(floatval((clone $query)->where('b.status', 1)->sum('b.win_amount')), 2);
         $result['summary']['lost_amount'] = round(floatval((clone $query)->where('b.status', 2)->sum('b.total_amount')), 2);
+        $rebate = Db::name('xima_record')->alias('r')->join('lottery_bet b', 'b.order_no=r.bet_order_no')->where('r.source_user_id', 'in', $ids)->where('b.createtime', 'between', [$from, $to])->where('r.status', 'in', [0, 1])->where('b.status', '<>', 3);
+        if ($type) $rebate->where('b.lottery_type', $type);
+        $result['summary']['rebate_amount'] = round(floatval((clone $rebate)->sum('r.xima_amount')), 2);
         $s = &$result['summary'];
         $s['settled_difference'] = round($s['winning_bet_amount'] + $s['lost_amount'] - $s['win_amount'], 2);
         unset($s);
@@ -81,6 +84,7 @@ class AgentMarketReportService
                     'bet_amount' => round(floatval((clone $personal)->where('b.status', '<>', 3)->sum('b.total_amount')), 2),
                     'win_amount' => round(floatval((clone $personal)->where('b.status', 1)->sum('b.win_amount')), 2),
                     'lost_amount' => round(floatval((clone $personal)->where('b.status', 2)->sum('b.total_amount')), 2),
+                    'rebate_amount' => round(floatval((clone $rebate)->where('r.source_user_id', $uid)->sum('r.xima_amount')), 2),
                 ];
             }
         }
