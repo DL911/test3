@@ -3,6 +3,7 @@
 namespace app\common\service;
 
 use think\Db;
+use think\Env;
 use think\Log;
 
 /**
@@ -23,8 +24,88 @@ class DrawService
         'pl3'  => 'pls',
     ];
 
-    // 开奖时间过后允许等待的小时数，超过仍未开奖则视为官方当日未开奖并顺延（节假日兜底）
-    const POSTPONE_GRACE_HOURS = 2;
+    /**
+     * 官方接口只作为候选来源；接口结构变化或期号不匹配时必须停止自动结算。
+     */
+    public static function fetchFromOfficial($type, $expectedPeriod = null)
+    {
+        if ($type === 'fc3d') {
+            $url = 'https://www.cwl.gov.cn/cwl_admin/front/cwlkj/search/kjxx/findDrawNotice?name=3d&issueCount=20';
+            $response = self::httpGetVerified($url, 12, ['Accept: application/json', 'Referer: https://www.cwl.gov.cn/']);
+            return self::parseOfficialFc3d($response, $expectedPeriod);
+        }
+        if ($type === 'pl3') {
+            $url = 'https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=35&provinceId=0&pageSize=20&isVerify=1&pageNo=1';
+            $response = self::httpGetVerified($url, 12, [
+                'Accept: application/json',
+                'Referer: https://m.lottery.gov.cn/',
+            ]);
+            return self::parseOfficialPl3($response, $expectedPeriod);
+        }
+        return false;
+    }
+
+    protected static function parseOfficialFc3d($response, $expectedPeriod)
+    {
+        $json = $response ? json_decode($response, true) : null;
+        if (!is_array($json)) return false;
+        $rows = isset($json['result']) && is_array($json['result']) ? $json['result']
+            : (isset($json['data']) && is_array($json['data']) ? $json['data'] : []);
+        foreach ($rows as $row) {
+            if (!is_array($row)) continue;
+            $period = isset($row['code']) ? (string)$row['code'] : (isset($row['issue']) ? (string)$row['issue'] : '');
+            if ($expectedPeriod !== null && $period !== (string)$expectedPeriod) continue;
+            $raw = isset($row['red']) ? trim((string)$row['red']) : (isset($row['number']) ? trim((string)$row['number']) : '');
+            if (!preg_match('/^([0-9])[,\s]+([0-9])[,\s]+([0-9])$/', $raw, $m)) continue;
+            $date = isset($row['date']) ? substr((string)$row['date'], 0, 10)
+                : (isset($row['openTime']) ? substr((string)$row['openTime'], 0, 10) : '');
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) continue;
+            return ['period' => $period, 'numbers' => "{$m[1]},{$m[2]},{$m[3]}",
+                'draw_time' => $date . ' 21:15:00', 'source' => 'cwl'];
+        }
+        return false;
+    }
+
+    protected static function parseOfficialPl3($response, $expectedPeriod)
+    {
+        $json = $response ? json_decode($response, true) : null;
+        if (!is_array($json) || !isset($json['value']['list']) || !is_array($json['value']['list'])) return false;
+        foreach ($json['value']['list'] as $row) {
+            if (!is_array($row)) continue;
+            $rawPeriod = isset($row['lotteryDrawNum']) ? (string)$row['lotteryDrawNum'] : '';
+            $period = preg_match('/^\d{7}$/', $rawPeriod) ? substr($rawPeriod, 2) : $rawPeriod;
+            if ($expectedPeriod !== null && $period !== (string)$expectedPeriod) continue;
+            $raw = isset($row['lotteryDrawResult']) ? trim((string)$row['lotteryDrawResult']) : '';
+            if (!preg_match('/^([0-9])[,\s]+([0-9])[,\s]+([0-9])$/', $raw, $m)) continue;
+            $date = isset($row['lotteryDrawTime']) ? substr((string)$row['lotteryDrawTime'], 0, 10) : '';
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) continue;
+            return ['period' => $period, 'numbers' => "{$m[1]},{$m[2]},{$m[3]}",
+                'draw_time' => $date . ' 21:25:00', 'source' => 'sporttery'];
+        }
+        return false;
+    }
+
+    /** 国内采集节点可选：HTTPS 响应经共享密钥签名，且必须提供指定期号。 */
+    public static function fetchFromRelay($type, $expectedPeriod)
+    {
+        $baseUrl = trim((string)Env::get('draw_relay.url', ''));
+        $secret = (string)Env::get('draw_relay.secret', '');
+        if (!$baseUrl || strlen($secret) < 32 || !preg_match('#^https://#i', $baseUrl) || !$expectedPeriod) return false;
+        $url = $baseUrl . (strpos($baseUrl, '?') === false ? '?' : '&')
+            . http_build_query(['type' => $type, 'period' => $expectedPeriod]);
+        $response = self::httpGetVerified($url, 12, ['Accept: application/json']);
+        $data = $response ? json_decode($response, true) : null;
+        if (!is_array($data)) return false;
+        foreach (['type', 'period', 'numbers', 'draw_time', 'timestamp', 'signature'] as $key) {
+            if (!isset($data[$key])) return false;
+        }
+        if ($data['type'] !== $type || (string)$data['period'] !== (string)$expectedPeriod
+            || abs(time() - (int)$data['timestamp']) > 900) return false;
+        $payload = implode('|', [$data['type'], $data['period'], $data['numbers'], $data['draw_time'], $data['timestamp']]);
+        if (!hash_equals(hash_hmac('sha256', $payload, $secret), (string)$data['signature'])) return false;
+        return ['period' => (string)$data['period'], 'numbers' => (string)$data['numbers'],
+            'draw_time' => (string)$data['draw_time'], 'source' => 'domestic_relay'];
+    }
 
     /**
      * 从 huiniao API 获取最新开奖
@@ -130,50 +211,49 @@ class DrawService
         }
     }
 
-    /**
-     * 自动获取开奖结果 (多源自动容灾)
-     * 按优先级轮询所有数据源，直到成功
-     * 还会验证数据新鲜度（必须是今天的开奖）
-     */
-    public static function fetchLatestDraw($type = 'fc3d', $requireToday = false)
+    /** 官方接口优先；可选国内签名采集节点。两者冲突时停止自动结算。 */
+    public static function fetchLatestDraw($type = 'fc3d', $requireToday = false, $expectedPeriod = null)
     {
-        // 数据源列表，按优先级排序，可随时新增
-        $sources = [
-            ['name' => 'huiniao', 'method' => 'fetchFromHuiniao'],
-            ['name' => 'cz89',    'method' => 'fetchFromCz89'],
-        ];
-
-        $today = date('Y-m-d');
-        $errors = [];
-
-        foreach ($sources as $src) {
-            Log::info("DrawService: 尝试数据源 [{$src['name']}] 获取 {$type} ...");
+        $candidates = [];
+        foreach (['official', 'domestic_relay'] as $source) {
             try {
-                $result = call_user_func([__CLASS__, $src['method']], $type);
-                if ($result) {
-                    // 验证数据新鲜度：开奖日期必须是今天
-                    if ($requireToday && isset($result['draw_time'])) {
-                        $drawDate = substr($result['draw_time'], 0, 10);
-                        if ($drawDate !== $today) {
-                            $errors[] = "[{$src['name']}] 数据不是今天的(返回日期: {$drawDate})";
-                            Log::info("DrawService: [{$src['name']}] 数据非今日, 跳过 (日期: {$drawDate})");
-                            continue;
-                        }
-                    }
-                    Log::info("DrawService: [{$src['name']}] 成功! 期号={$result['period']}, 号码={$result['numbers']}");
-                    return $result;
-                } else {
-                    $errors[] = "[{$src['name']}] 返回空数据";
-                    Log::info("DrawService: [{$src['name']}] 返回空数据");
+                $result = $source === 'official'
+                    ? self::fetchFromOfficial($type, $expectedPeriod)
+                    : self::fetchFromRelay($type, $expectedPeriod);
+                if (!$result || !self::isValidDrawResult($type, $result, $expectedPeriod, $requireToday)) {
+                    Log::info("DrawService: [{$source}] 无匹配的有效开奖数据, 彩种={$type}, 待处理期号={$expectedPeriod}");
+                    continue;
                 }
+                $candidates[$source] = $result;
+                Log::info("DrawService: [{$source}] 有效候选, 彩种={$type}, 期号={$result['period']}, 号码={$result['numbers']}");
             } catch (\Exception $e) {
-                $errors[] = "[{$src['name']}] 异常: " . $e->getMessage();
-                Log::error("DrawService: [{$src['name']}] 异常: " . $e->getMessage());
+                Log::error("DrawService: [{$source}] 异常: " . $e->getMessage());
             }
         }
+        if (isset($candidates['official'], $candidates['domestic_relay'])
+            && ($candidates['official']['numbers'] !== $candidates['domestic_relay']['numbers']
+                || substr($candidates['official']['draw_time'], 0, 10) !== substr($candidates['domestic_relay']['draw_time'], 0, 10))) {
+            Log::error("DrawService: 官方接口与国内采集节点结果冲突, 彩种={$type}, 期号={$expectedPeriod}, 停止自动结算");
+            return false;
+        }
+        return isset($candidates['official']) ? $candidates['official']
+            : (isset($candidates['domestic_relay']) ? $candidates['domestic_relay'] : false);
+    }
 
-        Log::error("DrawService: 所有数据源均失败 [{$type}] - " . implode('; ', $errors));
-        return false;
+    protected static function isValidDrawResult($type, $result, $expectedPeriod, $requireToday)
+    {
+        if (!is_array($result) || !isset($result['period'], $result['numbers'], $result['draw_time'])) return false;
+        $period = (string)$result['period'];
+        if (!preg_match($type === 'fc3d' ? '/^\d{7}$/' : '/^\d{5}$/', $period)
+            || ($expectedPeriod !== null && $period !== (string)$expectedPeriod)
+            || !preg_match('/^[0-9],[0-9],[0-9]$/', (string)$result['numbers'])
+            || !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', (string)$result['draw_time'])) return false;
+        $drawTimestamp = strtotime($result['draw_time']);
+        if (!$drawTimestamp || $drawTimestamp > time() || ($requireToday && date('Y-m-d', $drawTimestamp) !== date('Y-m-d'))) return false;
+        $drawYear = date('Y', $drawTimestamp);
+        if ($type === 'fc3d' && substr($period, 0, 4) !== $drawYear) return false;
+        if ($type === 'pl3' && substr($period, 0, 2) !== substr($drawYear, 2)) return false;
+        return true;
     }
 
     /**
@@ -190,14 +270,21 @@ class DrawService
 
         Log::info("===== 开始自动开奖: {$typeInfo['name']} =====");
 
-        // 超时兜底：先把已过期仍未开奖的期号顺延，避免节假日/休市一直卡在"开奖中"
-        self::postponeExpiredPeriods();
-
         // 1. 获取远程开奖数据
-        $drawData = self::fetchLatestDraw($type);
+        // 只处理最新已开奖期的紧邻下一期。数据源跳期时等待人工核对缺失期，
+        // 避免把后一期号码用于前一期投注。
+        $latestSettledPeriod = Db::name('lottery_draw')
+            ->where('lottery_type', $lotteryType)
+            ->where('status', 1)
+            ->max('period');
+        $expectedPeriod = $latestSettledPeriod ? self::calcNextPeriod($latestSettledPeriod) : null;
+        $drawData = self::fetchLatestDraw($type, false, $expectedPeriod);
         if (!$drawData) {
-            Log::error("自动开奖失败: 无法获取 {$typeInfo['name']} 开奖数据");
-            return ['code' => 0, 'msg' => '获取开奖数据失败，所有数据源不可用'];
+            $msg = $expectedPeriod
+                ? "未获取到 {$typeInfo['name']} 待处理期号 {$expectedPeriod} 的有效开奖数据"
+                : "未获取到 {$typeInfo['name']} 的有效开奖数据";
+            Log::error("自动开奖失败: {$msg}");
+            return ['code' => 0, 'msg' => $msg];
         }
 
         Log::info("获取到开奖数据: 期号={$drawData['period']}, 号码={$drawData['numbers']}, 来源={$drawData['source']}");
@@ -286,7 +373,8 @@ class DrawService
         // 计算下一期期号
         $currentPeriod = $drawData['period'];
         $nextPeriod = self::calcNextPeriod($currentPeriod);
-        $nextDrawTime = date('Y-m-d', strtotime('+1 day')) . ' ' . $typeInfo['draw_time'];
+        $drawTimestamp = strtotime($drawData['draw_time']);
+        $nextDrawTime = date('Y-m-d', strtotime('+1 day', $drawTimestamp ?: time())) . ' ' . $typeInfo['draw_time'];
 
         $exists = Db::name('lottery_draw')
             ->where('lottery_type', $lotteryType)
@@ -316,47 +404,6 @@ class DrawService
     protected static function calcNextPeriod($period)
     {
         return (string)(intval($period) + 1);
-    }
-
-    /**
-     * 超时兜底：待开奖期号超过开奖时间 N 小时仍未开奖（如官方节假日休市、停售），
-     * 视为官方当日未开奖，把该期开奖时间顺延到下一个开奖日。
-     * 期号保持不变（官方下一期也是顺序递增，休市不消耗期号），避免页面一直卡在"开奖中"。
-     *
-     * @param float $graceHours 开奖时间过后允许等待的小时数
-     * @return int 顺延的期数
-     */
-    public static function postponeExpiredPeriods($graceHours = self::POSTPONE_GRACE_HOURS)
-    {
-        $now = time();
-        $deadline = $now - intval($graceHours * 3600);
-
-        $list = Db::name('lottery_draw')
-            ->where('status', 0)
-            ->where('draw_time', '<', date('Y-m-d H:i:s', $deadline))
-            ->select();
-
-        $postponed = 0;
-        foreach ($list as $row) {
-            $drawTs = strtotime($row['draw_time']);
-            if (!$drawTs) continue;
-
-            // 保留原开奖时刻，顺延到将来的最近一天
-            $clock = date('H:i:s', $drawTs);
-            $newTs = strtotime(date('Y-m-d', $now) . ' ' . $clock);
-            while ($newTs <= $now) {
-                $newTs = strtotime('+1 day', $newTs);
-            }
-
-            Db::name('lottery_draw')->where('id', $row['id'])->update([
-                'draw_time'  => date('Y-m-d H:i:s', $newTs),
-                'updatetime' => $now,
-            ]);
-            Log::info("超时兜底: [彩种{$row['lottery_type']}] 期号 {$row['period']} 官方未开奖，开奖时间由 {$row['draw_time']} 顺延至 " . date('Y-m-d H:i:s', $newTs));
-            $postponed++;
-        }
-
-        return $postponed;
     }
 
     /**
@@ -1543,6 +1590,31 @@ protected static function checkWin($betItem, $numbersArr, $sumValue, $playType, 
         curl_close($ch);
 
         if ($httpCode !== 200 || !$response) return false;
+        return $response;
+    }
+
+    protected static function httpGetVerified($url, $timeout, array $headers)
+    {
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => $timeout,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36',
+            CURLOPT_HTTPHEADER => $headers,
+        ]);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $effectiveUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+        $error = curl_error($ch);
+        curl_close($ch);
+        if ($httpCode !== 200 || !$response || !preg_match('#^https://#i', (string)$effectiveUrl)) {
+            Log::info("DrawService: HTTPS 来源请求失败, HTTP={$httpCode}, 错误={$error}");
+            return false;
+        }
         return $response;
     }
 }

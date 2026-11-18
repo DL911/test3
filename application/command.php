@@ -18,6 +18,7 @@ return [
     'app\admin\command\Addon',
     'app\admin\command\Api',
     'app\command\AutoDraw',
+    'app\command\DrawSourceCheck',
     'app\command\Resettle',
     'app\command\FixCommission',
 ];

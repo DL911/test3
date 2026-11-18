@@ -201,13 +201,6 @@ class Lottery extends Api
         $type = $this->request->param('type', 'fc3d');
         $lotteryType = isset($this->typeMap[$type]) ? $this->typeMap[$type] : 1;
 
-        // 超时兜底：节假日/休市官方未开奖时，把过期期号顺延到下一个开奖日，避免卡在"开奖中"
-        try {
-            \app\common\service\DrawService::postponeExpiredPeriods();
-        } catch (\Exception $e) {
-            // 兜底失败不影响正常读取
-        }
-
         // 最新已开奖
         $latest = Db::name('lottery_draw')
             ->where('lottery_type', $lotteryType)
@@ -223,14 +216,10 @@ class Lottery extends Api
             ->order('draw_time', 'asc')
             ->find();
 
-        // 如果没有下一期，自动触发开奖+创建下一期
+        // 页面读取不触发远程采集或结算；自动开奖只由计划任务执行。
+        // 没有待开奖期时，仅根据最近已开奖期创建下一期。
         if (!$next) {
-            try {
-                \app\common\service\DrawService::processAutoDraw($type);
-            } catch (\Exception $e) {
-                // 采集失败不影响页面加载
-            }
-            // 重新查询
+            // 重新查询，避免与计划任务同时创建下一期
             $latest = Db::name('lottery_draw')
                 ->where('lottery_type', $lotteryType)
                 ->where('status', 1)
@@ -248,7 +237,8 @@ class Lottery extends Api
                 $drawTimeMap = ['fc3d' => '21:15:00', 'pl3' => '21:25:00'];
                 $drawHour = isset($drawTimeMap[$type]) ? $drawTimeMap[$type] : '21:15:00';
                 $nextPeriod = strval(intval($latest['period']) + 1);
-                $nextDrawTime = date('Y-m-d', strtotime('+1 day')) . ' ' . $drawHour;
+                $lastDrawTimestamp = strtotime($latest['draw_time']);
+                $nextDrawTime = date('Y-m-d', strtotime('+1 day', $lastDrawTimestamp ?: time())) . ' ' . $drawHour;
 
                 Db::name('lottery_draw')->insert([
                     'lottery_type' => $lotteryType,
@@ -1225,6 +1215,9 @@ class Lottery extends Api
         $fc3d = \app\common\service\DrawService::processAutoDraw('fc3d');
         $pl3  = \app\common\service\DrawService::processAutoDraw('pl3');
 
+        if ($fc3d['code'] !== 1 || $pl3['code'] !== 1) {
+            $this->error('自动开奖未全部完成', ['fc3d' => $fc3d, 'pl3' => $pl3]);
+        }
         $this->success('自动开奖执行完成', [
             'fc3d' => $fc3d,
             'pl3'  => $pl3,

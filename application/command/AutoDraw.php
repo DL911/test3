@@ -114,5 +114,6 @@ class AutoDraw extends Command
             $status = $r['code'] === 1 ? '<info>✓ 成功</info>' : '<error>✗ 失败</error>';
             $output->writeln("  {$name}: {$status} - {$r['msg']}");
         }
+        return empty($pending) ? 0 : 1;
     }
 }
