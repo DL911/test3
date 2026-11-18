@@ -85,6 +85,77 @@ class DrawService
         return false;
     }
 
+    /** 乐彩网开奖汇总页。只读取指定彩种的表格行及开奖号码列。 */
+    public static function fetchFrom17500($type, $expectedPeriod = null)
+    {
+        $html = self::httpGetVerified('https://www.17500.cn/kj/index.html', 15, ['Accept: text/html']);
+        return self::parse17500($html, $type, $expectedPeriod);
+    }
+
+    protected static function parse17500($html, $type, $expectedPeriod)
+    {
+        if (!$html || !class_exists('DOMDocument') || !isset(self::$typeMap[$type])) return false;
+        $dom = new \DOMDocument();
+        if (!@$dom->loadHTML('<?xml encoding="UTF-8">' . $html)) return false;
+        $name = $type === 'fc3d' ? '福彩3D' : '排列3';
+        foreach ($dom->getElementsByTagName('tr') as $row) {
+            $cells = [];
+            foreach ($row->childNodes as $child) {
+                if ($child instanceof \DOMElement && strtolower($child->tagName) === 'td') {
+                    $cells[] = self::normaliseDrawText($child->textContent);
+                }
+            }
+            if (count($cells) < 4 || $cells[0] !== $name) continue;
+            $period = $type === 'pl3' && preg_match('/^20\d{5}$/', $cells[1])
+                ? substr($cells[1], 2) : $cells[1];
+            if ($expectedPeriod !== null && $period !== (string)$expectedPeriod) continue;
+            $year = $type === 'fc3d' ? substr($period, 0, 4) : '20' . substr($period, 0, 2);
+            if (!preg_match('/^\d{2}-\d{2}$/', $cells[2])
+                || !preg_match('/^([0-9])([0-9])([0-9])(?:\b|\s|$)/u', $cells[3], $m)) continue;
+            $date = $year . '-' . $cells[2];
+            if (!self::isRealDrawDate($date)) continue;
+            return ['period' => $period, 'numbers' => "{$m[1]},{$m[2]},{$m[3]}",
+                'draw_time' => $date . ' ' . self::$typeMap[$type]['draw_time'], 'source' => '17500'];
+        }
+        return false;
+    }
+
+    /** 东方财富开奖汇总页。定位彩种标题后的期号、日期与第一组开奖号码。 */
+    public static function fetchFromEastmoney($type, $expectedPeriod = null)
+    {
+        $html = self::httpGetVerified('https://caipiao.eastmoney.com/Result/Summary', 15, ['Accept: text/html']);
+        return self::parseEastmoney($html, $type, $expectedPeriod);
+    }
+
+    protected static function parseEastmoney($html, $type, $expectedPeriod)
+    {
+        if (!$html || !class_exists('DOMDocument') || !isset(self::$typeMap[$type])) return false;
+        $dom = new \DOMDocument();
+        if (!@$dom->loadHTML('<?xml encoding="UTF-8">' . $html)) return false;
+        $text = self::normaliseDrawText($dom->textContent);
+        $name = $type === 'fc3d' ? '福彩3D' : '排列3';
+        $periodLength = $type === 'fc3d' ? 7 : 5;
+        $pattern = '/'. $name . '(?:\s*\/\s*排列5)?\s+第\s*(\d{' . $periodLength . '})\s*期\s+'
+            . '(20\d{2}-\d{2}-\d{2})\s+(?:星期[一二三四五六日天]\s+)?\d{2}:\d{2}\s+'
+            . '([0-9])\s+([0-9])\s+([0-9])(?:\s+[0-9]\s+[0-9])?(?:\s|$)/u';
+        if (!preg_match($pattern, $text, $m)) return false;
+        if ($expectedPeriod !== null && $m[1] !== (string)$expectedPeriod) return false;
+        if (!self::isRealDrawDate($m[2])) return false;
+        return ['period' => $m[1], 'numbers' => "{$m[3]},{$m[4]},{$m[5]}",
+            'draw_time' => $m[2] . ' ' . self::$typeMap[$type]['draw_time'], 'source' => 'eastmoney'];
+    }
+
+    protected static function normaliseDrawText($text)
+    {
+        return trim(preg_replace('/\s+/u', ' ', str_replace("\xc2\xa0", ' ', (string)$text)));
+    }
+
+    protected static function isRealDrawDate($date)
+    {
+        $value = \DateTime::createFromFormat('!Y-m-d', $date);
+        return $value && $value->format('Y-m-d') === $date;
+    }
+
     /** 国内采集节点可选：HTTPS 响应经共享密钥签名，且必须提供指定期号。 */
     public static function fetchFromRelay($type, $expectedPeriod)
     {
@@ -211,15 +282,16 @@ class DrawService
         }
     }
 
-    /** 官方接口优先；可选国内签名采集节点。两者冲突时停止自动结算。 */
+    /** 官方或签名节点可独立使用；公开网站必须双源一致才可结算。 */
     public static function fetchLatestDraw($type = 'fc3d', $requireToday = false, $expectedPeriod = null)
     {
         $candidates = [];
-        foreach (['official', 'domestic_relay'] as $source) {
+        foreach (['official', 'domestic_relay', '17500', 'eastmoney'] as $source) {
             try {
-                $result = $source === 'official'
-                    ? self::fetchFromOfficial($type, $expectedPeriod)
-                    : self::fetchFromRelay($type, $expectedPeriod);
+                if ($source === 'official') $result = self::fetchFromOfficial($type, $expectedPeriod);
+                elseif ($source === 'domestic_relay') $result = self::fetchFromRelay($type, $expectedPeriod);
+                elseif ($source === '17500') $result = self::fetchFrom17500($type, $expectedPeriod);
+                else $result = self::fetchFromEastmoney($type, $expectedPeriod);
                 if (!$result || !self::isValidDrawResult($type, $result, $expectedPeriod, $requireToday)) {
                     Log::info("DrawService: [{$source}] 无匹配的有效开奖数据, 彩种={$type}, 待处理期号={$expectedPeriod}");
                     continue;
@@ -230,14 +302,19 @@ class DrawService
                 Log::error("DrawService: [{$source}] 异常: " . $e->getMessage());
             }
         }
-        if (isset($candidates['official'], $candidates['domestic_relay'])
-            && ($candidates['official']['numbers'] !== $candidates['domestic_relay']['numbers']
-                || substr($candidates['official']['draw_time'], 0, 10) !== substr($candidates['domestic_relay']['draw_time'], 0, 10))) {
-            Log::error("DrawService: 官方接口与国内采集节点结果冲突, 彩种={$type}, 期号={$expectedPeriod}, 停止自动结算");
-            return false;
+        $first = null;
+        foreach ($candidates as $candidate) {
+            if ($first && ($candidate['period'] !== $first['period']
+                || $candidate['numbers'] !== $first['numbers']
+                || substr($candidate['draw_time'], 0, 10) !== substr($first['draw_time'], 0, 10))) {
+                Log::error("DrawService: 开奖来源结果冲突, 彩种={$type}, 期号={$expectedPeriod}, 停止自动结算");
+                return false;
+            }
+            $first = $candidate;
         }
-        return isset($candidates['official']) ? $candidates['official']
-            : (isset($candidates['domestic_relay']) ? $candidates['domestic_relay'] : false);
+        if (isset($candidates['official'])) return $candidates['official'];
+        if (isset($candidates['domestic_relay'])) return $candidates['domestic_relay'];
+        return isset($candidates['17500'], $candidates['eastmoney']) ? $candidates['17500'] : false;
     }
 
     protected static function isValidDrawResult($type, $result, $expectedPeriod, $requireToday)

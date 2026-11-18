@@ -14,7 +14,7 @@ class DrawSourceCheck extends Command
     protected function configure()
     {
         $this->setName('DrawSourceCheck')
-            ->setDescription('只读检查官方、国内采集节点及旧数据源')
+            ->setDescription('只读检查官方、乐彩网、东方财富及旧数据源')
             ->addArgument('type', Argument::REQUIRED, 'fc3d 或 pl3')
             ->addArgument('period', Argument::OPTIONAL, '期号，可留空查看来源最新一期');
     }
@@ -30,13 +30,15 @@ class DrawSourceCheck extends Command
         $methods = [
             '官方接口' => ['fetchFromOfficial', $period ?: null],
             '国内签名节点' => ['fetchFromRelay', $period ?: null],
+            '乐彩网' => ['fetchFrom17500', $period ?: null],
+            '东方财富' => ['fetchFromEastmoney', $period ?: null],
             '旧 huiniao' => ['fetchFromHuiniao', null],
             '旧 cz89' => ['fetchFromCz89', null],
         ];
         foreach ($methods as $label => $entry) {
             try {
                 $method = $entry[0];
-                $result = in_array($method, ['fetchFromOfficial', 'fetchFromRelay'], true)
+                $result = in_array($method, ['fetchFromOfficial', 'fetchFromRelay', 'fetchFrom17500', 'fetchFromEastmoney'], true)
                     ? DrawService::$method($type, $entry[1]) : DrawService::$method($type);
                 if (!$result) {
                     $output->writeln("{$label}: 无有效结果");
