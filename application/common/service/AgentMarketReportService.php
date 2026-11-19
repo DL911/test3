@@ -74,12 +74,12 @@ class AgentMarketReportService
         unset($s);
         $result['user_total'] = Db::name('user')->where('id', 'in', $listIds ?: [0])->count();
         if ($result['user_total']) {
-            $users = Db::name('user')->where('id', 'in', $listIds)->field('id,username')->order('id desc')->page($userPage, 20)->select();
+            $users = Db::name('user')->where('id', 'in', $listIds)->field('id,username,is_agent')->order('id desc')->page($userPage, 20)->select();
             foreach ($users as $person) {
                 $uid = intval($person['id']);
                 $personal = (clone $query)->where('b.user_id', $uid);
                 $result['users'][] = [
-                    'user_id' => $uid, 'username' => $person['username'],
+                    'user_id' => $uid, 'username' => $person['username'], 'is_agent' => intval($person['is_agent']),
                     'order_count' => (clone $personal)->where('b.status', '<>', 3)->count(),
                     'bet_amount' => round(floatval((clone $personal)->where('b.status', '<>', 3)->sum('b.total_amount')), 2),
                     'win_amount' => round(floatval((clone $personal)->where('b.status', 1)->sum('b.win_amount')), 2),
