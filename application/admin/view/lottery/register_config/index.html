@@ -46,6 +46,7 @@
                     <div class="col-sm-3"><label>邀请注册与奖励</label><select id="inviteStatus" class="form-control"><option value="0">关闭</option><option value="1">开启</option></select></div>
                 </div>
                 <p style="margin-top:12px;"><button class="btn btn-info" onclick="saveInviteConfig()">保存邀请配置</button></p>
+                <p class="help-block">邀请链接仅在上方状态设为“开启”并保存后可以访问；新建初始账号不会自动开启邀请注册。</p>
                 <hr>
                 <label>创建首个邀请账号（自动补 xj_）</label>
                 <div class="form-inline"><input id="inviteRootName" class="form-control" maxlength="17" placeholder="账号主体，4至17位"> <input id="inviteRootPassword" class="form-control" type="text" maxlength="30" value="88888888" placeholder="初始密码"> <button class="btn btn-default" onclick="createInviteRoot()">创建并生成邀请链接</button></div>

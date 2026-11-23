@@ -121,10 +121,12 @@ class Lottery extends Frontend
     public function register()
     {
         $invite = intval($this->request->get('invite/d', 0));
-        if ($invite <= 0 || !\think\Db::name('invite_reward_config')->where('id', 1)->where('status', 1)->find()
-            || !\think\Db::name('user')->where('id', $invite)->where('account_source', 'invite')->where('status', 'normal')->find()) {
-            $this->error('仅支持有效邀请链接注册', url('lottery/login'));
-        }
+        if ($invite <= 0) $this->error('请使用专属邀请链接注册', url('lottery/login'));
+        $inviter = \think\Db::name('user')->where('id', $invite)->field('id,account_source,status')->find();
+        if (!$inviter || $inviter['account_source'] !== 'invite' || $inviter['status'] !== 'normal')
+            $this->error('邀请码无效或邀请账号已停用', url('lottery/login'));
+        if (!\think\Db::name('invite_reward_config')->where('id', 1)->where('status', 1)->find())
+            $this->error('邀请注册尚未开启，请联系管理员', url('lottery/login'));
         return $this->view->fetch('lottery/register');
     }
 
