@@ -3,6 +3,7 @@ namespace app\api\controller;
 
 use app\common\controller\Api;
 use app\common\service\AgentRebateService;
+use app\common\service\InviteRewardService;
 use app\common\service\QuickBetService;
 use think\Db;
 
@@ -71,6 +72,7 @@ class Quickbet extends Api
             Db::name('lottery_bet')->insert(['order_no' => $orderNo, 'user_id' => $userId, 'lottery_type' => $lotteryType, 'period' => $period, 'play_type' => 'quick', 'play_sub' => '', 'panel_type' => 'quick', 'bet_content' => json_encode($normalized, JSON_UNESCAPED_UNICODE), 'bet_count' => count($normalized), 'bet_amount' => $total, 'total_amount' => $total, 'odds' => 0, 'status' => 0, 'createtime' => $now, 'updatetime' => $now]);
             Db::name('user')->where('id', $userId)->setDec('money', $total);
             AgentRebateService::createForBet($userId, $orderNo, floatval($total), $lotteryType);
+            InviteRewardService::createForBet($userId, $orderNo, floatval($total), $lotteryType);
             Db::name('quick_bet_audit')->insert(['order_no' => $orderNo, 'request_id' => $requestId, 'user_id' => $userId, 'lottery_type' => $lotteryType, 'period' => $period, 'raw_text' => $raw, 'confirmed_items' => json_encode($normalized, JSON_UNESCAPED_UNICODE), 'settings_version' => $version, 'createtime' => $now]);
             $balance = Db::name('user')->where('id', $userId)->value('money');
             Db::commit();

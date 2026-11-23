@@ -50,6 +50,7 @@ class User extends Api
             'is_agent' => isset($user->is_agent) ? intval($user->is_agent) : 0,
             'can_open_account' => isset($user->can_open_account) ? intval($user->can_open_account) : 0,
             'agent_level' => isset($user->agent_level) ? intval($user->agent_level) : 0,
+            'account_source' => isset($user->account_source) ? $user->account_source : 'legacy',
             // 仅展示新代理体系的投注比例；历史账号返回空数组。
             'xima_rates' => $this->getXimaDisplayRates($user),
             'verify_status' => $this->getUserVerifyStatus($user->id),

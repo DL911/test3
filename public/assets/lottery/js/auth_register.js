@@ -84,7 +84,7 @@
             var valid = true;
 
             // 验证用户名
-            if (!username || username.length < 4 || !/^[a-zA-Z0-9_]+$/.test(username)) {
+            if (!username || username.length < 4 || username.length > 17 || !/^[a-zA-Z0-9_]+$/.test(username)) {
                 document.getElementById('fieldUsername').classList.add('error');
                 var ue = document.getElementById('usernameError');
                 if (ue) ue.textContent = '\u7528\u6237\u540d\u97004-20\u4f4d\uff0c\u4ec5\u5b57\u6bcd/\u6570\u5b57/\u4e0b\u5212\u7ebf';
@@ -136,6 +136,7 @@
             btn.disabled = true;
 
             var invite = document.getElementById('regInviteCode') ? document.getElementById('regInviteCode').value.trim() : '';
+            if (!/^\d+$/.test(invite) || Number(invite) <= 0) { showToast('请使用有效邀请链接注册', 'error'); btn.disabled = false; btn.classList.remove('auth-btn-loading'); return; }
             
             var formData = new FormData();
             formData.append('username', username);
@@ -150,7 +151,7 @@
                 formData.append('invite', invite);
             }
 
-            fetch('/index.php/api/user/register', {
+            fetch('/index.php/api/invite/register', {
                 method: 'POST',
                 body: formData
             })

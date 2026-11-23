@@ -120,7 +120,12 @@ class Lottery extends Frontend
      */
     public function register()
     {
-        $this->error('系统已关闭公开注册，请联系代理开户', url('lottery/login'));
+        $invite = intval($this->request->get('invite/d', 0));
+        if ($invite <= 0 || !\think\Db::name('invite_reward_config')->where('id', 1)->where('status', 1)->find()
+            || !\think\Db::name('user')->where('id', $invite)->where('account_source', 'invite')->where('status', 'normal')->find()) {
+            $this->error('仅支持有效邀请链接注册', url('lottery/login'));
+        }
+        return $this->view->fetch('lottery/register');
     }
 
     /**
@@ -187,6 +192,14 @@ class Lottery extends Frontend
             return $this->view->fetch('lottery/agent');
         }
         return $this->view->fetch('lottery/pc_agent');
+    }
+
+    public function invite()
+    {
+        if (\think\Db::name('user')->where('id', $this->auth->id)->value('account_source') !== 'invite') {
+            $this->error('当前账号不属于邀请体系');
+        }
+        return $this->view->fetch('lottery/invite');
     }
 
     /** PC 与手机共用的代理团队记录页。 */

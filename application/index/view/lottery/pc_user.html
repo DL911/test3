@@ -189,7 +189,7 @@
                 <a class="uc-nav-item" data-p="records" onclick="showPanel('records')">
                     <i class="fa-solid fa-receipt"></i> 投注记录 <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
-                <a class="uc-nav-item new-agent-only" data-p="rebate" onclick="showPanel('rebate')" style="display:none;">
+                <a class="uc-nav-item rebate-member-only" data-p="rebate" onclick="showPanel('rebate')" style="display:none;">
                     <i class="fa-solid fa-recycle" style="color:#43e97b;"></i> 返水中心 <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
 
@@ -197,6 +197,7 @@
                     <i class="fa-solid fa-list" style="color:#764ba2;"></i> 交易明细 <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
                 <div class="uc-nav-divider"></div>
+                <a class="uc-nav-item invite-only" href="/index.php/index/lottery/invite" style="display:none;"><i class="fa-solid fa-link"></i> 邀请中心 <i class="fa-solid fa-chevron-right arrow"></i></a>
                 <a class="uc-nav-item new-agent-only" href="/index.php/index/lottery/agent" style="display:none;">
                     <i class="fa-solid fa-users"></i> 代理开户 <i class="fa-solid fa-chevron-right arrow"></i>
                 </a>
@@ -702,6 +703,8 @@
                     refreshBalance();
                     window._verifyStatus = (info.verify_status !== undefined) ? info.verify_status : -1;
                     document.querySelectorAll('.new-agent-only').forEach(function(el){ el.style.display = parseInt(info.agent_level || 0) > 0 ? '' : 'none'; });
+                    document.querySelectorAll('.rebate-member-only').forEach(function(el){ el.style.display = (parseInt(info.agent_level || 0) > 0 || info.account_source === 'invite') ? '' : 'none'; });
+                    document.querySelectorAll('.invite-only').forEach(function(el){ el.style.display = info.account_source === 'invite' ? '' : 'none'; });
                 }
             });
 

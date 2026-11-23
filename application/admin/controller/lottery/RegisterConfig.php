@@ -21,6 +21,7 @@ class RegisterConfig extends Backend
             $todayStart = strtotime(date('Y-m-d 00:00:00'));
             return json(['code' => 1, 'msg' => 'ok', 'data' => [
                 'config' => $config,
+                'invite_config' => Db::name('invite_reward_config')->where('id', 1)->find(),
                 'stats' => [
                     'total_users' => Db::name('user')->where('agent_level', '>', 0)->count(),
                     'today_users' => Db::name('user')->where('agent_level', '>', 0)->where('createtime', '>=', $todayStart)->count(),
@@ -63,6 +64,7 @@ class RegisterConfig extends Backend
     public function createTopAgent()
     {
         $username = trim($this->request->post('username', ''));
+        $username = strpos($username, 'xy_') === 0 ? $username : 'xy_' . $username;
         $mobile = trim($this->request->post('mobile', ''));
         $password = (string)$this->request->post('password', '');
         $ratePercent = $this->request->post('rebate_rate/f', -1);
@@ -78,7 +80,7 @@ class RegisterConfig extends Backend
         $now = time();
         try {
             $user = UserModel::create([
-                'pid' => 0, 'is_agent' => 1, 'can_open_account' => 1, 'agent_level' => 1,
+                'pid' => 0, 'is_agent' => 1, 'can_open_account' => 1, 'agent_level' => 1, 'account_source' => 'agent',
                 'username' => $username, 'nickname' => $username,
                 'password' => (new UserAuth())->getEncryptPassword($password, $salt), 'salt' => $salt,
                 'email' => '', 'mobile' => $mobile, 'avatar' => '', 'level' => 1, 'score' => 0, 'money' => 0,
@@ -90,6 +92,37 @@ class RegisterConfig extends Backend
         } catch (\Exception $e) {
             return json(['code' => 0, 'msg' => '创建失败：' . $e->getMessage()]);
         }
+    }
+
+    public function saveInviteConfig()
+    {
+        $self = $this->request->post('self_rate/f', -1);
+        $parent = $this->request->post('parent_rate/f', -1);
+        $minimum = $this->request->post('min_bet/f', -1);
+        $status = $this->request->post('status/d', 0);
+        if ($self < 0 || $parent < 0 || $self > 100 || $parent > 100 || $minimum < 0 || !in_array($status, [0, 1], true))
+            return json(['code' => 0, 'msg' => '邀请奖励配置不正确']);
+        Db::name('invite_reward_config')->where('id', 1)->update(['self_rate' => round($self / 100, 6),
+            'parent_rate' => round($parent / 100, 6), 'min_bet' => round($minimum, 2), 'status' => $status, 'updatetime' => time()]);
+        return json(['code' => 1, 'msg' => '邀请奖励配置已保存']);
+    }
+
+    public function createInviteRoot()
+    {
+        $raw = trim((string)$this->request->post('username', ''));
+        $username = strpos($raw, 'xj_') === 0 ? $raw : 'xj_' . $raw;
+        $password = (string)$this->request->post('password', '');
+        if (!preg_match('/^xj_[A-Za-z0-9_]{4,17}$/', $username) || strlen($password) < 6 || strlen($password) > 30)
+            return json(['code' => 0, 'msg' => '用户名需4至17位，密码需6至30位']);
+        if (UserModel::getByUsername($username)) return json(['code' => 0, 'msg' => '账号已存在']);
+        $salt = Random::alnum(); $now = time();
+        $user = UserModel::create(['pid' => 0, 'account_source' => 'invite', 'is_agent' => 0, 'can_open_account' => 0,
+            'agent_level' => 0, 'username' => $username, 'nickname' => $username,
+            'password' => (new UserAuth())->getEncryptPassword($password, $salt), 'salt' => $salt,
+            'email' => '', 'mobile' => '', 'avatar' => '', 'level' => 1, 'score' => 0, 'money' => 0,
+            'self_rebate_rate' => 0, 'invite_rebate_rate' => 0, 'jointime' => $now, 'joinip' => $this->request->ip(),
+            'status' => 'normal', 'createtime' => $now, 'updatetime' => $now], true);
+        return json(['code' => 1, 'msg' => '邀请体系初始账号已创建', 'data' => ['username' => $username, 'id' => $user->id]]);
     }
 
     /** 后台重置新模式顶级代理密码。 */

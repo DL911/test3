@@ -4,6 +4,7 @@ namespace app\api\controller;
 
 use app\common\controller\Api;
 use app\common\service\AgentRebateService;
+use app\common\service\InviteRewardService;
 use think\Db;
 
 /**
@@ -946,6 +947,7 @@ class Lottery extends Api
 
             // 每笔有效投注按投注时代理链比例快照生成自身返水与全部上级级差奖励。
             AgentRebateService::createForBet($userId, $orderNo, $totalAmount, $lotteryType);
+            InviteRewardService::createForBet($userId, $orderNo, $totalAmount, $lotteryType);
 
             $newBalance = Db::name('user')->where('id', $userId)->value('money');
             Db::commit();

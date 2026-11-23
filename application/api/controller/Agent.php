@@ -201,6 +201,7 @@ class Agent extends Api
     {
         $agent = $this->currentUser(true);
         $username = trim($this->request->post('username', ''));
+        $username = strpos($username, 'xy_') === 0 ? $username : 'xy_' . $username;
         $mobile = trim($this->request->post('mobile', ''));
         $password = (string)$this->request->post('password', '');
         $accountType = $this->request->post('account_type', 'user');
@@ -226,6 +227,7 @@ class Agent extends Api
                 'is_agent' => $accountType === 'agent' ? 1 : 0,
                 'can_open_account' => $accountType === 'agent' ? 1 : 0,
                 'agent_level' => intval($agent['agent_level']) + 1,
+                'account_source' => 'agent',
                 'username' => $username,
                 'nickname' => $username,
                 'password' => $this->auth->getEncryptPassword($password, $salt),
@@ -335,9 +337,9 @@ class Agent extends Api
 
     private function currentUser($requireAgent = false)
     {
-        $user = Db::name('user')->where('id', $this->auth->id)->field('id,pid,is_agent,can_open_account,agent_level,self_rebate_rate,status')->find();
+        $user = Db::name('user')->where('id', $this->auth->id)->field('id,pid,is_agent,can_open_account,agent_level,self_rebate_rate,status,account_source')->find();
         if (!$user || $user['status'] !== 'normal') $this->error('账号不可用');
-        if (intval($user['agent_level']) <= 0) $this->error('历史账号不属于新代理体系');
+        if (intval($user['agent_level']) <= 0 || $user['account_source'] !== 'agent') $this->error('当前账号不属于代理体系');
         if ($requireAgent && (intval($user['is_agent']) !== 1 || intval($user['can_open_account']) !== 1)) $this->error('当前账号没有代理开户权限');
         return $user;
     }

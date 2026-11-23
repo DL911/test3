@@ -131,13 +131,14 @@
 
         <div class="lm-menu-group" id="rebateGroup" style="display:none;">
             <div class="lm-menu-list">
+                <a class="lm-menu-item" id="inviteMenu" href="/index.php/index/lottery/invite" style="display:none;"><div class="lm-menu-icon" style="background:#16a34a;color:#fff;"><i class="fa-solid fa-link"></i></div><div class="lm-menu-text"><span>邀请中心</span><small>复制专属链接</small></div></a>
                 <a class="lm-menu-item" href="/index.php/index/lottery/xima">
                     <div class="lm-menu-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: #fff;"><i class="fa-solid fa-recycle"></i></div>
                     <div class="lm-menu-text"><span>返水中心</span><small id="ximaHint">逐笔产生返水，次日领取</small></div>
                     <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
                 </a>
 
-                <a class="lm-menu-item" href="/index.php/index/lottery/agent">
+                <a class="lm-menu-item" id="agentMenu" href="/index.php/index/lottery/agent">
                     <div class="lm-menu-icon" style="background: linear-gradient(135deg, #FF6B6B, #E3001B); color: #fff;"><i class="fa-solid fa-users"></i></div>
                     <div class="lm-menu-text"><span>代理开户</span><small>管理直属账号与级差返水</small></div>
                     <i class="fa-solid fa-chevron-right lm-menu-arrow"></i>
@@ -345,7 +346,9 @@
 
             // 历史用户与新代理体系隔离，仅新开户链账号显示相关入口。
             var rg = document.getElementById('rebateGroup');
-            if (rg) rg.style.display = parseInt(u.agent_level || 0) > 0 ? '' : 'none';
+            if (rg) rg.style.display = (parseInt(u.agent_level || 0) > 0 || u.account_source === 'invite') ? '' : 'none';
+            var inviteMenu = document.getElementById('inviteMenu'); if (inviteMenu) inviteMenu.style.display = u.account_source === 'invite' ? '' : 'none';
+            var agentMenu = document.getElementById('agentMenu'); if (agentMenu) agentMenu.style.display = parseInt(u.agent_level || 0) > 0 ? '' : 'none';
 
             // 显示实名认证状态
             var vs = (u.verify_status !== undefined) ? u.verify_status : -1;

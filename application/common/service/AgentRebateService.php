@@ -19,8 +19,8 @@ class AgentRebateService
     public static function createForBet($userId, $orderNo, $betAmount, $lotteryType)
     {
         // 历史用户 agent_level=0，与新代理体系完全隔离。
-        $bettorLevel = intval(Db::name('user')->where('id', $userId)->value('agent_level'));
-        if ($bettorLevel <= 0) {
+        $bettor = Db::name('user')->where('id', $userId)->field('agent_level,account_source')->find();
+        if (!$bettor || intval($bettor['agent_level']) <= 0 || $bettor['account_source'] !== 'agent') {
             return [];
         }
         $config = Db::name('agent_config')->where('id', 1)->where('status', 1)->find();

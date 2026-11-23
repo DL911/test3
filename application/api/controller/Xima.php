@@ -193,7 +193,7 @@ class Xima extends Api
         foreach ($list as &$item) {
             $item['create_date'] = date('Y-m-d H:i', $item['createtime']);
             $item['claim_date'] = $item['claim_time'] ? date('Y-m-d H:i', $item['claim_time']) : '--';
-            $item['type_text'] = $item['type'] === 'self' ? '自身返水' : '团队级差';
+            $item['type_text'] = $item['reward_type'] === 'invite_self' ? '邀请体系自身洗码' : ($item['reward_type'] === 'invite_parent' ? '直属邀请奖励' : ($item['type'] === 'self' ? '自身返水' : '团队级差'));
             $item['status_text'] = $item['status'] == 1 ? '已领取' : ($item['status'] == 2 ? '已作废' : ($item['unlock_date'] <= date('Y-m-d') ? '可领取' : '今日待解锁'));
             // 来源用户名
             $sourceUserId = isset($item['source_user_id']) ? $item['source_user_id'] : 0;
@@ -211,6 +211,6 @@ class Xima extends Api
     private function ensureNewAgentMember($userId)
     {
         $level = intval(Db::name('user')->where('id', $userId)->value('agent_level'));
-        if ($level <= 0) $this->error('当前账号不属于新代理返水体系');
+        if ($level <= 0 && Db::name('user')->where('id', $userId)->value('account_source') !== 'invite') $this->error('当前账号不属于可领取返水体系');
     }
 }
