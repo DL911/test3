@@ -23,10 +23,12 @@ class RegisterConfig extends Backend
                 'config' => $config,
                 'invite_config' => Db::name('invite_reward_config')->where('id', 1)->find(),
                 'stats' => [
-                    'total_users' => Db::name('user')->where('agent_level', '>', 0)->count(),
-                    'today_users' => Db::name('user')->where('agent_level', '>', 0)->where('createtime', '>=', $todayStart)->count(),
-                    'agent_users' => Db::name('user')->where('agent_level', '>', 0)->where('is_agent', 1)->count(),
-                    'invited_users' => Db::name('user')->where('agent_level', '>', 1)->count(),
+                    'total_users' => Db::name('user')->where('account_source', 'in', ['agent', 'invite'])->count(),
+                    'today_users' => Db::name('user')->where('account_source', 'in', ['agent', 'invite'])->where('createtime', '>=', $todayStart)->count(),
+                    'agent_users' => Db::name('user')->where('account_source', 'agent')->where('is_agent', 1)->count(),
+                    'invited_users' => Db::name('user')->where('account_source', 'in', ['agent', 'invite'])->where('pid', '>', 0)->count(),
+                    'invite_users' => Db::name('user')->where('account_source', 'invite')->count(),
+                    'invite_direct_users' => Db::name('user')->where('account_source', 'invite')->where('pid', '>', 0)->count(),
                 ],
                 'top_agents' => Db::name('user')->where('agent_level', 1)->where('pid', 0)->where('is_agent', 1)
                     ->field('id,username,nickname,mobile,self_rebate_rate,can_open_account,status,createtime')
