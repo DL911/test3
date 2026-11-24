@@ -50,11 +50,11 @@
                 <p style="margin-top:12px;"><button class="btn btn-info" onclick="saveInviteConfig()">保存邀请配置</button></p>
                 <p class="help-block">邀请链接仅在上方状态设为“开启”并保存后可以访问；新建初始账号不会自动开启邀请注册。</p>
                 <hr>
-                <div class="panel panel-success" style="margin-top:18px"><div class="panel-heading">创建首个邀请账号</div><div class="panel-body">
+                <div class="panel panel-success" style="margin-top:18px"><div class="panel-heading">创建邀请账号</div><div class="panel-body">
                     <div class="form-group"><label>登录账号（系统自动补 xj）</label><input id="inviteRootName" class="form-control" maxlength="18" placeholder="账号主体，4至18位"></div>
                     <div class="form-group"><label>初始密码</label><input id="inviteRootPassword" class="form-control" type="text" maxlength="30" value="88888888"><p class="help-block">默认密码为 8 个 8，创建前可直接修改。</p></div>
                     <div class="form-group"><label>该邀请链路本人洗码比例 (%)</label><input id="inviteRootRate" class="form-control" type="number" min="0" max="100" step="0.01" value="0"><p class="help-block">此账号及其后续邀请的用户继承该比例；其他首个邀请账号可设置不同的比例。直属邀请奖励按上方单独比例计算。</p></div>
-                    <button class="btn btn-success" onclick="createInviteRoot()"><i class="fa fa-user-plus"></i> 创建首个邀请账号</button>
+                    <button class="btn btn-success" onclick="createInviteRoot()"><i class="fa fa-user-plus"></i> 创建邀请账号</button>
                 </div></div>
                 <p id="inviteRootResult" class="help-block"></p>
             </div>
