@@ -177,7 +177,16 @@ var LotteryAuth = (function() {
                 return rates.map(function(r, i) { return r.lottery_name + ' ' + values[i]; }).join(' / ');
             }
             var selfRateStr = formatXimaRate('self_rate');
-            var inviteRateStr = formatXimaRate('parent_rate');
+            var inviteRateStr = u.account_source === 'agent' ? '按下级比例计算' : formatXimaRate('parent_rate');
+            var parentLabel = u.account_source === 'invite' ? '直属邀请奖励比例' : '团队级差';
+            var userParentWrap = document.getElementById('userParentWrap');
+            if (userParentWrap) userParentWrap.style.display = u.account_source === 'invite' ? 'none' : '';
+            var pcUserParentWrap = document.getElementById('pcUserParentWrap');
+            if (pcUserParentWrap) pcUserParentWrap.style.display = u.account_source === 'invite' ? 'none' : '';
+            var userParentLabel = document.getElementById('userParentLabel');
+            if (userParentLabel) userParentLabel.textContent = parentLabel;
+            var pcUserParentLabel = document.getElementById('pcUserParentLabel');
+            if (pcUserParentLabel) pcUserParentLabel.textContent = parentLabel;
             
             var userSelfRebate = document.getElementById('userSelfRebate');
             if (userSelfRebate) userSelfRebate.textContent = selfRateStr;

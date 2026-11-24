@@ -45,8 +45,8 @@ class User extends Api
             'level'    => $user->level,
             'mobile'   => $user->mobile,
             'group_id' => $user->group_id,
-            'self_rebate_rate'   => intval($user->agent_level) > 0 ? $user->self_rebate_rate : 0,
-            'invite_rebate_rate' => 0,
+            'self_rebate_rate'   => in_array($user->account_source, ['agent', 'invite'], true) ? $user->self_rebate_rate : 0,
+            'invite_rebate_rate' => $user->account_source === 'invite' ? floatval(Db::name('invite_reward_config')->where('id', 1)->value('parent_rate')) : 0,
             'is_agent' => isset($user->is_agent) ? intval($user->is_agent) : 0,
             'can_open_account' => isset($user->can_open_account) ? intval($user->can_open_account) : 0,
             'agent_level' => isset($user->agent_level) ? intval($user->agent_level) : 0,
@@ -61,15 +61,17 @@ class User extends Api
     /** 新代理体系当前按账号层级总返水比例展示，各彩种统一使用该快照比例。 */
     private function getXimaDisplayRates($user)
     {
-        if (intval($user['agent_level']) <= 0) return [];
+        if (!in_array($user['account_source'], ['agent', 'invite'], true)) return [];
         $userRate = floatval($user['self_rebate_rate']);
+        $parentRate = $user['account_source'] === 'invite'
+            ? floatval(Db::name('invite_reward_config')->where('id', 1)->value('parent_rate')) : null;
         $rates = [];
         foreach ([1 => '福彩3D', 2 => '排列三'] as $type => $name) {
             $rates[] = [
                 'lottery_type' => $type,
                 'lottery_name' => $name,
                 'self_rate' => $userRate,
-                'parent_rate' => 0,
+                'parent_rate' => $parentRate,
             ];
         }
         return $rates;
