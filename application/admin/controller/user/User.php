@@ -61,9 +61,11 @@ class User extends Backend
             } catch (\Exception $e) {
                 $realNames = [];
             }
+            $agentChains = $this->buildAgentChains($list->items());
             foreach ($list as $k => $v) {
                 $v->avatar = $v->avatar ? cdnurl($v->avatar, true) : letter_avatar($v->nickname);
                 $v->real_name = isset($realNames[$v->id]) ? $realNames[$v->id] : '';
+                $v->agent_chain = isset($agentChains[$v->id]) ? $agentChains[$v->id] : null;
                 $v->hidden(['password', 'salt']);
             }
             $result = array("total" => $list->total(), "rows" => $list->items());
@@ -165,6 +167,9 @@ class User extends Backend
         $user = \think\Db::name('user')->where('id', $id)->find();
         if (!$user) $this->error('用户不存在');
 
+        $agentChains = $this->buildAgentChains([$user]);
+        $this->view->assign('agentChain', isset($agentChains[$id]) ? $agentChains[$id] : null);
+
         unset($user['password'], $user['salt'], $user['token']);
         $user['jointime_fmt'] = $user['jointime'] ? date('Y-m-d H:i:s', $user['jointime']) : '--';
         $user['logintime_fmt'] = $user['logintime'] ? date('Y-m-d H:i:s', $user['logintime']) : '--';
@@ -200,6 +205,56 @@ class User extends Backend
         $this->view->assign('stats', $stats);
         $this->view->assign('parent', $parent);
         return $this->view->fetch();
+    }
+
+    /** 按批次查找当前页代理的上级，避免列表逐行查询。 */
+    private function buildAgentChains($users)
+    {
+        $agents = [];
+        $known = [];
+        $pending = [];
+        foreach ($users as $user) {
+            $row = is_array($user) ? $user : $user->getData();
+            if (intval($row['is_agent']) !== 1 || $row['account_source'] !== 'agent') continue;
+            $id = intval($row['id']);
+            $agents[$id] = $id;
+            $known[$id] = $row;
+            if (intval($row['pid']) > 0) $pending[intval($row['pid'])] = intval($row['pid']);
+        }
+        for ($depth = 0; $pending && $depth < 50; $depth++) {
+            $ids = array_values(array_diff($pending, array_keys($known)));
+            if (!$ids) break;
+            $rows = Db::name('user')->where('id', 'in', $ids)
+                ->field('id,pid,username,is_agent,account_source')->select();
+            if (!$rows) break;
+            $pending = [];
+            foreach ($rows as $row) {
+                $known[intval($row['id'])] = $row;
+                $pid = intval($row['pid']);
+                if ($pid > 0 && !isset($known[$pid])) $pending[$pid] = $pid;
+            }
+        }
+        $result = [];
+        foreach ($agents as $id) {
+            $path = [];
+            $seen = [];
+            $current = $id;
+            $error = '';
+            while ($current > 0) {
+                if (isset($seen[$current])) { $error = '上级关系存在循环'; break; }
+                if (!isset($known[$current])) { $error = '上级账号不存在'; break; }
+                $row = $known[$current];
+                if (intval($row['is_agent']) !== 1 || $row['account_source'] !== 'agent') {
+                    $error = '上级并非代理体系账号'; break;
+                }
+                $seen[$current] = true;
+                $path[] = ['id' => $current, 'username' => $row['username']];
+                $current = intval($row['pid']);
+                if (count($path) >= 50 && $current > 0) { $error = '上级层级超过查询上限'; break; }
+            }
+            $result[$id] = ['path' => array_reverse($path), 'error' => $error];
+        }
+        return $result;
     }
 
     /**

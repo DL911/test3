@@ -84,10 +84,10 @@
             var valid = true;
 
             // 验证用户名
-            if (!username || username.length < 4 || username.length > 17 || !/^[a-zA-Z0-9_]+$/.test(username)) {
+            if (!/^xj[a-zA-Z0-9_]{4,18}$/.test(username)) {
                 document.getElementById('fieldUsername').classList.add('error');
                 var ue = document.getElementById('usernameError');
-                if (ue) ue.textContent = '\u7528\u6237\u540d\u97004-20\u4f4d\uff0c\u4ec5\u5b57\u6bcd/\u6570\u5b57/\u4e0b\u5212\u7ebf';
+                if (ue) ue.textContent = '请在 xj 后输入4-18位字母、数字或下划线';
                 valid = false;
             } else {
                 document.getElementById('fieldUsername').classList.remove('error');

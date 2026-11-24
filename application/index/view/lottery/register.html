@@ -68,11 +68,11 @@
                 <form class="auth-form" id="registerForm" onsubmit="return false;">
                     <!-- 用户名 -->
                     <div class="auth-field" id="fieldUsername">
-                        <label class="auth-field-label">用户名（系统自动补 xj）</label>
+                        <label class="auth-field-label">用户名（前缀 xj）</label>
                         <div class="auth-field-input-wrap">
                             <i class="fa-solid fa-user auth-field-icon"></i>
                             <input type="text" class="auth-field-input" id="regUsername"
-                                   placeholder="4-17位字母、数字或下划线" autocomplete="username" maxlength="17">
+                                   value="xj" placeholder="xj 后输入4-18位字母、数字或下划线" autocomplete="username" maxlength="20">
                         </div>
                         <div class="auth-field-error" id="usernameError">请输入有效的用户名</div>
                     </div>
@@ -161,6 +161,6 @@
 </div>
 
 <div class="auth-toast" id="toastContainer"></div>
-<script src="/assets/lottery/js/auth_register.js?v=2026112301"></script>
+<script src="/assets/lottery/js/auth_register.js?v=2026112401"></script>
 </body>
 </html>

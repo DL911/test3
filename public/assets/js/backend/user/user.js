@@ -30,6 +30,13 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'id', title: __('Id'), sortable: true},
                         {field: 'group.name', title: __('Group')},
                         {field: 'username', title: __('Username'), operate: 'LIKE'},
+                        {field: 'agent_chain', title: '上级链路', operate: false, formatter: function(value, row) {
+                            if (!value) return '<span class="text-muted">—</span>';
+                            if (value.error) return '<span class="text-danger">关系异常</span> <a href="javascript:;" class="agent-chain-link" data-id="'+row.id+'">查看链路</a>';
+                            var path = value.path || [];
+                            var parent = path.length > 1 ? path[path.length - 2].username : '无（顶级代理）';
+                            return '<span>直属上级：'+$('<div>').text(parent).html()+' · 共 '+Math.max(0, path.length - 1)+' 级</span> <a href="javascript:;" class="agent-chain-link" data-id="'+row.id+'">查看链路</a>';
+                        }},
                         {field: 'real_name', title: '真实姓名', operate: false, formatter: function(value){return value || '<span class="text-muted">未认证</span>'; }},
                         {field: 'mobile', title: __('Mobile'), operate: 'LIKE'},
                         {field: 'avatar', title: __('Avatar'), events: Table.api.events.image, formatter: Table.api.formatter.image, operate: false},
@@ -66,6 +73,22 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         }
                     ]
                 ]
+            });
+
+            // 启用/禁用按钮事件
+            $(document).on('click', '.agent-chain-link', function() {
+                var id = Number($(this).attr('data-id'));
+                var row = table.bootstrapTable('getData').filter(function(item) { return Number(item.id) === id; })[0];
+                if (!row || !row.agent_chain) return;
+                var chain = row.agent_chain;
+                var html = (chain.path || []).map(function(item) {
+                    return '<a href="javascript:;" class="agent-chain-profile" data-id="'+Number(item.id)+'">'+$('<div>').text(item.username).html()+' (ID '+Number(item.id)+')</a>';
+                }).join(' &rarr; ');
+                if (chain.error) html += '<p class="text-danger" style="margin-top:12px">'+$('<div>').text(chain.error).html()+'</p>';
+                Layer.open({type: 1, title: '代理上级链路', area: [mobileTable ? '92%' : '680px', 'auto'], content: '<div style="padding:20px;line-height:2;overflow-wrap:anywhere">'+html+'</div>'});
+            });
+            $(document).on('click', '.agent-chain-profile', function() {
+                Fast.api.open('user/user/profile?ids=' + Number($(this).attr('data-id')), '会员详情');
             });
 
             // 启用/禁用按钮事件
