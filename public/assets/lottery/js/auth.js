@@ -180,9 +180,9 @@ var LotteryAuth = (function() {
             var inviteRateStr = u.account_source === 'agent' ? '按下级比例计算' : formatXimaRate('parent_rate');
             var parentLabel = u.account_source === 'invite' ? '直属邀请奖励比例' : '团队级差';
             var userParentWrap = document.getElementById('userParentWrap');
-            if (userParentWrap) userParentWrap.style.display = u.account_source === 'invite' ? 'none' : '';
+            if (userParentWrap) userParentWrap.style.display = u.account_source === 'agent' ? '' : 'none';
             var pcUserParentWrap = document.getElementById('pcUserParentWrap');
-            if (pcUserParentWrap) pcUserParentWrap.style.display = u.account_source === 'invite' ? 'none' : '';
+            if (pcUserParentWrap) pcUserParentWrap.style.display = u.account_source === 'agent' ? '' : 'none';
             var userParentLabel = document.getElementById('userParentLabel');
             if (userParentLabel) userParentLabel.textContent = parentLabel;
             var pcUserParentLabel = document.getElementById('pcUserParentLabel');
