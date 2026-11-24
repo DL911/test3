@@ -207,17 +207,17 @@ class User extends Backend
         return $this->view->fetch();
     }
 
-    /** 按批次查找当前页代理的上级，避免列表逐行查询。 */
+    /** 按批次查找代理体系账号的上级，包括代理开户的普通用户。 */
     private function buildAgentChains($users)
     {
-        $agents = [];
+        $subjects = [];
         $known = [];
         $pending = [];
         foreach ($users as $user) {
             $row = is_array($user) ? $user : $user->getData();
-            if (intval($row['is_agent']) !== 1 || $row['account_source'] !== 'agent') continue;
+            if ($row['account_source'] !== 'agent') continue;
             $id = intval($row['id']);
-            $agents[$id] = $id;
+            $subjects[$id] = $id;
             $known[$id] = $row;
             if (intval($row['pid']) > 0) $pending[intval($row['pid'])] = intval($row['pid']);
         }
@@ -235,7 +235,7 @@ class User extends Backend
             }
         }
         $result = [];
-        foreach ($agents as $id) {
+        foreach ($subjects as $id) {
             $path = [];
             $seen = [];
             $current = $id;
@@ -244,14 +244,15 @@ class User extends Backend
                 if (isset($seen[$current])) { $error = '上级关系存在循环'; break; }
                 if (!isset($known[$current])) { $error = '上级账号不存在'; break; }
                 $row = $known[$current];
-                if (intval($row['is_agent']) !== 1 || $row['account_source'] !== 'agent') {
+                if ($row['account_source'] !== 'agent' || ($current !== $id && intval($row['is_agent']) !== 1)) {
                     $error = '上级并非代理体系账号'; break;
                 }
                 $seen[$current] = true;
-                $path[] = ['id' => $current, 'username' => $row['username']];
+                $path[] = ['id' => $current, 'username' => $row['username'], 'is_agent' => intval($row['is_agent'])];
                 $current = intval($row['pid']);
                 if (count($path) >= 50 && $current > 0) { $error = '上级层级超过查询上限'; break; }
             }
+            if (!$error && count($path) === 1 && intval($known[$id]['is_agent']) !== 1) $error = '普通用户缺少上级代理';
             $result[$id] = ['path' => array_reverse($path), 'error' => $error];
         }
         return $result;

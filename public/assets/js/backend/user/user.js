@@ -30,12 +30,15 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'id', title: __('Id'), sortable: true},
                         {field: 'group.name', title: __('Group')},
                         {field: 'username', title: __('Username'), operate: 'LIKE'},
+                        {field: 'is_agent', title: '是否代理', operate: false, formatter: function(value, row) {
+                            return Number(value) === 1 && row.account_source === 'agent'
+                                ? '<span class="label label-primary">代理</span>'
+                                : '<span class="label label-default">普通用户</span>';
+                        }},
                         {field: 'agent_chain', title: '上级链路', operate: false, formatter: function(value, row) {
                             if (!value) return '<span class="text-muted">—</span>';
                             if (value.error) return '<span class="text-danger">关系异常</span> <a href="javascript:;" class="agent-chain-link" data-id="'+row.id+'">查看链路</a>';
-                            var path = value.path || [];
-                            var parent = path.length > 1 ? path[path.length - 2].username : '无（顶级代理）';
-                            return '<span>直属上级：'+$('<div>').text(parent).html()+' · 共 '+Math.max(0, path.length - 1)+' 级</span> <a href="javascript:;" class="agent-chain-link" data-id="'+row.id+'">查看链路</a>';
+                            return '<a href="javascript:;" class="agent-chain-link" data-id="'+row.id+'">查看链路</a>';
                         }},
                         {field: 'real_name', title: '真实姓名', operate: false, formatter: function(value){return value || '<span class="text-muted">未认证</span>'; }},
                         {field: 'mobile', title: __('Mobile'), operate: 'LIKE'},
@@ -82,7 +85,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 if (!row || !row.agent_chain) return;
                 var chain = row.agent_chain;
                 var html = (chain.path || []).map(function(item) {
-                    return '<a href="javascript:;" class="agent-chain-profile" data-id="'+Number(item.id)+'">'+$('<div>').text(item.username).html()+' (ID '+Number(item.id)+')</a>';
+                    return '<a href="javascript:;" class="agent-chain-profile" data-id="'+Number(item.id)+'">'+$('<div>').text(item.username).html()+' (ID '+Number(item.id)+'，'+(Number(item.is_agent) === 1 ? '代理' : '普通用户')+')</a>';
                 }).join(' &rarr; ');
                 if (chain.error) html += '<p class="text-danger" style="margin-top:12px">'+$('<div>').text(chain.error).html()+'</p>';
                 Layer.open({type: 1, title: '代理上级链路', area: [mobileTable ? '92%' : '680px', 'auto'], content: '<div style="padding:20px;line-height:2;overflow-wrap:anywhere">'+html+'</div>'});

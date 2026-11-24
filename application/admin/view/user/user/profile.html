@@ -57,7 +57,7 @@
             <div class="panel-body" style="line-height:2;overflow-wrap:anywhere;">
                 {foreach $agentChain.path as $key=>$node}
                     {if $key} &rarr; {/if}
-                    <span>{$node.username|htmlentities} (ID {$node.id})</span>
+                    <span>{$node.username|htmlentities} (ID {$node.id}，{if $node.is_agent}代理{else}普通用户{/if})</span>
                 {/foreach}
                 {if $agentChain.error}<div class="text-danger">{$agentChain.error|htmlentities}</div>{/if}
             </div>
