@@ -26,8 +26,9 @@ class Invite extends Api
         $parent = Db::name('user')->where('id', $parentId)->where('account_source', 'invite')->where('status', 'normal')->find();
         if (!$parent) $this->error('邀请码无效');
         $raw = trim((string)$this->request->post('username', ''));
-        $username = strpos($raw, 'xj_') === 0 ? $raw : 'xj_' . $raw;
-        if (!preg_match('/^xj_[A-Za-z0-9_]{4,17}$/', $username)) $this->error('用户名需填写4至17位字母、数字或下划线');
+        if (strpos($raw, 'xj_') === 0) $raw = 'xj' . substr($raw, 3);
+        $username = strpos($raw, 'xj') === 0 ? $raw : 'xj' . $raw;
+        if (!preg_match('/^xj[A-Za-z0-9_]{4,18}$/', $username)) $this->error('用户名需填写4至18位字母、数字或下划线');
         $password = (string)$this->request->post('password', '');
         $mobile = trim((string)$this->request->post('mobile', ''));
         if (strlen($password) < 6 || strlen($password) > 30 || !preg_match('/^1[3-9]\d{9}$/', $mobile)) $this->error('密码或手机号格式不正确');
@@ -49,7 +50,9 @@ class Invite extends Api
         Db::startTrans();
         try {
             if (!$this->auth->register($username, $password, $email, $mobile,
-                ['pid' => $parentId, 'account_source' => 'invite', 'agent_level' => 0, 'is_agent' => 0, 'can_open_account' => 0])) {
+                ['pid' => $parentId, 'account_source' => 'invite', 'agent_level' => 0, 'is_agent' => 0, 'can_open_account' => 0,
+                    'self_rebate_rate' => $parent['self_rebate_rate'],
+                    'invite_rebate_rate' => $parent['invite_rebate_rate']])) {
                 throw new \RuntimeException($this->auth->getError());
             }
             $id = $this->auth->id;

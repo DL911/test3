@@ -201,7 +201,8 @@ class Agent extends Api
     {
         $agent = $this->currentUser(true);
         $username = trim($this->request->post('username', ''));
-        $username = strpos($username, 'xy_') === 0 ? $username : 'xy_' . $username;
+        if (strpos($username, 'xy_') === 0) $username = 'xy' . substr($username, 3);
+        $username = strpos($username, 'xy') === 0 ? $username : 'xy' . $username;
         $mobile = trim($this->request->post('mobile', ''));
         $password = (string)$this->request->post('password', '');
         $accountType = $this->request->post('account_type', 'user');

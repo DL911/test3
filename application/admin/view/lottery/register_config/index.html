@@ -1,7 +1,7 @@
 <div class="panel panel-default panel-intro">
     <div class="panel-heading"><h3 class="panel-title">代理开户与返水设置</h3></div>
     <div class="panel-body">
-        <div class="alert alert-info"><i class="fa fa-info-circle"></i> 公开注册关闭；邀请注册只接受有效的 xj_ 邀请链接。代理与邀请奖励独立计算，次日领取。</div>
+        <div class="alert alert-info"><i class="fa fa-info-circle"></i> 公开注册关闭；邀请注册只接受有效的 xj 邀请链接。代理与邀请奖励独立计算，次日领取。</div>
         <div class="row" style="margin-bottom:18px;">
             <div class="col-sm-3"><div class="well"><small>两套体系用户总数</small><h3 id="statTotal">-</h3></div></div>
             <div class="col-sm-3"><div class="well"><small>今日新用户</small><h3 id="statToday">-</h3></div></div>
@@ -28,7 +28,7 @@
                 <div class="panel panel-success">
                     <div class="panel-heading">创建顶级代理</div>
                     <div class="panel-body">
-                        <div class="form-group"><label>登录账号（系统自动补 xy_）</label><input class="form-control" id="agentUsername" maxlength="17"></div>
+                        <div class="form-group"><label>登录账号（系统自动补 xy）</label><input class="form-control" id="agentUsername" maxlength="17"></div>
                         <div class="form-group"><label>手机号（选填）</label><input class="form-control" id="agentMobile" maxlength="11"></div>
                         <div class="form-group"><label>初始密码</label><input type="text" class="form-control" id="agentPassword" value="88888888" maxlength="30"><p class="help-block">默认密码为 8 个 8，创建前可直接修改。</p></div>
                         <div class="form-group"><label>返水比例 (%)</label><input type="number" min="0" step="0.01" class="form-control" id="agentRate"></div>
@@ -42,7 +42,7 @@
             <div class="panel-heading">邀请体系（与代理体系独立）</div>
             <div class="panel-body">
                 <div class="row">
-                    <div class="col-sm-3"><label>本人洗码比例 (%)</label><input id="inviteSelfRate" type="number" min="0" max="100" step="0.01" class="form-control"></div>
+                    <div class="col-sm-3"><label>新链路默认洗码比例 (%)</label><input id="inviteSelfRate" type="number" min="0" max="100" step="0.01" class="form-control"></div>
                     <div class="col-sm-3"><label>直属邀请奖励比例 (%)</label><input id="inviteParentRate" type="number" min="0" max="100" step="0.01" class="form-control"></div>
                     <div class="col-sm-3"><label>最低单笔投注额</label><input id="inviteMinBet" type="number" min="0" step="0.01" class="form-control"></div>
                     <div class="col-sm-3"><label>邀请注册与奖励</label><select id="inviteStatus" class="form-control"><option value="0">关闭</option><option value="1">开启</option></select></div>
@@ -50,8 +50,12 @@
                 <p style="margin-top:12px;"><button class="btn btn-info" onclick="saveInviteConfig()">保存邀请配置</button></p>
                 <p class="help-block">邀请链接仅在上方状态设为“开启”并保存后可以访问；新建初始账号不会自动开启邀请注册。</p>
                 <hr>
-                <label>创建首个邀请账号（自动补 xj_）</label>
-                <div class="form-inline"><input id="inviteRootName" class="form-control" maxlength="17" placeholder="账号主体，4至17位"> <input id="inviteRootPassword" class="form-control" type="text" maxlength="30" value="88888888" placeholder="初始密码"> <button class="btn btn-default" onclick="createInviteRoot()">创建并生成邀请链接</button></div>
+                <div class="panel panel-success" style="margin-top:18px"><div class="panel-heading">创建首个邀请账号</div><div class="panel-body">
+                    <div class="form-group"><label>登录账号（系统自动补 xj）</label><input id="inviteRootName" class="form-control" maxlength="18" placeholder="账号主体，4至18位"></div>
+                    <div class="form-group"><label>初始密码</label><input id="inviteRootPassword" class="form-control" type="text" maxlength="30" value="88888888"><p class="help-block">默认密码为 8 个 8，创建前可直接修改。</p></div>
+                    <div class="form-group"><label>该邀请链路本人洗码比例 (%)</label><input id="inviteRootRate" class="form-control" type="number" min="0" max="100" step="0.01" value="0"><p class="help-block">此账号及其后续邀请的用户继承该比例；其他首个邀请账号可设置不同的比例。直属邀请奖励按上方单独比例计算。</p></div>
+                    <button class="btn btn-success" onclick="createInviteRoot()"><i class="fa fa-user-plus"></i> 创建首个邀请账号</button>
+                </div></div>
                 <p id="inviteRootResult" class="help-block"></p>
             </div>
         </div>
@@ -70,13 +74,14 @@
     var base=entry+'/lottery/register_config/';
     function esc(s){return String(s==null?'':s).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});}
     function post(action,data,done){var fd=new FormData();Object.keys(data).forEach(function(k){fd.append(k,data[k]);});var x=new XMLHttpRequest();x.open('POST',base+action,true);x.setRequestHeader('X-Requested-With','XMLHttpRequest');x.onload=function(){try{done(JSON.parse(x.responseText));}catch(e){alert('响应解析失败');}};x.send(fd);}
-    window.loadAgentConfig=function(){var x=new XMLHttpRequest();x.open('GET',base+'index',true);x.setRequestHeader('X-Requested-With','XMLHttpRequest');x.onload=function(){var r=JSON.parse(x.responseText),d=r.data||{},s=d.stats||{},c=d.config||{},ic=d.invite_config||{},defaultRate=(parseFloat(c.max_rebate_rate||0)*100).toFixed(2);inviteSelfRate.value=(parseFloat(ic.self_rate||0)*100).toFixed(2);inviteParentRate.value=(parseFloat(ic.parent_rate||0)*100).toFixed(2);inviteMinBet.value=ic.min_bet||0;inviteStatus.value=ic.status||0;statTotal.textContent=s.total_users||0;statToday.textContent=s.today_users||0;statAgents.textContent=s.agent_users||0;statInvited.textContent=s.invited_users||0;statInviteUsers.textContent=s.invite_users||0;statInviteDirect.textContent=s.invite_direct_users||0;maxRate.value=defaultRate;minGap.value=(parseFloat(c.min_rate_gap||0)*100).toFixed(2);if(!agentRate.value)agentRate.value=defaultRate;var h='';(d.top_agents||[]).forEach(function(a){var normal=a.status==='normal',statusText=normal?'正常':'已禁用';h+='<tr><td>'+a.id+'</td><td>'+esc(a.nickname||a.username)+'</td><td>'+esc(a.mobile||'--')+'</td><td><b>'+(parseFloat(a.self_rebate_rate||0)*100).toFixed(2)+'%</b></td><td>'+(a.can_open_account==1?'允许':'禁止')+'</td><td><span class="label '+(normal?'label-success':'label-default')+'">'+statusText+'</span></td><td>'+new Date(a.createtime*1000).toLocaleString()+'</td><td><button type="button" class="btn btn-xs btn-warning" onclick="resetTopAgentPassword('+a.id+',\''+esc(a.username).replace(/'/g,'&#39;')+'\')">重置密码</button> <button type="button" class="btn btn-xs '+(normal?'btn-danger':'btn-success')+'" onclick="toggleTopAgentStatus('+a.id+',\''+esc(a.username).replace(/'/g,'&#39;')+'\','+(normal?'true':'false')+')">'+(normal?'禁用':'启用')+'</button></td></tr>';});agentBody.innerHTML=h||'<tr><td colspan="8" class="text-center text-muted">暂无顶级代理</td></tr>';};x.send();};
+    window.loadAgentConfig=function(){var x=new XMLHttpRequest();x.open('GET',base+'index',true);x.setRequestHeader('X-Requested-With','XMLHttpRequest');x.onload=function(){var r=JSON.parse(x.responseText),d=r.data||{},s=d.stats||{},c=d.config||{},ic=d.invite_config||{},defaultRate=(parseFloat(c.max_rebate_rate||0)*100).toFixed(2);inviteSelfRate.value=(parseFloat(ic.self_rate||0)*100).toFixed(2);if(!inviteRootRate.dataset.edited)inviteRootRate.value=inviteSelfRate.value;inviteParentRate.value=(parseFloat(ic.parent_rate||0)*100).toFixed(2);inviteMinBet.value=ic.min_bet||0;inviteStatus.value=ic.status||0;statTotal.textContent=s.total_users||0;statToday.textContent=s.today_users||0;statAgents.textContent=s.agent_users||0;statInvited.textContent=s.invited_users||0;statInviteUsers.textContent=s.invite_users||0;statInviteDirect.textContent=s.invite_direct_users||0;maxRate.value=defaultRate;minGap.value=(parseFloat(c.min_rate_gap||0)*100).toFixed(2);if(!agentRate.value)agentRate.value=defaultRate;var h='';(d.top_agents||[]).forEach(function(a){var normal=a.status==='normal',statusText=normal?'正常':'已禁用';h+='<tr><td>'+a.id+'</td><td>'+esc(a.nickname||a.username)+'</td><td>'+esc(a.mobile||'--')+'</td><td><b>'+(parseFloat(a.self_rebate_rate||0)*100).toFixed(2)+'%</b></td><td>'+(a.can_open_account==1?'允许':'禁止')+'</td><td><span class="label '+(normal?'label-success':'label-default')+'">'+statusText+'</span></td><td>'+new Date(a.createtime*1000).toLocaleString()+'</td><td><button type="button" class="btn btn-xs btn-warning" onclick="resetTopAgentPassword('+a.id+',\''+esc(a.username).replace(/'/g,'&#39;')+'\')">重置密码</button> <button type="button" class="btn btn-xs '+(normal?'btn-danger':'btn-success')+'" onclick="toggleTopAgentStatus('+a.id+',\''+esc(a.username).replace(/'/g,'&#39;')+'\','+(normal?'true':'false')+')">'+(normal?'禁用':'启用')+'</button></td></tr>';});agentBody.innerHTML=h||'<tr><td colspan="8" class="text-center text-muted">暂无顶级代理</td></tr>';};x.send();};
     window.saveInviteConfig=function(){post('saveInviteConfig',{self_rate:inviteSelfRate.value,parent_rate:inviteParentRate.value,min_bet:inviteMinBet.value,status:inviteStatus.value},function(r){alert(r.msg);if(r.code===1)loadAgentConfig();});};
-    window.createInviteRoot=function(){post('createInviteRoot',{username:inviteRootName.value,password:inviteRootPassword.value},function(r){if(r.code!==1){alert(r.msg);return;}var d=r.data||{};inviteRootResult.textContent='登录账号：'+d.username+'；邀请链接：'+location.origin+'/index.php/index/lottery/register?invite='+d.id;});};
+    window.createInviteRoot=function(){if(!confirm('确认创建该邀请账号及独立返水链路？'))return;post('createInviteRoot',{username:inviteRootName.value,password:inviteRootPassword.value,rebate_rate:inviteRootRate.value},function(r){if(r.code!==1){alert(r.msg);return;}var d=r.data||{};inviteRootResult.textContent='登录账号：'+d.username+'；邀请链接：'+location.origin+'/index.php/index/lottery/register?invite='+d.id;inviteRootName.value='';inviteRootPassword.value='88888888';inviteRootRate.dataset.edited='';loadAgentConfig();});};
     window.saveConfig=function(){post('saveConfig',{max_rebate_rate:maxRate.value,min_rate_gap:minGap.value},function(r){alert(r.msg);if(r.code===1)loadAgentConfig();});};
     window.createTopAgent=function(){if(!confirm('确认创建该顶级代理？'))return;post('createTopAgent',{username:agentUsername.value,mobile:agentMobile.value,password:agentPassword.value,rebate_rate:agentRate.value},function(r){alert(r.msg);if(r.code===1){agentUsername.value='';agentMobile.value='';agentPassword.value='88888888';agentRate.value='';loadAgentConfig();}});};
     window.resetTopAgentPassword=function(agentId,username){var password=prompt('请输入顶级代理 '+username+' 的新密码（6-30位）：');if(password===null)return;if(password.length<6||password.length>30){alert('密码长度需为6-30位');return;}var confirmPassword=prompt('请再次输入新密码：');if(confirmPassword===null)return;if(password!==confirmPassword){alert('两次输入的密码不一致');return;}if(!confirm('确认重置顶级代理 '+username+' 的密码？该账号当前登录状态将失效。'))return;post('resetTopAgentPassword',{agent_id:agentId,password:password},function(r){alert(r.msg);if(r.code===1)loadAgentConfig();});};
     window.toggleTopAgentStatus=function(agentId,username,isNormal){var action=isNormal?'禁用':'启用';if(!confirm('确认'+action+'顶级代理 '+username+'？'+(isNormal?'禁用后该账号将立即退出登录，且无法继续登录。':'')))return;post('toggleTopAgentStatus',{agent_id:agentId},function(r){alert(r.msg);if(r.code===1)loadAgentConfig();});};
+    inviteRootRate.addEventListener('input',function(){this.dataset.edited='1';});
     loadAgentConfig();
 })();
 </script>

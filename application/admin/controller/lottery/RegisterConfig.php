@@ -66,7 +66,8 @@ class RegisterConfig extends Backend
     public function createTopAgent()
     {
         $username = trim($this->request->post('username', ''));
-        $username = strpos($username, 'xy_') === 0 ? $username : 'xy_' . $username;
+        if (strpos($username, 'xy_') === 0) $username = 'xy' . substr($username, 3);
+        $username = strpos($username, 'xy') === 0 ? $username : 'xy' . $username;
         $mobile = trim($this->request->post('mobile', ''));
         $password = (string)$this->request->post('password', '');
         $ratePercent = $this->request->post('rebate_rate/f', -1);
@@ -112,17 +113,22 @@ class RegisterConfig extends Backend
     public function createInviteRoot()
     {
         $raw = trim((string)$this->request->post('username', ''));
-        $username = strpos($raw, 'xj_') === 0 ? $raw : 'xj_' . $raw;
+        if (strpos($raw, 'xj_') === 0) $raw = 'xj' . substr($raw, 3);
+        $username = strpos($raw, 'xj') === 0 ? $raw : 'xj' . $raw;
         $password = (string)$this->request->post('password', '');
-        if (!preg_match('/^xj_[A-Za-z0-9_]{4,17}$/', $username) || strlen($password) < 6 || strlen($password) > 30)
+        $ratePercent = $this->request->post('rebate_rate/f', -1);
+        if (!preg_match('/^xj[A-Za-z0-9_]{4,18}$/', $username) || strlen($password) < 6 || strlen($password) > 30)
             return json(['code' => 0, 'msg' => '用户名需4至17位，密码需6至30位']);
+        if ($ratePercent < 0 || $ratePercent > 100) return json(['code' => 0, 'msg' => '邀请链路返水比例需在0%至100%之间']);
         if (UserModel::getByUsername($username)) return json(['code' => 0, 'msg' => '账号已存在']);
         $salt = Random::alnum(); $now = time();
         $user = UserModel::create(['pid' => 0, 'account_source' => 'invite', 'is_agent' => 0, 'can_open_account' => 0,
             'agent_level' => 0, 'username' => $username, 'nickname' => $username,
             'password' => (new UserAuth())->getEncryptPassword($password, $salt), 'salt' => $salt,
             'email' => '', 'mobile' => '', 'avatar' => '', 'level' => 1, 'score' => 0, 'money' => 0,
-            'self_rebate_rate' => 0, 'invite_rebate_rate' => 0, 'jointime' => $now, 'joinip' => $this->request->ip(),
+            'self_rebate_rate' => round($ratePercent / 100, 6),
+            'invite_rebate_rate' => 0,
+            'jointime' => $now, 'joinip' => $this->request->ip(),
             'status' => 'normal', 'createtime' => $now, 'updatetime' => $now], true);
         return json(['code' => 1, 'msg' => '邀请体系初始账号已创建', 'data' => ['username' => $username, 'id' => $user->id]]);
     }
