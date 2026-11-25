@@ -19,7 +19,7 @@ class AgentMarketReportService
         $from = strtotime($start); $to = strtotime($end) + 86399;
         $branches = []; $frontier = [intval($agentId)]; $seen = [intval($agentId) => true];
         for ($depth = 1; $depth <= 100 && $frontier; $depth++) {
-            $rows = Db::name('user')->where('pid', 'in', $frontier)->where('agent_level', '>', 0)->field('id,pid')->select();
+            $rows = Db::name('user')->where('pid', 'in', $frontier)->where('account_source', 'agent')->where('agent_level', '>', 0)->field('id,pid')->select();
             $frontier = [];
             foreach ($rows as $row) {
                 $id = intval($row['id']); $pid = intval($row['pid']);

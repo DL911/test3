@@ -69,7 +69,7 @@
             <div class="pc-invite-box" id="openAccountBox" style="display:none;">
                 <label><i class="fa-solid fa-user-plus"></i> 新增开户　我的比例：<b id="myRateText">--</b></label>
                 <div class="pc-invite-row" style="flex-wrap:wrap;">
-                    <span style="display:inline-flex;align-items:center;gap:0;background:#fff;border-radius:10px;overflow:hidden;min-width:220px;"><strong style="padding:12px 14px;background:#e7f0ff;color:#1265d8;font-size:18px;user-select:none;">xy</strong><input id="oaUsername" aria-label="账号后缀" placeholder="输入后缀（2-15位）" maxlength="15" autocomplete="off" style="min-width:0;width:180px;border:0;border-radius:0;"></span>
+                    <span style="display:inline-flex;align-items:center;gap:0;background:#fff;border-radius:10px;min-width:220px;max-width:100%;overflow:hidden;"><strong id="oaUsernamePrefix" aria-label="当前代理账号前缀" style="padding:12px 14px;background:#e7f0ff;color:#1265d8;font-size:18px;user-select:none;overflow-wrap:anywhere;max-width:55%;">加载中</strong><input id="oaUsername" aria-label="账号后缀" placeholder="输入后缀（1-15位）" maxlength="15" autocomplete="off" style="min-width:0;width:180px;border:0;border-radius:0;"></span>
                     <input id="oaMobile" placeholder="手机号（选填）" style="min-width:160px;">
                     <input id="oaPassword" type="text" value="88888888" maxlength="30" placeholder="初始密码（默认8个8）" style="min-width:160px;">
                     <select id="oaType" style="padding:12px;border-radius:10px;border:0;"><option value="user">普通用户</option><option value="agent">代理用户</option></select>
@@ -123,6 +123,7 @@
         LotteryAuth.request('/index.php/api/agent/summary',{method:'GET'}).then(function(res){
             if(res.code===1) {
                 var d = res.data;
+                document.getElementById('oaUsernamePrefix').textContent = d.username || '加载失败';
                 document.getElementById('agTeamSize').textContent = d.team_size;
                 document.getElementById('agCommission').textContent = '¥ ' + d.total_commission;
                 document.getElementById('myRateText').textContent = d.my_rate_text;
@@ -157,7 +158,7 @@
         var rateInput=document.getElementById('oaRate');
         rateInput.addEventListener('input',function(){var mine=parseFloat(rateInput.max||0),sub=parseFloat(rateInput.value||0),gap=Math.max(0,mine-sub);document.getElementById('ratePreview').textContent='每投注100元：下级约得 ¥'+sub.toFixed(2)+'，您约得级差 ¥'+gap.toFixed(2);});
         document.getElementById('btnOpenAccount').addEventListener('click',function(){
-            var username='xy'+document.getElementById('oaUsername').value.trim(), password=document.getElementById('oaPassword').value;
+            var username=document.getElementById('oaUsername').value.trim(), password=document.getElementById('oaPassword').value;
             var fd=new FormData();fd.append('username',username);fd.append('mobile',document.getElementById('oaMobile').value.trim());fd.append('password',password);fd.append('account_type',document.getElementById('oaType').value);fd.append('rebate_rate',rateInput.value);
             LotteryAuth.request('/index.php/api/agent/createAccount',{method:'POST',body:fd}).then(function(res){
                 if(res.code===1){var d=res.data||{},box=document.getElementById('oaCreatedAccount');box.textContent='开户成功，登录用户名：'+d.username+'；初始密码：'+password+'；类型：'+(d.account_type==='agent'?'代理用户':'普通用户')+'；返水比例：'+(d.rebate_rate_text||'--')+'。';var copy=document.createElement('button');copy.type='button';copy.textContent='复制用户名';copy.style.marginLeft='10px';copy.onclick=function(){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(d.username).then(function(){alert('用户名已复制');},function(){alert('复制失败，请手动复制');});}else alert('请手动复制用户名');};box.appendChild(copy);box.style.display='block';}

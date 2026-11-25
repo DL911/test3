@@ -320,6 +320,11 @@ class Payment extends Api
 
         // 检查发起方余额
         $fromUser = \app\common\model\User::get($userId);
+        $fromSource = $fromUser ? (string)$fromUser->account_source : '';
+        $toSource = (string)($toUser['account_source'] ?? '');
+        if (!in_array($fromSource, ['agent', 'invite'], true) || $fromSource !== $toSource) {
+            $this->error('不同账户体系之间不能转账');
+        }
         if (!$fromUser || $fromUser->money < $amount) {
             $this->error('余额不足，当前余额: ¥' . ($fromUser ? $fromUser->money : 0));
         }

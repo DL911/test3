@@ -19,12 +19,13 @@ class Agent extends Api
         $userId = $this->auth->id;
         $user = $this->currentUser();
         $todayStart = strtotime('today');
-        $directCount = Db::name('user')->where('pid', $userId)->count();
+        $directCount = Db::name('user')->where('pid', $userId)->where('account_source', 'agent')->count();
         $claimed = Db::name('xima_record')->where('user_id', $userId)->where('type', 'parent')->where('status', 1)->sum('xima_amount');
         $todayPending = Db::name('xima_record')->where('user_id', $userId)->where('type', 'parent')->where('status', 0)->where('createtime', '>=', $todayStart)->sum('xima_amount');
         $claimable = Db::name('xima_record')->where('user_id', $userId)->where('type', 'parent')->where('status', 0)->where('unlock_date', '<=', date('Y-m-d'))->sum('xima_amount');
         $rate = floatval($user['self_rebate_rate']);
         $this->success('success', [
+            'username' => $user['username'],
             'is_agent' => intval($user['is_agent']),
             'can_open_account' => intval($user['can_open_account']),
             'my_rate' => $rate,
@@ -44,7 +45,7 @@ class Agent extends Api
     {
         $userId = $this->auth->id;
         $parent = $this->currentUser();
-        $list = Db::name('user')->where('pid', $userId)
+        $list = Db::name('user')->where('pid', $userId)->where('account_source', 'agent')
             ->field('id,username,nickname,mobile,money,is_agent,can_open_account,self_rebate_rate,status,createtime')
             ->order('createtime', 'desc')->select();
         foreach ($list as &$item) {
@@ -90,10 +91,10 @@ class Agent extends Api
             if ($subId <= 0 || $subId === intval($agent['id'])) throw new \RuntimeException('直属账号不正确');
             sort($ids, SORT_NUMERIC);
             $users = [];
-            foreach ($ids as $id) $users[$id] = Db::name('user')->where('id', $id)->lock(true)->field('id,pid,agent_level,status,money')->find();
+            foreach ($ids as $id) $users[$id] = Db::name('user')->where('id', $id)->lock(true)->field('id,pid,agent_level,account_source,status,money')->find();
             $parent = $users[intval($agent['id'])];
             $child = $users[intval($subId)];
-            if (!$parent || $parent['status'] !== 'normal' || !$child || intval($child['pid']) !== intval($agent['id']) || intval($child['agent_level']) !== intval($parent['agent_level']) + 1) throw new \RuntimeException('只能操作新代理体系的直属账号');
+            if (!$parent || $parent['status'] !== 'normal' || $parent['account_source'] !== 'agent' || !$child || $child['account_source'] !== 'agent' || intval($child['pid']) !== intval($agent['id']) || intval($child['agent_level']) !== intval($parent['agent_level']) + 1) throw new \RuntimeException('只能操作代理体系的直属账号');
             $fromId = $direction === 'give' ? intval($agent['id']) : intval($subId);
             $toId = $direction === 'give' ? intval($subId) : intval($agent['id']);
             $fromBefore = intval(round(floatval($users[$fromId]['money']) * 100));
@@ -143,7 +144,7 @@ class Agent extends Api
         $limit = min(50, max(1, $this->request->get('limit/d', 20)));
         $frontier = [$rootId]; $seen = [$rootId => true]; $branches = [];
         for ($depth = 1; $depth <= 100 && $frontier; $depth++) {
-            $children = Db::name('user')->where('pid', 'in', $frontier)->where('agent_level', '>', 0)->field('id,pid')->select();
+            $children = Db::name('user')->where('pid', 'in', $frontier)->where('account_source', 'agent')->where('agent_level', '>', 0)->field('id,pid')->select();
             $frontier = [];
             foreach ($children as $child) {
                 $id = intval($child['id']); $pid = intval($child['pid']);
@@ -201,8 +202,8 @@ class Agent extends Api
     {
         $agent = $this->currentUser(true);
         $localName = trim((string)$this->request->post('username', ''));
-        if (!preg_match('/^xy[A-Za-z0-9_]{2,15}$/', $localName)) $this->error('开户账号须以xy开头，后接2-15位字母、数字或下划线');
-        $username = $agent['username'] . '-' . $localName;
+        if (!preg_match('/^[A-Za-z0-9_]{1,15}$/', $localName)) $this->error('账号后缀须为1-15位字母、数字或下划线');
+        $username = $agent['username'] . $localName;
         $mobile = trim($this->request->post('mobile', ''));
         $password = (string)$this->request->post('password', '');
         $accountType = $this->request->post('account_type', 'user');
@@ -351,7 +352,7 @@ class Agent extends Api
         $seen = [];
         $count = 0;
         for ($depth = 0; $depth < 100 && $frontier; $depth++) {
-            $ids = Db::name('user')->where('pid', 'in', $frontier)->column('id');
+            $ids = Db::name('user')->where('pid', 'in', $frontier)->where('account_source', 'agent')->column('id');
             $frontier = [];
             foreach ($ids as $id) {
                 $id = intval($id);

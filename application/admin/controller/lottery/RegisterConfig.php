@@ -71,7 +71,7 @@ class RegisterConfig extends Backend
         $mobile = trim($this->request->post('mobile', ''));
         $password = (string)$this->request->post('password', '');
         $ratePercent = $this->request->post('rebate_rate/f', -1);
-        if (!preg_match('/^[A-Za-z0-9_]{4,20}$/', $username)) return json(['code' => 0, 'msg' => '用户名需为4-20位字母、数字或下划线']);
+        if (!preg_match('/^xy[A-Za-z0-9_]{1,18}$/', $username)) return json(['code' => 0, 'msg' => '顶级代理账号须以xy开头，后接1-18位字母、数字或下划线']);
         if ($mobile !== '' && !preg_match('/^1[3-9]\d{9}$/', $mobile)) return json(['code' => 0, 'msg' => '手机号格式不正确']);
         if (strlen($password) < 6 || strlen($password) > 30) return json(['code' => 0, 'msg' => '密码长度需为6-30位']);
         $maxRate = floatval(Db::name('agent_config')->where('id', 1)->value('max_rebate_rate'));

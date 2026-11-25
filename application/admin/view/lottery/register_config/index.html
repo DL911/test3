@@ -28,7 +28,7 @@
                 <div class="panel panel-success">
                     <div class="panel-heading">创建顶级代理</div>
                     <div class="panel-body">
-                        <div class="form-group"><label>登录账号（系统自动补 xy）</label><input class="form-control" id="agentUsername" maxlength="17"></div>
+                        <div class="form-group"><label>登录账号（默认 xy 开头）</label><input class="form-control" id="agentUsername" value="xy" maxlength="20"></div>
                         <div class="form-group"><label>手机号（选填）</label><input class="form-control" id="agentMobile" maxlength="11"></div>
                         <div class="form-group"><label>初始密码</label><input type="text" class="form-control" id="agentPassword" value="88888888" maxlength="30"><p class="help-block">默认密码为 8 个 8，创建前可直接修改。</p></div>
                         <div class="form-group"><label>返水比例 (%)</label><input type="number" min="0" step="0.01" class="form-control" id="agentRate"></div>
@@ -78,7 +78,7 @@
     window.saveInviteConfig=function(){post('saveInviteConfig',{self_rate:inviteSelfRate.value,parent_rate:inviteParentRate.value,min_bet:inviteMinBet.value,status:inviteStatus.value},function(r){alert(r.msg);if(r.code===1)loadAgentConfig();});};
     window.createInviteRoot=function(){if(!confirm('确认创建该邀请账号及独立返水链路？'))return;post('createInviteRoot',{username:inviteRootName.value,password:inviteRootPassword.value,rebate_rate:inviteRootRate.value},function(r){if(r.code!==1){alert(r.msg);return;}var d=r.data||{};inviteRootResult.textContent='登录账号：'+d.username+'；邀请链接：'+location.origin+'/index.php/index/lottery/register?invite='+d.id;inviteRootName.value='';inviteRootPassword.value='88888888';inviteRootRate.dataset.edited='';loadAgentConfig();});};
     window.saveConfig=function(){post('saveConfig',{max_rebate_rate:maxRate.value,min_rate_gap:minGap.value},function(r){alert(r.msg);if(r.code===1)loadAgentConfig();});};
-    window.createTopAgent=function(){if(!confirm('确认创建该顶级代理？'))return;post('createTopAgent',{username:agentUsername.value,mobile:agentMobile.value,password:agentPassword.value,rebate_rate:agentRate.value},function(r){alert(r.msg);if(r.code===1){agentUsername.value='';agentMobile.value='';agentPassword.value='88888888';agentRate.value='';loadAgentConfig();}});};
+    window.createTopAgent=function(){if(!confirm('确认创建该顶级代理？'))return;post('createTopAgent',{username:agentUsername.value,mobile:agentMobile.value,password:agentPassword.value,rebate_rate:agentRate.value},function(r){alert(r.msg);if(r.code===1){agentUsername.value='xy';agentMobile.value='';agentPassword.value='88888888';agentRate.value='';loadAgentConfig();}});};
     window.resetTopAgentPassword=function(agentId,username){var password=prompt('请输入顶级代理 '+username+' 的新密码（6-30位）：');if(password===null)return;if(password.length<6||password.length>30){alert('密码长度需为6-30位');return;}var confirmPassword=prompt('请再次输入新密码：');if(confirmPassword===null)return;if(password!==confirmPassword){alert('两次输入的密码不一致');return;}if(!confirm('确认重置顶级代理 '+username+' 的密码？该账号当前登录状态将失效。'))return;post('resetTopAgentPassword',{agent_id:agentId,password:password},function(r){alert(r.msg);if(r.code===1)loadAgentConfig();});};
     window.toggleTopAgentStatus=function(agentId,username,isNormal){var action=isNormal?'禁用':'启用';if(!confirm('确认'+action+'顶级代理 '+username+'？'+(isNormal?'禁用后该账号将立即退出登录，且无法继续登录。':'')))return;post('toggleTopAgentStatus',{agent_id:agentId},function(r){alert(r.msg);if(r.code===1)loadAgentConfig();});};
     inviteRootRate.addEventListener('input',function(){this.dataset.edited='1';});
