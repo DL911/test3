@@ -200,14 +200,14 @@ class Agent extends Api
     public function createAccount()
     {
         $agent = $this->currentUser(true);
-        $username = trim($this->request->post('username', ''));
-        if (strpos($username, 'xy_') === 0) $username = 'xy' . substr($username, 3);
-        $username = strpos($username, 'xy') === 0 ? $username : 'xy' . $username;
+        $localName = trim((string)$this->request->post('username', ''));
+        if (!preg_match('/^xy[A-Za-z0-9_]{2,15}$/', $localName)) $this->error('开户账号须以xy开头，后接2-15位字母、数字或下划线');
+        $username = $agent['username'] . '-' . $localName;
         $mobile = trim($this->request->post('mobile', ''));
         $password = (string)$this->request->post('password', '');
         $accountType = $this->request->post('account_type', 'user');
         $ratePercent = $this->request->post('rebate_rate/f', -1);
-        if (!preg_match('/^[A-Za-z0-9_]{4,20}$/', $username)) $this->error('用户名需为4-20位字母、数字或下划线');
+        if (strlen($username) > 191) $this->error('代理链路账号过长，请联系管理员');
         if ($mobile !== '' && !preg_match('/^1[3-9]\d{9}$/', $mobile)) $this->error('手机号格式不正确');
         if (strlen($password) < 6 || strlen($password) > 30) $this->error('密码长度需为6-30位');
         if (!in_array($accountType, ['user', 'agent'], true)) $this->error('账户类型不正确');
@@ -338,7 +338,7 @@ class Agent extends Api
 
     private function currentUser($requireAgent = false)
     {
-        $user = Db::name('user')->where('id', $this->auth->id)->field('id,pid,is_agent,can_open_account,agent_level,self_rebate_rate,status,account_source')->find();
+        $user = Db::name('user')->where('id', $this->auth->id)->field('id,pid,username,is_agent,can_open_account,agent_level,self_rebate_rate,status,account_source')->find();
         if (!$user || $user['status'] !== 'normal') $this->error('账号不可用');
         if (intval($user['agent_level']) <= 0 || $user['account_source'] !== 'agent') $this->error('当前账号不属于代理体系');
         if ($requireAgent && (intval($user['is_agent']) !== 1 || intval($user['can_open_account']) !== 1)) $this->error('当前账号没有代理开户权限');
