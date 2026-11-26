@@ -150,7 +150,7 @@ class Betrecord extends Backend
                 $item['lottery_name'] = isset($typeMap[$item['lottery_type']]) ? $typeMap[$item['lottery_type']] : '未知';
                 $item['status_text'] = isset($statusMap[$item['status']]) ? $statusMap[$item['status']] : '未知';
                 $item['win_amount'] = isset($item['win_amount']) ? $item['win_amount'] : 0;
-                $item['play_name'] = isset($playMap[$item['play_type']]) ? $playMap[$item['play_type']] : ($item['play_type'] ?? '-');
+                $item['play_name'] = $item['play_type'] === 'quick' ? '快译模式' : (isset($playMap[$item['play_type']]) ? $playMap[$item['play_type']] : ($item['play_type'] ?? '-'));
                 // play_sub → 中文附加
                 $subLabelMap = ['baiwei'=>'百位','shiwei'=>'十位','gewei'=>'个位',
                     'baishi'=>'百十','baige'=>'百个','shige'=>'十个','zonghe'=>'总和','longhu'=>'龙虎'];
@@ -252,7 +252,9 @@ class Betrecord extends Backend
                         $betDisplay = mb_substr($item['bet_content'], 0, 30);
                     }
                 }
-                $item['bet_display'] = $betDisplay;
+                $item['bet_display'] = $item['play_type'] === 'quick'
+                    ? \app\common\service\QuickBetService::displayContent($item['bet_content'])
+                    : $betDisplay;
             }
 
             $this->success('', '', [
@@ -343,7 +345,19 @@ class Betrecord extends Backend
             }
             $betDisplay = implode(' ', $parts);
         }
-        $bet['bet_display'] = $betDisplay;
+        $bet['bet_display'] = $bet['play_type'] === 'quick'
+            ? \app\common\service\QuickBetService::displayContent($bet['bet_content'])
+            : $betDisplay;
+        if ($bet['play_type'] === 'quick') {
+            $bet['play_name'] = '快译模式';
+            $catalog = \app\common\service\QuickBetService::catalog();
+            foreach (is_array($bet['bet_content_arr']) ? $bet['bet_content_arr'] : [] as &$entry) {
+                if (is_array($entry)) {
+                    $entry['play_name'] = $catalog[$entry['play'] ?? ''] ?? '快译玩法';
+                }
+            }
+            unset($entry);
+        }
 
         return json(['code' => 1, 'data' => $bet]);
     }

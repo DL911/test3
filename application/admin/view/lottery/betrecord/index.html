@@ -164,7 +164,7 @@ function btDetail(id) {
             betsHtml += '<thead><tr><th>选项</th><th>赔率</th><th>金额</th></tr></thead><tbody>';
             for(var i=0;i<bets.length;i++){
                 var b = bets[i];
-                betsHtml += '<tr><td>'+(b.key||'--')+'</td><td>'+(b.odds||'-')+'</td><td>'+(b.amount||'-')+'</td></tr>';
+                betsHtml += '<tr><td>'+(d.play_type==='quick' ? (b.play_name||'快译玩法')+' '+(b.number||'') : (b.key||'--'))+'</td><td>'+(b.odds||'-')+'</td><td>'+(b.amount||'-')+'</td></tr>';
             }
             betsHtml += '</tbody></table>';
 
@@ -176,7 +176,7 @@ function btDetail(id) {
                 '<tr><td><strong>用户</strong></td><td>'+(d.nickname||d.username||'UID:'+d.user_id)+'</td></tr>'+
                 '<tr><td><strong>彩种</strong></td><td>'+(typeMap[d.lottery_type]||d.lottery_type)+'</td></tr>'+
                 '<tr><td><strong>期号</strong></td><td>'+d.period+'</td></tr>'+
-                '<tr><td><strong>玩法</strong></td><td>'+d.play_type+(d.play_sub?' / '+d.play_sub:'')+'</td></tr>'+
+                '<tr><td><strong>玩法</strong></td><td>'+(d.play_name||d.play_type)+(d.play_sub?' / '+d.play_sub:'')+'</td></tr>'+
                 '<tr><td><strong>投注号码</strong></td><td><b style="color:#1890ff;font-size:16px;">'+(d.bet_display||'-')+'</b></td></tr>'+
                 '<tr><td><strong>开奖号码</strong></td><td><b style="color:#e67e22;font-size:16px;">'+(d.draw_result||'-')+'</b></td></tr>'+
                 '<tr><td><strong>注数</strong></td><td>'+d.bet_count+'</td></tr>'+
