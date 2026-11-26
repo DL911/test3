@@ -332,7 +332,7 @@ class User extends Backend
                     $list = \think\Db::name('lottery_bet')->where('user_id', $userId)->order('createtime', 'desc')->page($page, $limit)->select();
                     $total = \think\Db::name('lottery_bet')->where('user_id', $userId)->count();
                     $typeMap = [1 => '福彩3D', 2 => '排列三'];
-                    $playMap = ['kuaijie'=>'快捷','shuangmian'=>'双面','daxiao'=>'大小','danshuang'=>'单双','longhu'=>'龙虎','zonghe_daxiao'=>'总和大小','zonghe_danshuang'=>'总和单双','biaozhun'=>'标准','dingwei'=>'定位','yizi'=>'一字组合','erzi'=>'二字组合','sanzi'=>'三字组合','zusan'=>'组三','zuliu'=>'组六','hezhi'=>'和值','zhixuan'=>'直选','danshi'=>'单式'];
+                    $playMap = ['quick'=>'快译模式','kuaijie'=>'快捷','shuangmian'=>'双面','daxiao'=>'大小','danshuang'=>'单双','longhu'=>'龙虎','zonghe_daxiao'=>'总和大小','zonghe_danshuang'=>'总和单双','biaozhun'=>'标准','dingwei'=>'定位','yizi'=>'一字组合','erzi'=>'二字组合','sanzi'=>'三字组合','zusan'=>'组三','zuliu'=>'组六','hezhi'=>'和值','zhixuan'=>'直选','danshi'=>'单式','sx_zx3_fushi'=>'三星组选三复式','sx_zx6_fushi'=>'三星组选六复式'];
                     $statusMap = [0 => '待开奖', 1 => '已中奖', 2 => '未中奖', 3 => '已取消'];
                     $betKeyMap = ['zhi'=>'质','da'=>'大','xiao'=>'小','dan'=>'单','shuang'=>'双','long'=>'龙','hu'=>'虎','he'=>'和','baozi'=>'豹子','shunzi'=>'顺子','duizi'=>'对子','banshun'=>'半顺','zaliu'=>'杂六','zonghe_da'=>'总和大','zonghe_xiao'=>'总和小','zonghe_dan'=>'总和单','zonghe_shuang'=>'总和双'];
 
@@ -344,13 +344,16 @@ class User extends Backend
 
                         // 解析投注内容为可读文本
                         $betDisplay = '-';
-                        if (!empty($item['bet_content'])) {
+                        if ($item['play_type'] === 'quick') {
+                            $betDisplay = \app\common\service\QuickBetService::displayContent($item['bet_content']);
+                        } elseif (!empty($item['bet_content'])) {
                             $bets = json_decode($item['bet_content'], true);
                             if (is_array($bets)) {
                                 $parts = [];
                                 foreach ($bets as $b) {
                                     $k = is_array($b) ? ($b['key'] ?? '') : $b;
-                                    if (preg_match('/^num_(\d)$/', $k, $m)) $parts[] = $m[1];
+                                    if (preg_match('/^p([012])_(\d)$/', $k, $m)) $parts[] = ['百位', '十位', '个位'][(int)$m[1]] . '选' . $m[2];
+                                    elseif (preg_match('/^num_(\d)$/', $k, $m)) $parts[] = $m[1];
                                     elseif (preg_match('/^\d+$/', $k)) $parts[] = $k;
                                     else $parts[] = $betKeyMap[$k] ?? $k;
                                 }

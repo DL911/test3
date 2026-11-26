@@ -517,7 +517,7 @@
                 else if (/^ez_\d+$/.test(k)) { text = k.replace('ez_', ''); isNum = true; }
                 else if (/^sz_\d+$/.test(k)) { text = k.replace('sz_', ''); isNum = true; }
                 else if (/^\d+$/.test(k)) { text = k; isNum = true; }
-                else if (/^p\d+_/.test(k)) { text = k.split('_')[1]; isNum = true; }
+                else if (/^p[012]_\d$/.test(k)) { text = ['百位', '十位', '个位'][Number(k.charAt(1))] + '选' + k.split('_')[1]; }
                 else if (/^(bai|shi|ge)_\d+$/.test(k)) { text = k.split('_')[1]; isNum = true; }
                 else if (k.indexOf('hzws_') === 0) { text = '和尾' + k.replace('hzws_',''); }
                 else if (k.indexOf('hz_') === 0) { text = '和' + k.replace('hz_',''); }
