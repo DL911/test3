@@ -99,16 +99,7 @@
       }
     })();
   </script>
-  <div class="copy-toolbar">
-    <button id="copy-text" type="button">复制正文</button>
-    <button id="copy-html" type="button">复制 HTML 源码</button>
-    <span id="copy-status" role="status"></span>
-  </div>
-  <div class="manual-copy" id="manual-copy" hidden="">
-    <textarea id="manual-text" aria-label="待复制内容" readonly=""></textarea>
-  </div>
-
-  <section class="kuaiyi-examples" id="kuaiyi-examples" aria-labelledby="kuaiyi-title">
+<section class="kuaiyi-examples" id="kuaiyi-examples" aria-labelledby="kuaiyi-title">
     <h2 class="kuaiyi-title" id="kuaiyi-title">快译输入示例</h2>
     <div class="kuaiyi-groups">
       <section class="kuaiyi-group">
@@ -172,58 +163,7 @@
     </div>
   </section>
 
-  <script>
-    const examples = document.getElementById('kuaiyi-examples');
-    const copyStatus = document.getElementById('copy-status');
-    const manualCopy = document.getElementById('manual-copy');
-    const manualText = document.getElementById('manual-text');
 
-    function getPlainText() {
-      const title = document.getElementById('kuaiyi-title').textContent;
-      const groups = Array.from(examples.querySelectorAll('.kuaiyi-group'), (group) => {
-        const heading = group.querySelector('h3').textContent;
-        const rows = Array.from(group.querySelectorAll('dl > div'), (row) => {
-          const label = row.querySelector('dt').textContent;
-          const sample = row.querySelector('dd').textContent;
-          return `- ${label}　${sample}`;
-        });
-        return [heading, ...rows].join('\n');
-      });
-      return [title, ...groups].join('\n\n');
-    }
-
-    async function copy(content, label) {
-      if (navigator.clipboard?.writeText) {
-        try {
-          await navigator.clipboard.writeText(content);
-          manualCopy.hidden = true;
-          copyStatus.textContent = `已复制${label}`;
-          return;
-        } catch {
-          // A local file or browser setting can prevent direct clipboard access.
-        }
-      }
-
-      const previousFocus = document.activeElement;
-      manualText.value = content;
-      manualCopy.hidden = false;
-      manualText.focus();
-      manualText.select();
-      if (typeof document.execCommand === 'function' && document.execCommand('copy')) {
-        manualCopy.hidden = true;
-        previousFocus?.focus();
-        copyStatus.textContent = `已复制${label}`;
-        return;
-      }
-      copyStatus.textContent = '内容已选中，可以手动复制。';
-    }
-
-    document.getElementById('copy-text').addEventListener('click', () => copy(getPlainText(), '正文'));
-    document.getElementById('copy-html').addEventListener('click', () => {
-      const styles = document.getElementById('example-styles').textContent;
-      copy(`<style>${styles}</style>\n${examples.outerHTML}`, 'HTML 源码');
-    });
-  </script>
 
 
 </body></html>
