@@ -41,7 +41,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                             return '<a href="javascript:;" class="agent-chain-link" data-id="'+row.id+'">查看链路</a>';
                         }},
                         {field: 'real_name', title: '真实姓名', operate: false, formatter: function(value){return value || '<span class="text-muted">未认证</span>'; }},
-                        {field: 'admin_remark', title: '备注', operate: 'LIKE', formatter: function(value){ return value ? $('<div>').text(value).html() : '<span class="text-muted">—</span>'; }},
+                        {field: 'admin_remark', title: '分成', operate: 'LIKE', formatter: function(value){ return value ? $('<div>').text(value).html() : '<span class="text-muted">—</span>'; }},
                         {field: 'mobile', title: __('Mobile'), operate: 'LIKE'},
                         {field: 'avatar', title: __('Avatar'), events: Table.api.events.image, formatter: Table.api.formatter.image, operate: false},
                         {field: 'money', title: '余额', sortable: true, formatter: function(v){return '<b style="color:#e67e22;">¥'+parseFloat(v||0).toFixed(2)+'</b>';}},
@@ -130,6 +130,17 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             Controller.api.bindevent();
         },
         edit: function () {
+            var shareInput = $('#c-admin-remark');
+            var serverTime = Number(shareInput.attr('data-server-time')) * 1000;
+            var startedAt = performance.now();
+            function updateShareAvailability() {
+                // Use server time plus elapsed time, independent of the browser timezone.
+                var beijing = new Date(serverTime + performance.now() - startedAt + 8 * 3600000);
+                shareInput.prop('disabled', !(beijing.getUTCDay() === 1 && beijing.getUTCHours() < 21));
+            }
+            updateShareAvailability();
+            var shareTimer = setInterval(updateShareAvailability, 1000);
+            $(window).on('unload', function () { clearInterval(shareTimer); });
             Controller.api.bindevent();
         },
         profile: function () {

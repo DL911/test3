@@ -99,8 +99,15 @@ class User extends Backend
         if (!$row) {
             $this->error(__('No Results were found'));
         }
+        $shareNow = new \DateTimeImmutable('now', new \DateTimeZone('Asia/Shanghai'));
+        $shareEditable = $shareNow->format('N') === '1' && (int)$shareNow->format('H') < 21;
+        $this->view->assign('shareEditable', $shareEditable);
+        $this->view->assign('shareServerTime', $shareNow->getTimestamp());
         if ($this->request->isPost()) {
             $params = $this->request->post('row/a', []);
+            if (!$shareEditable && array_key_exists('admin_remark', $params) && (string)$params['admin_remark'] !== (string)$row['admin_remark']) {
+                $this->error('分成仅可在北京时间每周一00:00至21:00前修改');
+            }
             if (array_key_exists('money', $params)) {
                 if (!is_numeric($params['money'])) {
                     $this->error('余额格式不正确');

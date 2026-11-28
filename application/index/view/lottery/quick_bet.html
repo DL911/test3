@@ -6,6 +6,7 @@ body{margin:0;background:#f3f7fa;color:#18342f;font-family:Arial,"Microsoft YaHe
 .grid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px}.card{background:#fff;border:1px solid #d8e5df;border-radius:14px;padding:20px;margin:12px 0}
 textarea{width:100%;box-sizing:border-box;min-height:150px}input,select,textarea,button{font:inherit;padding:10px;border:1px solid #c6d8d0;border-radius:8px}
 button{cursor:pointer;background:#1677ff;color:#fff;border:0}.secondary{background:#edf4f0;color:#224c43}.danger{color:#b63e35}.muted{color:#71847f;font-size:13px}
+.input-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.example-link{display:inline-block;padding:10px;border-radius:8px;text-decoration:none}
 .line{padding:12px 0;border-bottom:1px solid #edf0ee;overflow-wrap:anywhere}.line:last-child{border:0}.pending{background:#fff8f5;padding:12px;border-radius:8px;margin:10px 0}
 .entry-line{display:flex;align-items:center;justify-content:space-between;gap:12px}.entry-text{min-width:0}.entry-remove{flex:none;background:#fff1ef;color:#b63e35;border:1px solid #f0c9c3;padding:6px 12px}.entry-remove:hover{background:#ffe1dc}
 pre{white-space:pre-wrap;word-break:break-word}#submit{width:100%;font-size:17px;padding:15px}button:disabled{background:#9cb2bd;cursor:not-allowed}
@@ -27,7 +28,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}.row input,.row select{max-width:180
 </style></head><body>
 <div class="wrap">
 <div class="head"><div><a href="/index.php/index/lottery/bet?type={$lottery_type}">← 返回投注页</a><h1>快译模式 <small id="gameName"></small></h1></div><button class="secondary" id="showOdds">查看玩法赔率</button></div>
-<div class="grid"><section class="card"><h2>输入投注内容</h2><p class="muted">使用参考模块的离线规则识别。例：518 581 185 一百直10组。识别结果仍需逐笔核对。</p><textarea id="raw" maxlength="10000" placeholder="输入或粘贴本次投注内容"></textarea><p><button id="recognize" disabled>快译并核对</button> <button class="secondary" id="manual" disabled>手动补充一笔</button></p><p id="message" class="danger"></p></section>
+<div class="grid"><section class="card"><h2>输入投注内容</h2><p class="muted">使用参考模块的离线规则识别。例：518 581 185 一百直10组。识别结果仍需逐笔核对。</p><textarea id="raw" maxlength="10000" placeholder="输入或粘贴本次投注内容"></textarea><p class="input-actions"><button id="recognize" disabled>快译并核对</button> <button class="secondary" id="manual" disabled>手动补充一笔</button> <a class="secondary example-link" href="/assets/lottery/quick-demo.html?type={$lottery_type}">输入示例</a></p><p id="message" class="danger"></p></section>
 <aside class="card"><h2>本次投注</h2><p>彩种：<b id="gameLabel"></b></p><p>当前期号：<b id="period">读取中</b></p><p>余额：¥<b id="balance">--</b></p><p>候选：<b id="count">0</b> 笔　合计：<b id="total">¥0.00</b></p><p class="muted">快译只生成候选；确认投注成功后才会真实扣款。后台停用的玩法不能投注。</p></aside></div>
 <section class="card"><h2>逐笔核对</h2><div id="pending"></div><div id="entries" class="muted">尚无候选注单。</div></section>
 <section class="card"><button id="submit" disabled>确认投注</button><p class="muted">提交时服务端重新核对彩种、期号、玩法、赔率及余额；任一项无效，整批不扣款。</p><p id="result" role="status" aria-live="polite"></p></section></div>
@@ -36,7 +37,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}.row input,.row select{max-width:180
 <script src="/assets/lottery/js/auth.js"></script>
 <script src="/assets/lottery/quickref/core/engine.js?v=20261102-1"></script><script src="/assets/lottery/quickref/core/learned.js"></script>
 <script src="/assets/lottery/quickref/core/model-result.js"></script><script src="/assets/lottery/quickref/core/knowledge.js"></script>
-<script src="/assets/lottery/quickref/core/stream.js"></script><script src="/assets/lottery/quickref/module.js"></script><script src="/assets/lottery/quickref/offline.js?v=20261102-2"></script>
+<script src="/assets/lottery/quickref/core/stream.js"></script><script src="/assets/lottery/quickref/module.js"></script><script src="/assets/lottery/quickref/offline.js?v=20261129-2"></script>
 <script>
 (function(){
 'use strict';

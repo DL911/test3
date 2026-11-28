@@ -70,9 +70,10 @@
         </div>
     </div>
     <div class="form-group">
-        <label for="c-admin-remark" class="control-label col-xs-12 col-sm-2">备注:</label>
-        <div class="col-xs-12 col-sm-8">
-            <textarea id="c-admin-remark" class="form-control" name="row[admin_remark]" rows="3" maxlength="500">{$row.admin_remark|htmlentities}</textarea>
+        <label for="c-admin-remark" class="control-label col-xs-12 col-sm-2">分成:</label>
+        <div class="col-xs-12 col-sm-4">
+            <textarea id="c-admin-remark" class="form-control" name="row[admin_remark]" rows="2" maxlength="500" data-server-time="{$shareServerTime}" aria-describedby="share-time-hint" {if !$shareEditable}disabled{/if}>{$row.admin_remark|htmlentities}</textarea>
+            <span id="share-time-hint" class="help-block">仅北京时间每周一00:00至21:00前可编辑，其他时间置灰。</span>
         </div>
     </div>
     <div class="form-group">

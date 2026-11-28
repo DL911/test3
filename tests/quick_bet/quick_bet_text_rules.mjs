@@ -9,6 +9,20 @@ for(const file of ['core/engine.js','core/learned.js','core/model-result.js','co
 }
 const S=globalThis.LotteryRecognitionOdds,settings=S.defaultSettings();
 const cases=[
+  ['12* 100',['twopos:12:100:01']],
+  ['百1十2 100',['twopos:12:100:01']],
+  ['1*2 100',['twopos:12:100:02']],
+  ['*12 100',['twopos:12:100:12']],
+  ['个2百1 100',['twopos:12:100:02']],
+  ['百1十1 100',['twopos:11:100:01']],
+  ['123组六100组三100',['g6_3:123:100:','g3_3:123:100:']],
+  ['123组六80组三20',['g6_3:123:80:','g3_3:123:20:']],
+  ['组三100',['g3all::100:']],
+  ['组六100',['g6all::100:']],
+  ['12 100+100',['two:12:100:','twog3:12:100:']],
+  ['12打100+100',['two:12:100:','twog3:12:100:']],
+  ['12 80+20',['two:12:80:','twog3:12:20:']],
+  ['03打80+20',['two:03:80:','twog3:03:20:']],
   ['589组200',['g6_3:589:200:']],
   ['百单100',['posodd::100:0']],
   ['百十单100',['posodd::100:01']],
@@ -57,8 +71,8 @@ const servicePath=path.resolve(import.meta.dirname,'../../application/common/ser
 const validateCode=`require '${servicePath}'; foreach(json_decode(stream_get_contents(STDIN),true) as $item) \\app\\common\\service\\QuickBetService::validateItem($item); echo 'server validation OK';`;
 const php=spawnSync('php',['-r',validateCode],{input:JSON.stringify(serverItems),encoding:'utf8'});
 if(php.status!==0||!php.stdout.includes('server validation OK'))throw Error(php.stderr||php.stdout);
-for(const raw of ['007组10','12310','一百二','和15 10元','026 039直3注各2']){
+for(const raw of ['007组10','12310','一百二','和15 10元','026 039直3注各2','11 100+100','11打100+100','12100+100','12 100+100+100','百1百2 100','112组六100组三100']){
   const rows=S.recognizeOffline(raw,{game:'3D',settings,memories:[]});
   if(rows.every(e=>e.status==='confirmed'))throw Error('ambiguous or retired play accepted: '+raw);
 }
-console.log('quick bet text rules passed: '+cases.length*2+' positive and 5 guarded cases');
+console.log('quick bet text rules passed: '+cases.length*2+' positive and 11 guarded cases');

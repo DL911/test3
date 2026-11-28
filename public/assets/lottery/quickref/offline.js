@@ -76,9 +76,33 @@ function explicitCandidates(raw,text,settings,game){
   const numbers=value=>value.trim().split(/[\s,，.。;；、/\-=]+/).filter(Boolean);
   const validNumbers=ns=>ns.length>0&&ns.every(n=>/^\d{2,9}$/.test(n));
   const make=(play,ns,value,pos='')=>candidate(raw,ns.map(n=>entry(game,play(n),[n],moneyValue(value),pos)),settings);
+  let shorthand=body.match(new RegExp('^([0-9*]{3})\\s+(?:打\\s*)?'+stake+'\\s*$'));
+  if(shorthand&&/^(?:\d\d\*|\d\*\d|\*\d\d)$/.test(shorthand[1])){
+    const mask=shorthand[1],pos=[...mask].map((c,i)=>c==='*'?'':String(i)).join('');
+    return candidate(raw,[entry(game,'twopos',[mask.replace('*','')],moneyValue(shorthand[2]),pos)],settings);
+  }
+  shorthand=body.match(new RegExp('^(百|十|个)(?:位)?([0-9])\\s*(百|十|个)(?:位)?([0-9])\\s*(?:打\\s*)?'+stake+'\\s*$'));
+  if(shorthand){
+    if(shorthand[1]===shorthand[3])return pending(raw,'两码定位需要两个不同位置，请核对。',game);
+    const digits=[[position[shorthand[1]],shorthand[2]],[position[shorthand[3]],shorthand[4]]].sort((a,b)=>Number(a[0])-Number(b[0]));
+    return candidate(raw,[entry(game,'twopos',[digits.map(d=>d[1]).join('')],moneyValue(shorthand[5]),digits.map(d=>d[0]).join(''))],settings);
+  }
+  shorthand=body.match(new RegExp('^(\\d{3})\\s*组六\\s*'+stake+'\\s*组三\\s*'+stake+'\\s*$'));
+  if(shorthand){
+    if(new Set(shorthand[1]).size!==3)return pending(raw,'明写组选六但号码有重复，请核对。',game);
+    return candidate(raw,[entry(game,'g6_3',[shorthand[1]],moneyValue(shorthand[2])),entry(game,'g3_3',[shorthand[1]],moneyValue(shorthand[3]))],settings);
+  }
+  shorthand=body.match(new RegExp('^(组三|组六)\\s*(?:打\\s*)?'+stake+'\\s*$'));
+  if(shorthand)return candidate(raw,[entry(game,shorthand[1]==='组三'?'g3all':'g6all',[],moneyValue(shorthand[2]))],settings);
   let declared=body.match(new RegExp('^([\\d\\s,，.。;；、/]+?)\\s*(?:直选|直)\\s*(\\d+)\\s*注\\s*各\\s*(?:打\\s*)?('+moneyPattern+')\\s*'+moneyUnit+'\\s*$'));
   if(declared){const ns=numbers(declared[1]);if(ns.length!==Number(declared[2])||!ns.every(n=>/^\d{3}$/.test(n)))return pending(raw,'声明注数与实际三位号码数量不一致，请核对。',game);return make(()=> 'direct',ns,declared[3])}
-  let m=body.match(new RegExp('^'+list+'\\s*各\\s*'+stake+'\\s*(?:防对子|防对|防|放对子|放对|放|组三)\\s*'+stake+'\\s*$'));
+  // Two distinct digits followed by A+B mean 两码 and 两码组三 respectively.
+  let m=body.match(new RegExp('^(\\d{2})(?:\\s+|\\s*打\\s*)'+stake+'\\s*\\+\\s*'+stake+'\\s*$'));
+  if(m){const first=moneyValue(m[2]),second=moneyValue(m[3]);
+    if(new Set(m[1]).size!==2||!Number.isFinite(first)||!Number.isFinite(second))return pending(raw,'两码组合的号码或金额不明确，请核对。',game);
+    return candidate(raw,[entry(game,'two',[m[1]],first),entry(game,'twog3',[m[1]],second)],settings);
+  }
+  m=body.match(new RegExp('^'+list+'\\s*各\\s*'+stake+'\\s*(?:防对子|防对|防|放对子|放对|放|组三)\\s*'+stake+'\\s*$'));
   if(m){const ns=numbers(m[1]),first=moneyValue(m[2]),second=moneyValue(m[3]);
     if(!validNumbers(ns)||!ns.every(n=>new Set(n).size===n.length)||!Number.isFinite(first)||!Number.isFinite(second))return pending(raw,'各组号码或双金额不明确，请核对。',game);
     return candidate(raw,ns.flatMap(n=>[entry(game,n.length===2?'two':'g6_'+n.length,[n],first),entry(game,n.length===2?'twog3':'g3_'+n.length,[n],second)]),settings);
