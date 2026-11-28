@@ -132,17 +132,17 @@
     <!-- ===== 客服咨询入口（与 PC 首页左侧栏保持一致） ===== -->
     <section class="m-kefu-portals" aria-label="客服咨询">
         <div class="m-kefu-portals-title"><i class="fa-solid fa-headset"></i> 客服咨询</div>
-        <a class="m-kefu-portal wanli" data-kefu-channel="wanli" href="/index.php/index/lottery/kefu?channel=wanli">
+        <a class="m-kefu-portal wanli" data-kefu-channel="wanli"{if !isset($kefu_visible['wanli'])} style="display:none"{/if} href="/index.php/index/lottery/kefu?channel=wanli">
             <span class="m-kefu-portal-icon"><i class="fa-solid fa-gem"></i></span>
             <span class="m-kefu-portal-name">万利百家乐开户窗口</span>
             <span class="kefu-unread-badge"></span><i class="fa-solid fa-chevron-right"></i>
         </a>
-        <a class="m-kefu-portal dongfang" data-kefu-channel="dongfang" href="/index.php/index/lottery/kefu?channel=dongfang">
+        <a class="m-kefu-portal dongfang" data-kefu-channel="dongfang"{if !isset($kefu_visible['dongfang'])} style="display:none"{/if} href="/index.php/index/lottery/kefu?channel=dongfang">
             <span class="m-kefu-portal-icon"><i class="fa-solid fa-chess-queen"></i></span>
             <span class="m-kefu-portal-name">东方汇百家乐</span>
             <span class="kefu-unread-badge"></span><i class="fa-solid fa-chevron-right"></i>
         </a>
-        <a class="m-kefu-portal crown" data-kefu-channel="crown" href="/index.php/index/lottery/kefu?channel=crown">
+        <a class="m-kefu-portal crown" data-kefu-channel="crown"{if !isset($kefu_visible['crown'])} style="display:none"{/if} href="/index.php/index/lottery/kefu?channel=crown">
             <span class="m-kefu-portal-icon"><i class="fa-solid fa-futbol"></i></span>
             <span class="m-kefu-portal-name">皇冠足球开户窗口</span>
             <span class="kefu-unread-badge"></span><i class="fa-solid fa-chevron-right"></i>

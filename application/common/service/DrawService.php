@@ -286,7 +286,7 @@ class DrawService
     public static function fetchLatestDraw($type = 'fc3d', $requireToday = false, $expectedPeriod = null)
     {
         $candidates = [];
-        foreach (['official', 'domestic_relay', '17500', 'eastmoney'] as $source) {
+        foreach (['17500', 'official', 'domestic_relay', 'eastmoney'] as $source) {
             try {
                 if ($source === 'official') $result = self::fetchFromOfficial($type, $expectedPeriod);
                 elseif ($source === 'domestic_relay') $result = self::fetchFromRelay($type, $expectedPeriod);
@@ -298,6 +298,7 @@ class DrawService
                 }
                 $candidates[$source] = $result;
                 Log::info("DrawService: [{$source}] 有效候选, 彩种={$type}, 期号={$result['period']}, 号码={$result['numbers']}");
+                if ($source === '17500') return $result;
             } catch (\Exception $e) {
                 Log::error("DrawService: [{$source}] 异常: " . $e->getMessage());
             }
@@ -312,9 +313,10 @@ class DrawService
             }
             $first = $candidate;
         }
+        if (isset($candidates['17500'])) return $candidates['17500'];
         if (isset($candidates['official'])) return $candidates['official'];
         if (isset($candidates['domestic_relay'])) return $candidates['domestic_relay'];
-        return isset($candidates['17500'], $candidates['eastmoney']) ? $candidates['17500'] : false;
+        return false;
     }
 
     protected static function isValidDrawResult($type, $result, $expectedPeriod, $requireToday)

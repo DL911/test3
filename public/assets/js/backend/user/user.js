@@ -41,6 +41,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                             return '<a href="javascript:;" class="agent-chain-link" data-id="'+row.id+'">查看链路</a>';
                         }},
                         {field: 'real_name', title: '真实姓名', operate: false, formatter: function(value){return value || '<span class="text-muted">未认证</span>'; }},
+                        {field: 'admin_remark', title: '备注', operate: 'LIKE', formatter: function(value){ return value ? $('<div>').text(value).html() : '<span class="text-muted">—</span>'; }},
                         {field: 'mobile', title: __('Mobile'), operate: 'LIKE'},
                         {field: 'avatar', title: __('Avatar'), events: Table.api.events.image, formatter: Table.api.formatter.image, operate: false},
                         {field: 'money', title: '余额', sortable: true, formatter: function(v){return '<b style="color:#e67e22;">¥'+parseFloat(v||0).toFixed(2)+'</b>';}},

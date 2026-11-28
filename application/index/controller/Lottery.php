@@ -73,6 +73,7 @@ class Lottery extends Frontend
     public function index()
     {
         $channels = KefuChannel::map(false);
+        $this->view->assign('kefu_visible', KefuChannel::map(true));
         $general = isset($channels[KefuChannel::DEFAULT_CODE]) ? $channels[KefuChannel::DEFAULT_CODE] : [];
         $this->view->assign('announcement', trim(isset($general['announcement']) ? $general['announcement'] : ''));
         if ($this->isMobile()) {
@@ -221,6 +222,7 @@ class Lottery extends Frontend
      */
     public function m_index()
     {
+        $this->view->assign('kefu_visible', KefuChannel::map(true));
         return $this->view->fetch('lottery/m_index');
     }
 
