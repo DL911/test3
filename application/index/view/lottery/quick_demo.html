@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>快译输入示例</title>
+  <style>
+    body {
+      margin: 0;
+      padding: clamp(12px, 4vw, 40px);
+      background: #eef2f6;
+      color: #152536;
+      font: 16px/1.6 system-ui, "Microsoft YaHei", sans-serif;
+    }
+    .copy-toolbar, .manual-copy {
+      max-width: 960px;
+      margin: 0 auto 14px;
+    }
+    .copy-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .copy-toolbar button {
+      min-height: 44px;
+      padding: 8px 14px;
+      border: 1px solid #244766;
+      border-radius: 8px;
+      background: #fff;
+      color: #244766;
+      font: inherit;
+      cursor: pointer;
+    }
+    .copy-toolbar button:first-child { background: #244766; color: #fff; }
+    .copy-toolbar button:focus-visible { outline: 2px solid #175d9b; outline-offset: 3px; }
+    .manual-copy textarea { box-sizing: border-box; width: 100%; min-height: 145px; font: inherit; }
+  </style>
+  <style id="example-styles">
+    .kuaiyi-examples {
+      box-sizing: border-box;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: clamp(14px, 4%, 32px);
+      border: 1px solid #dce5ed;
+      border-radius: 14px;
+      background: #fff;
+      color: #152536;
+      font: 16px/1.6 system-ui, "Microsoft YaHei", sans-serif;
+    }
+    .kuaiyi-examples .kuaiyi-title {
+      margin: 0 0 18px;
+      font-size: clamp(24px, 4vw, 32px);
+      line-height: 1.3;
+    }
+    .kuaiyi-examples .kuaiyi-groups { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .kuaiyi-examples .kuaiyi-group {
+      min-width: 0;
+      padding: 14px;
+      border: 1px solid #dce5ed;
+      border-radius: 10px;
+      background: #f7f9fc;
+    }
+    .kuaiyi-examples h3 { margin: 0 0 4px; color: #244766; font-size: 18px; }
+    .kuaiyi-examples dl, .kuaiyi-examples dd { margin: 0; }
+    .kuaiyi-examples dl > div { padding: 7px 0; }
+    .kuaiyi-examples dl > div + div { border-top: 1px solid #dce5ed; }
+    .kuaiyi-examples dt { font-weight: 650; }
+    .kuaiyi-examples dd { font-size: 0.9375em; }
+    .kuaiyi-examples code {
+      display: inline-block;
+      max-width: 100%;
+      padding: 0 0.32em;
+      border-radius: 4px;
+      background: #e7eef6;
+      color: #193b59;
+      font: 1em/1.55 ui-monospace, Consolas, "Microsoft YaHei", monospace;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    @media (min-width: 700px) {
+      .kuaiyi-examples .kuaiyi-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="copy-toolbar" aria-label="页面导航"><a id="back-quick" href="/index.php/index/lottery/quickBet?type=fc3d" style="display:inline-block;padding:8px 14px;border:1px solid #244766;border-radius:8px;color:#244766;background:#fff;text-decoration:none">← 返回快译模式</a></nav>
+  <script>
+    (function () {
+      const back = document.getElementById('back-quick');
+      const type = new URLSearchParams(location.search).get('type');
+      back.href = '/index.php/index/lottery/quickBet?type=' + (type === 'pl3' ? 'pl3' : 'fc3d');
+      if (document.referrer) {
+        const previous = new URL(document.referrer);
+        if (previous.origin === location.origin && previous.pathname.toLowerCase() === '/index.php/index/lottery/quickbet' && previous.searchParams.get('type') === type) {
+          back.addEventListener('click', function (event) {
+            if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && event.button === 0 && history.length > 1) { event.preventDefault(); history.back(); }
+          });
+        }
+      }
+    })();
+  </script>
+  <div class="copy-toolbar">
+    <button id="copy-text" type="button">复制正文</button>
+    <button id="copy-html" type="button">复制 HTML 源码</button>
+    <span id="copy-status" role="status"></span>
+  </div>
+  <div class="manual-copy" id="manual-copy" hidden="">
+    <textarea id="manual-text" aria-label="待复制内容" readonly=""></textarea>
+  </div>
+
+  <section class="kuaiyi-examples" id="kuaiyi-examples" aria-labelledby="kuaiyi-title">
+    <h2 class="kuaiyi-title" id="kuaiyi-title">快译输入示例</h2>
+    <div class="kuaiyi-groups">
+      <section class="kuaiyi-group">
+        <h3>一码</h3>
+        <dl>
+          <div><dt>一码</dt><dd><code>1 100</code> 或 <code>1打100</code></dd></div>
+          <div><dt>一码定位</dt><dd><code>百1 100</code> 或 <code>百1打100</code></dd></div>
+        </dl>
+      </section>
+
+      <section class="kuaiyi-group">
+        <h3>两码</h3>
+        <dl>
+          <div><dt>两码组六</dt><dd><code>12 100</code> 或 <code>12打100</code></dd></div>
+          <div><dt>两码组三</dt><dd><code>12防100</code> 或 <code>12组三100</code></dd></div>
+          <div><dt>两码组六 + 组三</dt><dd><code>12 100+100</code> 或 <code>12打100+100</code></dd></div>
+          <div><dt>两码定位</dt><dd><code>12* 100</code> 或 <code>百1十2 100</code></dd></div>
+          <div><dt>两码对子</dt><dd><code>11 100</code> 或 <code>11打100</code></dd></div>
+        </dl>
+      </section>
+
+      <section class="kuaiyi-group">
+        <h3>三码</h3>
+        <dl>
+          <div><dt>三码直选</dt><dd><code>123直100</code></dd></div>
+          <div><dt>三码组六</dt><dd><code>123 100</code> 或 <code>123打100</code></dd></div>
+          <div><dt>三码组三</dt><dd><code>123防100</code> 或 <code>123组三100</code></dd></div>
+          <div><dt>三码直选 + 组六</dt><dd><code>123 100+100</code></dd></div>
+          <div><dt>三码组六 + 组三</dt><dd><code>123组六100组三100</code></dd></div>
+          <div><dt>三码直选 + 组六 + 组三</dt><dd><code>123 100+100+100</code></dd></div>
+        </dl>
+      </section>
+
+      <section class="kuaiyi-group">
+        <h3>4～9 码</h3>
+        <dl>
+          <div><dt>组六</dt><dd><code>1234 100</code> 或 <code>1234打100</code></dd></div>
+          <div><dt>组三</dt><dd><code>1234防100</code> 或 <code>1234组三100</code></dd></div>
+          <div><dt>组六 + 组三</dt><dd><code>1234 100+100</code></dd></div>
+        </dl>
+      </section>
+
+      <section class="kuaiyi-group">
+        <h3>全包与豹子</h3>
+        <dl>
+          <div><dt>对子全包</dt><dd><code>对子100</code>（炸弹算中）</dd></div>
+          <div><dt>组三全包</dt><dd><code>组三100</code>（炸弹不算中）</dd></div>
+          <div><dt>组六全包</dt><dd><code>组六100</code></dd></div>
+          <div><dt>指定豹子</dt><dd><code>111 100</code></dd></div>
+          <div><dt>豹子全包</dt><dd><code>豹子 100</code> 或 <code>炸弹 100</code></dd></div>
+        </dl>
+      </section>
+
+      <section class="kuaiyi-group">
+        <h3>大小单双</h3>
+        <dl>
+          <div><dt>和值大小单双</dt><dd><code>和大100</code> 或 <code>和值大100</code></dd></div>
+          <div><dt>位置大小单双</dt><dd><code>百大100</code></dd></div>
+        </dl>
+      </section>
+    </div>
+  </section>
+
+  <script>
+    const examples = document.getElementById('kuaiyi-examples');
+    const copyStatus = document.getElementById('copy-status');
+    const manualCopy = document.getElementById('manual-copy');
+    const manualText = document.getElementById('manual-text');
+
+    function getPlainText() {
+      const title = document.getElementById('kuaiyi-title').textContent;
+      const groups = Array.from(examples.querySelectorAll('.kuaiyi-group'), (group) => {
+        const heading = group.querySelector('h3').textContent;
+        const rows = Array.from(group.querySelectorAll('dl > div'), (row) => {
+          const label = row.querySelector('dt').textContent;
+          const sample = row.querySelector('dd').textContent;
+          return `- ${label}　${sample}`;
+        });
+        return [heading, ...rows].join('\n');
+      });
+      return [title, ...groups].join('\n\n');
+    }
+
+    async function copy(content, label) {
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(content);
+          manualCopy.hidden = true;
+          copyStatus.textContent = `已复制${label}`;
+          return;
+        } catch {
+          // A local file or browser setting can prevent direct clipboard access.
+        }
+      }
+
+      const previousFocus = document.activeElement;
+      manualText.value = content;
+      manualCopy.hidden = false;
+      manualText.focus();
+      manualText.select();
+      if (typeof document.execCommand === 'function' && document.execCommand('copy')) {
+        manualCopy.hidden = true;
+        previousFocus?.focus();
+        copyStatus.textContent = `已复制${label}`;
+        return;
+      }
+      copyStatus.textContent = '内容已选中，可以手动复制。';
+    }
+
+    document.getElementById('copy-text').addEventListener('click', () => copy(getPlainText(), '正文'));
+    document.getElementById('copy-html').addEventListener('click', () => {
+      const styles = document.getElementById('example-styles').textContent;
+      copy(`<style>${styles}</style>\n${examples.outerHTML}`, 'HTML 源码');
+    });
+  </script>
+
+
+</body></html>

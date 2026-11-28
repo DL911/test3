@@ -100,6 +100,11 @@ class Lottery extends Frontend
         return $this->view->fetch();
     }
 
+    public function quickDemo()
+    {
+        return $this->view->fetch('lottery/quick_demo');
+    }
+
     public function quickBet()
     {
         $type = $this->request->param('type', 'fc3d');
